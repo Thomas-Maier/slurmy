@@ -133,8 +133,8 @@ class JobHandler:
     if partition: job_partition = partition
 
     for run_arg in zip(*run_args_resolved):
-      run_script = self._run_script.format(*run_arg)
-      self.add_job(run_script, job_partition)
+      job_run_script = run_script.format(*run_arg)
+      self.add_job(job_run_script, job_partition)
 
   # def setup_jobs(self):
   #   self.reset()
