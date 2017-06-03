@@ -57,6 +57,9 @@ class JobHandler:
       print ('Job requires '+str(n_args)+' seperate arguments, '+str(n_args_provided)+' were provided')
       raise
     self._run_args = []
+    if n_args == 1:
+      run_args = [run_args]
+        
     for arg in run_args:
       if isinstance(arg, list) or isinstance(arg, tuple):
         len_arg = len(arg)
@@ -72,6 +75,7 @@ class JobHandler:
     if os.path.isdir(self._script_folder):
       os.system('rm -r '+self._script_folder)
     os.mkdir(self._script_folder)
+    print self._run_args
     for i, run_arg in enumerate(zip(*self._run_args)):
       name = self._name+'_'+str(i)
       run_script = self._run_script.format(*run_arg)
