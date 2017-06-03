@@ -38,11 +38,12 @@ class JobHandler:
   ## Generates Jobs according to configuration
   ## Allow for arbitrary combination of slurm jobs and local (multiprocessing) jobs
 
-  def __init__(self, n_jobs, run_script, run_args = None, name = None):
+  def __init__(self, n_jobs, run_script, partition, run_args = None, name = None):
     self._name = 'hans'
     if name: self._name = name
     self._jobs = []
     self._run_script = run_script
+    self._partition = partition
 
     self._script_folder = 'scripts_'+self._name+'/'
     self._log_folder = 'logs_'+self._name+'/'
@@ -72,16 +73,16 @@ class JobHandler:
         self._run_args.append(arg)
 
   def setup_jobs(self):
-    if os.path.isdir(self._script_folder):
-      os.system('rm -r '+self._script_folder)
+    if os.path.isdir(self._script_folder): os.system('rm -r '+self._script_folder)
     os.mkdir(self._script_folder)
-    print self._run_args
+    if os.path.isdir(self._log_folder): os.system('rm -r '+self._log_folder)
+    os.mkdir(self._log_folder)
     for i, run_arg in enumerate(zip(*self._run_args)):
       name = self._name+'_'+str(i)
       run_script = self._run_script.format(*run_arg)
       run_script_name = self._write_script(run_script, name)
       log_name = self._log_folder+name
-      job = Job(run_script_path)
+      job = Job(name, run_script_name, log_name, self._partition)
       self._jobs.append(job)
 
   def _write_script(self, run_script, name):
