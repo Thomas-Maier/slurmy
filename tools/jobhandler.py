@@ -53,7 +53,7 @@ class JobHandler:
       print ('You have to provide arguments to be used by the job')
       raise
     n_args_provided = len(run_args)
-    if n_args_provided != n_args:
+    if n_args > 1 and n_args_provided != n_args:
       print ('Job requires '+str(n_args)+' seperate arguments, '+str(n_args_provided)+' were provided')
       raise
     self._run_args = []
