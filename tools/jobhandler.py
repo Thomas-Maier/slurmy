@@ -31,7 +31,7 @@ class Job:
   ## Checks itself if it was successful (by whatever means that are defined)
   ## Is able to submit as slurm job or run locally
 
-  def __init__(self, name, run_script, log_file, partition, finished_func = None):
+  def __init__(self, name, run_script, log_file, partition, success_func = None):
     self._name = name
     self._run_script = run_script
     self._log_file = log_file
