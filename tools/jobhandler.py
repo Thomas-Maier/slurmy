@@ -1,14 +1,18 @@
 
 import os
 import subprocess
+import time
+from enum import Enum
+import operator
 
 
-JOB_STATUS = {'configured': 0,
-              'running': 1,
-              'finished': 2,
-              'success': 3,
-              'failed': 4,
-              'cancelled': 5}
+class Status(Enum):
+  Configured = 0
+  Running = 1
+  Finished = 2
+  Success = 3
+  Failed = 4
+  Cancelled = 5
 
 def slurm_submit(job_name, log_name, partition, run_script):
   submit_string = subprocess.check_output(['sbatch', '-J', job_name, '-o', log_name, '-p', partition, run_script])
@@ -26,9 +30,9 @@ def slurm_cancel(job_id):
 def slurm_status(job_id):
   status_string = subprocess.check_output(['squeue', '-j', job_id])
   n_lines = status_string.count('\n')
-  status = JOB_STATUS['finished']
+  status = Status.Finished
   if n_lines > 1:
-    status = JOB_STATUS['running']
+    status = Status.Running
 
   return status
 
@@ -46,7 +50,7 @@ class Job:
     self._run_script = run_script
     self._log_file = log_file
     self._partition = partition
-    self._status = JOB_STATUS['configured']
+    self._status = Status.Configured
     self._job_id = None
     self._tags = set()
     if tags is not None: self.add_tags(tags)
@@ -74,29 +78,29 @@ class Job:
 
   def submit(self):
     self._job_id = slurm_submit(self._name, self._log_file, self._partition, self._run_script)
-    self._status = JOB_STATUS['running']
+    self._status = Status.Running
 
   def cancel(self):
-    if self._status != JOB_STATUS['running']:
+    if self._status != Status.Running:
       print ('Job is not in running state')
     else:
       slurm_cancel(self._job_id)
-      self._status = JOB_STATUS['cancelled']
+      self._status = Status.Cancelled
 
   def get_status(self):
-    if self._status == JOB_STATUS['running']:
+    if self._status == Status.Running:
       self._status = slurm_status(self._job_id)
-    if self._status == JOB_STATUS['finished']:
+    if self._status == Status.Finished:
       if self._success_func():
-        self._status == JOB_STATUS['success']
+        self._status == Status.Success
       else:
-        self._status == JOB_STATUS['failed']
+        self._status == Status.Failed
         
     return self._status
 
   # def get_success(self):
   #   success = False
-  #   if self._status == JOB_STATUS['finished']:
+  #   if self._status == Status.Finished:
   #     success = self._success_func()
       
   #   return success
@@ -222,7 +226,7 @@ class JobHandler:
 
     return out_file_name
 
-  ## TODO: needs to be more robust, i.e. what happends if the parent_tag is not in the tagged jobs dict
+  ## TODO: needs to be more robust, i.e. what happens if the parent_tag is not in the tagged jobs dict
   def _check_job_readiness(self, job):
     parent_tags = job.get_parent_tags()
     if not parent_tags:
@@ -230,10 +234,20 @@ class JobHandler:
     for tag in parent_tags:
       for tagged_job in self._tagged_jobs[tag]:
         status = tagged_job.get_status()
-        if status == JOB_STATUS['success']: continue
+        if status == Status.Success: continue
         return False
     
     return True
+
+  def run_jobs(self):
+    running = True
+    n_all = len(self._jobs)
+    while running:
+      self.submit_jobs()
+      time.sleep(10)
+      status_dict = self._get_jobs_status()
+      n_success = status_dict[Status.Success]
+      if n_success == n_all: running = False
 
   def submit_jobs(self, tags = None):
     for job in self.get_jobs(tags):
@@ -261,18 +275,42 @@ class JobHandler:
   #     n_finished += 1
   #   print ('Jobs finished/all:', '('+str(n_finished)+'/'+str(n_all)+')')
 
-  ## TODO: modify so that it allows to specify tags
-  ## TODO: separate evaluation from printing
-  def check_status(self):
-    n_success = 0
-    n_finished = 0
-    n_all = len(self._jobs)
+  ## TODO: must be rather check_jobs_status with some decision making if jobs failed (retry logic, maybe job can automatically gather on which machine it was running on)
+  def _get_jobs_status(self):
+    status_dict = {}
     for job in self._jobs:
-      if job.get_status() != JOB_STATUS['finished']: continue
-      n_finished += 1
-      if not job.get_success(): continue
-      n_success += 1
-    print ('Jobs successful/finished/all:', '('+str(n_success)+'/'+str(n_finished)+'/'+str(n_all)+')')
+      status = job.get_status()
+      if not status in status_dict: status_dict[status] = 0
+      status_dict[status] += 1
+
+    return status_dict
+
+  # status_tuple = sorted(status_dict.items(), key = operator.itemgetter(1), reverse = False)
+
+  # JOB_STATUS = {'configured': 0,
+  #             'running': 1,
+  #             'finished': 2,
+  #             'success': 3,
+  #             'failed': 4,
+  #             'cancelled': 5}
+
+  ## TODO: modify so that it allows to specify tags
+  def check_status(self):
+    status_dict = self._get_jobs_status()
+    n_all = str(len(self._jobs))
+    for status, n_jobs in status_dict.items():
+      print (status.name+':', '('+str(n_jobs)+'/'+n_all+')')
+
+  # def check_status(self):
+  #   n_success = 0
+  #   n_finished = 0
+  #   n_all = len(self._jobs)
+  #   for job in self._jobs:
+  #     if job.get_status() != Status.Finished: continue
+  #     n_finished += 1
+  #     if not job.get_success(): continue
+  #     n_success += 1
+  #   print ('Jobs successful/finished/all:', '('+str(n_success)+'/'+str(n_finished)+'/'+str(n_all)+')')
 
   @staticmethod
   def _has_tag(job, tag):
