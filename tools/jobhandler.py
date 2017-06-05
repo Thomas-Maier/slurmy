@@ -6,6 +6,7 @@ import time
 from enum import Enum
 from sys import stdout
 import multiprocessing as mp
+from collections import OrderedDict
 
 
 class Status(Enum):
@@ -73,6 +74,9 @@ class Job:
       print ('Job is not in Configured state, cannot set to local')
       raise
     self._is_local = is_local
+
+  def is_local(self):
+    return self._is_local
 
   def add_tag(self, tag, is_parent = False):
     if is_parent:
@@ -171,6 +175,7 @@ class JobHandler:
   ## TODO: Make default setting of stuff like partition and make optional to also define on job to job basis
   ## TODO: Can I ask slurm if currently there are free slots?
   ## TODO: Give option to set a maximum number of submitted jobs
+  ## TODO PACKAGE: Add a script that takes the JobHandler base folder and can make basic checks for the jobs
 
   def __init__(self, name = 'hans', partition = None, local_max = 0, is_verbose = False):
     self._name = name
@@ -182,6 +187,7 @@ class JobHandler:
     self._partition = partition
     self._local_max = local_max
     self._local_jobs = []
+    self._local_counter = 0
     self._is_verbose = is_verbose
     self._reset()
 
@@ -275,13 +281,14 @@ class JobHandler:
     
     return True
 
+  ## TODO: think of better information printing
   def _get_print_string(self, status_dict):
     print_string = 'Jobs '
     if self._is_verbose:
       n_local = len(self._local_jobs)
       n_running = status_dict[Status.Running]
       n_slurm = n_running - n_local
-      print_string += 'running: {}, {}(slurm), {}(local); '.format(n_running, n_slurm, n_local)
+      print_string += 'running (slurm/local/all): ({}/{}/{}); '.format(n_slurm, n_local, n_running)
     n_success = status_dict[Status.Success]
     n_failed = status_dict[Status.Failed]
     n_all = len(self._jobs)
@@ -289,24 +296,64 @@ class JobHandler:
 
     return print_string
 
+  ## TODO: better print format
+  def _get_summary_string(self, time_val):
+    summary_dict = OrderedDict()
+    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs)-self._local_counter, 'local': self._local_counter}
+    summary_dict['success'] = {'string': '     successful ', 'slurm': 0, 'local': 0}
+    summary_dict['fail'] = {'string': '     failed ', 'slurm': 0, 'local': 0}
+    for job in self._jobs:
+      if job.get_status() == Status.Success:
+        if job.is_local():
+          summary_dict['success']['local'] += 1
+        else:
+          summary_dict['success']['slurm'] += 1
+      else:
+        if job.is_local():
+          summary_dict['fail']['local'] += 1
+        else:
+          summary_dict['fail']['slurm'] += 1
+
+    print_string = ''
+    for summary_val in summary_dict.values():
+      n_slurm = summary_val['slurm']
+      n_local = summary_val['local']
+      n_all = summary_val['slurm'] + summary_val['local']
+      print_string += '{}(slurm/local/all): ({}/{}/{})\n'.format(summary_val['string'], n_slurm, n_local, n_all)
+    print_string += 'time spent: {:.1f} s'.format(time_val)
+
+    return print_string
+
   ## TODO: implement try block with KeyboardInterrupt to stop gracefully and clean everything up
   ## except KeyboardInterrupt:
   ## finally:
   def run_jobs(self, intervall = 5):
-    n_all = len(self._jobs)
-    running = True
-    while running:
-      self.submit_jobs()
-      status_dict = self._get_jobs_status()
-      print_string = self._get_print_string(status_dict)
+    time_now = time.time()
+    try:
+      n_all = len(self._jobs)
+      running = True
+      while running:
+        self.submit_jobs()
+        status_dict = self._get_jobs_status()
+        print_string = self._get_print_string(status_dict)
+        stdout.write('\r'+print_string)
+        stdout.flush()
+        time.sleep(intervall)
+        n_success = status_dict[Status.Success]
+        n_failed = status_dict[Status.Failed]
+        n_cancelled = status_dict[Status.Cancelled]
+        if (n_success+n_failed+n_cancelled) == n_all: running = False
+    except KeyboardInterrupt:
+      stdout.write('\n')
+      print ('Quitting gracefully...')
+      self.cancel_jobs()
+      exit(0)
+    finally:
+      time_now = time.time() - time_now
+      print_string = self._get_summary_string(time_now)
       stdout.write('\r'+print_string)
-      stdout.flush()
-      time.sleep(intervall)
-      n_success = status_dict[Status.Success]
-      n_failed = status_dict[Status.Failed]
-      n_cancelled = status_dict[Status.Cancelled]
-      if (n_success+n_failed+n_cancelled) == n_all: running = False
-    stdout.write('\n')
+      stdout.write('\n')
+      
 
   def submit_jobs(self, tags = None):
     ## Check local jobs progression
@@ -319,10 +366,13 @@ class JobHandler:
       if len(self._local_jobs) < self._local_max:
         job.set_local()
         self._local_jobs.append(job)
+        self._local_counter += 1
       job.submit()
-
+        
   def cancel_jobs(self, tags = None):
     for job in self.get_jobs(tags):
+      ## Nothing to do when job is not in Running state
+      if job.get_status() != Status.Running: continue
       job.cancel()
 
   ## TODO: must be rather check_jobs_status with some decision making if jobs failed (retry logic, maybe job can automatically gather on which machine it was running on)
