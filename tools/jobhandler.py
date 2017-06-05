@@ -5,6 +5,7 @@ import subprocess
 import time
 from enum import Enum
 from sys import stdout
+import multiprocessing as mp
 
 
 class Status(Enum):
@@ -51,7 +52,7 @@ class Job:
   ## Checks itself if it was successful (by whatever means that are defined)
   ## Is able to submit as slurm job or run locally
 
-  def __init__(self, name, run_script, log_file, partition, success_func = None, tags = None, parent_tags = None):
+  def __init__(self, name, run_script, log_file, partition, success_func = None, tags = None, parent_tags = None, is_local = False):
     self._name = name
     self._run_script = run_script
     self._log_file = log_file
@@ -62,9 +63,16 @@ class Job:
     if tags is not None: self.add_tags(tags)
     self._parent_tags = set()
     if parent_tags is not None: self.add_tags(parent_tags, True)
-
     self._success_func = None
     if success_func is not None: self._success_func = success_func
+    self._is_local = is_local
+    self._local_process = None
+
+  def set_local(self, is_local = True):
+    if self._status != Status.Configured:
+      print ('Job is not in Configured state, cannot set to local')
+      raise
+    self._is_local = is_local
 
   def add_tag(self, tag, is_parent = False):
     if is_parent:
@@ -80,20 +88,32 @@ class Job:
       self.add_tag(tags, is_parent)
 
   def submit(self):
-    if self._status == Status.Configured:
+    if self._status != Status.Configured:
+      print ('Job is not in Configured state, cannot submit')
+      raise
+    if self._is_local:
+      self._local_process = mp.Process(target = Job._submit_local, args = (self._run_script, self._log_file))
+      self._local_process.start()
+    else:
       self._job_id = slurm_submit(self._name, self._log_file, self._partition, self._run_script)
-      self._status = Status.Running
+    self._status = Status.Running
 
   def cancel(self):
     if self._status != Status.Running:
       print ('Job is not in running state')
+      return
+    if self._is_local:
+      self._local_process.terminate()
     else:
       slurm_cancel(self._job_id)
-      self._status = Status.Cancelled
+    self._status = Status.Cancelled
 
   def get_status(self):
     if self._status == Status.Running:
-      self._status = slurm_status(self._job_id)
+      if self._is_local:
+        self._status = Job._get_local_status(self._local_process)
+      else:
+        self._status = slurm_status(self._job_id)
     if self._status == Status.Finished:
       if self._is_success():
         self._status = Status.Success
@@ -105,7 +125,10 @@ class Job:
   def _is_success(self):
     success = False
     if self._success_func is None:
-      success = (slurm_exitcode(self._job_id) == '0:0')
+      if self._is_local:
+        success = (self._local_process.exitcode == 0)
+      else:
+        success = (slurm_exitcode(self._job_id) == '0:0')
     else:
       success = self._success_func()
 
@@ -120,6 +143,25 @@ class Job:
   def get_name(self):
     return self._name
 
+  @staticmethod
+  def _submit_local(run_script, log_file):
+    ## Make sure that the process finds the files, if relative paths are given
+    if not run_script.startswith('/'): run_script = './'+run_script
+    if not log_file.startswith('/'): log_file = './'+log_file
+    r = os.system('. '+run_script+' 2>&1 > '+log_file)
+
+    return r
+
+  @staticmethod
+  def _get_local_status(process):
+    status = None
+    if process.is_alive():
+      status = Status.Running
+    else:
+      status = Status.Finished
+
+    return status
+
 
 class JobHandler:
 
@@ -127,20 +169,23 @@ class JobHandler:
   ## Allow for arbitrary combination of slurm jobs and local (multiprocessing) jobs
   ## TODO: Currently not really working with jobs without any args
   ## TODO: Make default setting of stuff like partition and make optional to also define on job to job basis
-  ## TODO: Local job submission (with multiprocessing or subprocess.Popen)
+  ## TODO: Can I ask slurm if currently there are free slots?
+  ## TODO: Give option to set a maximum number of submitted jobs
 
-  def __init__(self, name = 'hans', partition = None):
+  def __init__(self, name = 'hans', partition = None, local_max = 0, is_verbose = False):
     self._name = name
     self._script_folder = self._name+'/scripts/'
     self._log_folder = self._name+'/logs/'
     self._jobs = []
     self._tagged_jobs = {}
-    self._job_counter = set()
-    self._partition = None
-    if partition: self._partition = partition
-    self.reset()
+    self._job_counter = 0
+    self._partition = partition
+    self._local_max = local_max
+    self._local_jobs = []
+    self._is_verbose = is_verbose
+    self._reset()
 
-  def reset(self):
+  def _reset(self):
     if os.path.isdir(self._script_folder): os.system('rm -r '+self._script_folder)
     os.makedirs(self._script_folder)
     if os.path.isdir(self._log_folder): os.system('rm -r '+self._log_folder)
@@ -156,11 +201,8 @@ class JobHandler:
     return job_list
 
   def add_job(self, run_script, partition = None, success_func = None, tags = None, parent_tags = None):
-    job_counter = 0
-    if len(self._job_counter) > 0:
-      job_counter = list(self._job_counter)[-1]+1
-    self._job_counter.add(job_counter)
-    name = self._name+'_'+str(job_counter)
+    self._job_counter += 1
+    name = self._name+'_'+str(self._job_counter)
     run_script_name = self._write_script(run_script, name)
     log_name = self._log_folder+name
     job_partition = self._partition
@@ -219,7 +261,8 @@ class JobHandler:
 
     return out_file_name
 
-  ## TODO: needs to be more robust, i.e. what happens if the parent_tag is not in the tagged jobs dict
+  ## TODO: needs to be more robust, i.e. what happens if the parent_tag is not in the tagged jobs dict.
+  ## Put a check on this in submit_jobs?
   def _check_job_readiness(self, job):
     parent_tags = job.get_parent_tags()
     if not parent_tags:
@@ -232,24 +275,50 @@ class JobHandler:
     
     return True
 
+  def _get_print_string(self, status_dict):
+    print_string = 'Jobs '
+    if self._is_verbose:
+      n_local = len(self._local_jobs)
+      n_running = status_dict[Status.Running]
+      n_slurm = n_running - n_local
+      print_string += 'running: {}, {}(slurm), {}(local); '.format(n_running, n_slurm, n_local)
+    n_success = status_dict[Status.Success]
+    n_failed = status_dict[Status.Failed]
+    n_all = len(self._jobs)
+    print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
+
+    return print_string
+
+  ## TODO: implement try block with KeyboardInterrupt to stop gracefully and clean everything up
+  ## except KeyboardInterrupt:
+  ## finally:
   def run_jobs(self, intervall = 5):
     n_all = len(self._jobs)
     running = True
     while running:
       self.submit_jobs()
       status_dict = self._get_jobs_status()
-      n_success = status_dict[Status.Success]
-      n_failed = status_dict[Status.Failed]
-      print_string = 'Jobs success/fail/all: ('+str(n_success)+'/'+str(n_failed)+'/'+str(n_all)+')'
+      print_string = self._get_print_string(status_dict)
       stdout.write('\r'+print_string)
       stdout.flush()
       time.sleep(intervall)
-      if (n_success+n_failed) == n_all: running = False
+      n_success = status_dict[Status.Success]
+      n_failed = status_dict[Status.Failed]
+      n_cancelled = status_dict[Status.Cancelled]
+      if (n_success+n_failed+n_cancelled) == n_all: running = False
     stdout.write('\n')
 
   def submit_jobs(self, tags = None):
+    ## Check local jobs progression
+    self._check_local_jobs()
     for job in self.get_jobs(tags):
+      ## If job is not in Configured state there is nothing to do
+      if job.get_status() != Status.Configured: continue
+      ## Check if job is ready to be submitted
       if not self._check_job_readiness(job): continue
+      if len(self._local_jobs) < self._local_max:
+        job.set_local()
+        self._local_jobs.append(job)
       job.submit()
 
   def cancel_jobs(self, tags = None):
@@ -271,6 +340,12 @@ class JobHandler:
     n_all = str(len(self._jobs))
     for status, n_jobs in status_dict.items():
       print (status.name+':', '('+str(n_jobs)+'/'+n_all+')')
+
+  def _check_local_jobs(self):
+    for i, job in enumerate(self._local_jobs):
+      if job.get_status() == Status.Running: continue
+      self._local_jobs.pop(i)
+      
 
   @staticmethod
   def _has_tag(job, tag):
