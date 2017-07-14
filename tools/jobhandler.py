@@ -5,9 +5,31 @@ import time
 from sys import stdout
 import multiprocessing as mp
 from collections import OrderedDict
+import pickle
 from slurmyDef import Status
-from job import Job
+from job import Job, JobConfig
 
+
+class JobHandlerConfig:
+  def __init__(self, name = 'hans', work_dir = '', local_max = 0, is_verbose = False, partition = None, success_func = None, max_retries = 0):
+    self.name = name
+    ## For safety, if given name is emtpy set a default
+    if not self.name: self.name = 'hans'
+    self.base_folder = self.name+'/'
+    if work_dir: self.base_folder = work_dir.rstrip('/')+self.name+'/'
+    self.script_folder = self.base_folder+'scripts/'
+    self.log_folder = self.base_folder+'logs/'
+    self.output_folder = self.base_folder+'output/'
+    self.snapshot_folder = self.base_folder+'/snapshot/'
+    self.path = self.snapshot_folder+'JobHandlerConfig.pkl'
+    self.jobs_configs = []
+    self.job_counter = 0
+    self.partition = partition
+    self.success_func = success_func
+    self.local_max = local_max
+    self.local_counter = 0
+    self.is_verbose = is_verbose
+    self.max_retries = max_retries
 
 class JobHandler:
   ## Generates Jobs according to configuration
@@ -18,26 +40,38 @@ class JobHandler:
   ## TODO: Give option to set a maximum number of submitted jobs
   ## TODO PACKAGE: Add a script that takes the JobHandler base folder and can make basic checks for the jobs
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
+  ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
+  ## TODO: Allow for predefined command line script with arguments to be submitted
 
-  def __init__(self, name = 'hans', partition = None, local_max = 0, is_verbose = False):
-    self._name = name
-    self._script_folder = self._name+'/scripts/'
-    self._log_folder = self._name+'/logs/'
+  def __init__(self, use_snapshot = False, name = 'hans', work_dir = '', local_max = 0, is_verbose = False, partition = None, success_func = None, max_retries = 0):
+    ## Variables that are not picklable
     self._jobs = []
     self._tagged_jobs = {}
-    self._job_counter = 0
-    self._partition = partition
-    self._local_max = local_max
     self._local_jobs = []
-    self._local_counter = 0
-    self._is_verbose = is_verbose
-    self._reset()
+    ## JobHandler config
+    self._config = JobHandlerConfig(name = name, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, partition = partition, success_func = success_func,
+                                    max_retries = max_retries)
+    if use_snapshot and os.path.isfile(self._config.path):
+      with open(self._config.path, 'rb') as in_file:
+        self._config = pickle.load(in_file)
+      if self._config.local_max > 0 or local_max > 0:
+        print ('Snapshot usage and local processing is not compatible...')
+        raise
+      for job_config in self._config.jobs_configs:
+        self._add_job_with_config(job_config)
+    else:
+      self._reset()
 
   def _reset(self):
-    if os.path.isdir(self._script_folder): os.system('rm -r '+self._script_folder)
-    os.makedirs(self._script_folder)
-    if os.path.isdir(self._log_folder): os.system('rm -r '+self._log_folder)
-    os.makedirs(self._log_folder)
+    if os.path.isdir(self._config.base_folder): os.system('rm -r '+self._config.base_folder)
+    os.makedirs(self._config.script_folder)
+    os.makedirs(self._config.log_folder)
+    if os.path.isdir(self._config.snapshot_folder): os.system('rm -r '+self._config.snapshot_folder)
+    os.makedirs(self._config.snapshot_folder)
+
+  def _update_snapshot(self):
+    with open(self._config.path, 'wb') as out_file:
+      pickle.dump(self._config, out_file)
 
   ## TODO: Make this a generator instead
   def get_jobs(self, tags = None):
@@ -48,60 +82,40 @@ class JobHandler:
 
     return job_list
 
-  def add_job(self, run_script, partition = None, success_func = None, tags = None, parent_tags = None):
-    self._job_counter += 1
-    name = self._name+'_'+str(self._job_counter)
-    run_script_name = self._write_script(run_script, name)
-    log_name = self._log_folder+name
-    job_partition = self._partition
-    if partition: job_partition = partition
-    job = Job(name, run_script_name, log_name, job_partition,
-              success_func = success_func, tags = tags, parent_tags = parent_tags)
+  def _add_job_with_config(self, job_config):
+    job = Job(config = job_config)
     self._jobs.append(job)
+    tags = job_config.tags
     if tags is not None:
-      if isinstance(tags, list) or isinstance(tags, tuple):
+      if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
         for tag in tags:
           if tag not in self._tagged_jobs: self._tagged_jobs[tag] = []
           self._tagged_jobs[tag].append(job)
       else:
         if tags not in self._tagged_jobs: self._tagged_jobs[tags] = []
-        self._tagged_jobs[tags].append(job)
+        self._tagged_jobs[tags].append(job)    
 
-  # def add_jobs(self, n_jobs, run_script, run_args = None, partition = None):
-  #   n_args = run_script.count('{}')
-  #   if n_args > 0 and run_args is None:
-  #     print ('You have to provide arguments to be used by the job')
-  #     raise
-  #   n_args_provided = len(run_args)
-  #   if n_args > 1 and n_args_provided != n_args:
-  #     print ('Job requires '+str(n_args)+' separate arguments, '+str(n_args_provided)+' were provided')
-  #     raise
-  #   run_args_resolved = []
-  #   if n_args == 1:
-  #     run_args = [run_args]
+  def add_job(self, run_script, run_args = None, partition = None, success_func = None, max_retries = None, tags = None, parent_tags = None):
+    self._config.job_counter += 1
+    name = self._config.name+'_'+str(self._config.job_counter)
+    run_script_name = run_script
+    if not os.path.isfile(run_script_name):
+      run_script_name = self._write_script(run_script, name)
+    log_name = self._config.log_folder+name
+    job_partition = partition or self._config.partition
+    job_success_func = success_func or self._config.success_func
+    job_max_retries = max_retries or self._config.max_retries
+    config_path = self._config.snapshot_folder+name+'.pkl'
 
-  #   if run_args is None: return 0
-        
-  #   for arg in run_args:
-  #     if isinstance(arg, list) or isinstance(arg, tuple):
-  #       len_arg = len(arg)
-  #       if len_arg != n_jobs:
-  #         print ('Length of argument list is '+str(len_arg)+', while '+str(n_jobs)+' are to be submitted')
-  #         raise
-  #       run_args_resolved.append(arg)
-  #     else:
-  #       arg_list = n_jobs * [arg]
-  #       run_args_resolved.append(arg)
-
-  #   job_partition = self._partition
-  #   if partition: job_partition = partition
-
-  #   for run_arg in zip(*run_args_resolved):
-  #     job_run_script = run_script.format(*run_arg)
-  #     self.add_job(job_run_script, job_partition)
+    job_config = JobConfig(name = name, path = config_path, run_script = run_script_name, run_args = run_args, log_file = log_name, partition = job_partition,
+                           success_func = job_success_func, max_retries = job_max_retries, tags = tags, parent_tags = parent_tags)
+    self._config.jobs_configs.append(job_config)
+    with open(job_config.path, 'wb') as out_file:
+      pickle.dump(job_config, out_file)
+    self._add_job_with_config(job_config)
 
   def _write_script(self, run_script, name):
-    out_file_name = self._script_folder+name
+    out_file_name = self._config.script_folder+name
     with open(out_file_name, 'w') as out_file:
       ## Required for slurm submission script
       if not run_script.startswith('#!'): out_file.write('#!/bin/bash \n')
@@ -111,7 +125,7 @@ class JobHandler:
 
   ## TODO: needs to be more robust, i.e. what happens if the parent_tag is not in the tagged jobs dict.
   ## Put a check on this in submit_jobs?
-  def _check_job_readiness(self, job):
+  def _job_ready(self, job):
     parent_tags = job.get_parent_tags()
     if not parent_tags:
       return True
@@ -119,6 +133,8 @@ class JobHandler:
       for tagged_job in self._tagged_jobs[tag]:
         status = tagged_job.get_status()
         if status == Status.Success: continue
+        ## If a parent job is uncoverably failed/cancelled, cancel this job as well
+        if (status == Status.Failed or status == Status.Cancelled) and not tagged_job.do_retry(): job.cancel(clear_retry = True)
         return False
     
     return True
@@ -126,7 +142,7 @@ class JobHandler:
   ## TODO: think of better information printing
   def _get_print_string(self, status_dict):
     print_string = 'Jobs '
-    if self._is_verbose:
+    if self._config.is_verbose:
       n_local = len(self._local_jobs)
       n_running = status_dict[Status.Running]
       n_slurm = n_running - n_local
@@ -139,32 +155,44 @@ class JobHandler:
     return print_string
 
   ## TODO: better print format
-  def _get_summary_string(self, time_val):
+  def _get_summary_string(self, time_spent = None):
     summary_dict = OrderedDict()
-    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs)-self._local_counter, 'local': self._local_counter}
+    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs)-self._config.local_counter, 'local': self._config.local_counter}
     summary_dict['success'] = {'string': '     successful ', 'slurm': 0, 'local': 0}
     summary_dict['fail'] = {'string': '     failed ', 'slurm': 0, 'local': 0}
+    jobs_failed = ''
     for job in self._jobs:
-      if job.get_status() == Status.Success:
+      status = job.get_status()
+      if status == Status.Success:
         if job.is_local():
           summary_dict['success']['local'] += 1
         else:
           summary_dict['success']['slurm'] += 1
-      else:
+      elif status == Status.Failed or status == Status.Cancelled:
+        jobs_failed += '{} '.format(job.get_name())
         if job.is_local():
           summary_dict['fail']['local'] += 1
         else:
           summary_dict['fail']['slurm'] += 1
 
     print_string = ''
-    for summary_val in summary_dict.values():
+    for key, summary_val in summary_dict.items():
+      if key == 'fail' and not jobs_failed: continue
       n_slurm = summary_val['slurm']
       n_local = summary_val['local']
       n_all = summary_val['slurm'] + summary_val['local']
       print_string += '{}(slurm/local/all): ({}/{}/{})\n'.format(summary_val['string'], n_slurm, n_local, n_all)
-    print_string += 'time spent: {:.1f} s'.format(time_val)
+    if self._config.is_verbose and jobs_failed:
+      print_string += 'Failed jobs: {}\n'.format(jobs_failed)
+    if time_spent:
+      print_string += 'time spent: {:.1f} s'.format(time_spent)
 
     return print_string
+
+  def print_summary(self, time_spent = None):
+    print_string = self._get_summary_string(time_spent)
+    stdout.write('\r'+print_string)
+    stdout.write('\n')
 
   def run_jobs(self, intervall = 5):
     time_now = time.time()
@@ -189,30 +217,37 @@ class JobHandler:
       exit(0)
     finally:
       time_now = time.time() - time_now
-      print_string = self._get_summary_string(time_now)
-      stdout.write('\r'+print_string)
-      stdout.write('\n')
+      self.print_summary(time_now)
       
 
   def submit_jobs(self, tags = None):
     ## Check local jobs progression
     self._check_local_jobs()
     for job in self.get_jobs(tags):
+      status = job.get_status()
+      if (status == Status.Failed or status == Status.Cancelled): job.retry(submit = False)
       ## If job is not in Configured state there is nothing to do
-      if job.get_status() != Status.Configured: continue
+      if status != Status.Configured: continue
       ## Check if job is ready to be submitted
-      if not self._check_job_readiness(job): continue
-      if len(self._local_jobs) < self._local_max:
+      if not self._job_ready(job): continue
+      if len(self._local_jobs) < self._config.local_max:
         job.set_local()
         self._local_jobs.append(job)
-        self._local_counter += 1
+        self._config.local_counter += 1
       job.submit()
+    self._update_snapshot()
       
   def cancel_jobs(self, tags = None):
     for job in self.get_jobs(tags):
       ## Nothing to do when job is not in Running state
       if job.get_status() != Status.Running: continue
       job.cancel()
+
+  def retry_jobs(self, tags = None):
+    for job in self.get_jobs(tags):
+      ## Retry only if job is failed or cancelled
+      if job.get_status() != Status.Failed and job.get_status() != Status.Cancelled: continue
+      job.retry()
 
   ## TODO: must be rather check_jobs_status with some decision making if jobs failed (retry logic, maybe job can automatically gather on which machine it was running on)
   def _get_jobs_status(self):

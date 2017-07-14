@@ -5,8 +5,10 @@ from slurmyDef import Status
 
 
 ## TODO: Make more stuff optional and add more options (clusters, qos)
-def slurm_submit(job_name, log_name, partition, run_script):
-  submit_string = subprocess.check_output(['sbatch', '-J', job_name, '-o', log_name, '-p', partition, run_script])
+def slurm_submit(job_name, log_name, partition, run_script, run_args = None):
+  submit_list = ['sbatch', '-J', job_name, '-o', log_name, '-p', partition, run_script]
+  if run_args is not None: submit_list.extend(run_args.split())
+  submit_string = subprocess.check_output(submit_list)
   job_id = int(submit_string.split(' ')[-1].rstrip('\n'))
 
   return job_id
