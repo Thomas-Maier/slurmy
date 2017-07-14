@@ -10,7 +10,6 @@ from job import Job
 
 
 class JobHandler:
-
   ## Generates Jobs according to configuration
   ## Allow for arbitrary combination of slurm jobs and local (multiprocessing) jobs
   ## TODO: Currently not really working with jobs without any args
@@ -18,6 +17,7 @@ class JobHandler:
   ## TODO: Can I ask slurm if currently there are free slots?
   ## TODO: Give option to set a maximum number of submitted jobs
   ## TODO PACKAGE: Add a script that takes the JobHandler base folder and can make basic checks for the jobs
+  ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
 
   def __init__(self, name = 'hans', partition = None, local_max = 0, is_verbose = False):
     self._name = name
