@@ -43,7 +43,7 @@ class JobHandler:
 
   def __init__(self, name = 'hans', backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
     ## Variables that are not picklable
-    self._jobs = []
+    self._jobs = {}
     self._tagged_jobs = {}
     self._local_jobs = []
     ## JobHandler config
@@ -59,6 +59,9 @@ class JobHandler:
     else:
       self._reset()
 
+  def __getitem__(self, key):
+    return self._jobs[key]
+
   def _reset(self):
     if os.path.isdir(self._config.base_folder): os.system('rm -r '+self._config.base_folder)
     os.makedirs(self._config.script_folder)
@@ -73,7 +76,7 @@ class JobHandler:
   ## TODO: Make this a generator instead
   def get_jobs(self, tags = None):
     job_list = []
-    for job in self._jobs:
+    for job in self._jobs.values():
       if tags is not None and not JobHandler._has_tags(job, tags): continue
       job_list.append(job)
 
@@ -81,7 +84,7 @@ class JobHandler:
 
   def _add_job_with_config(self, job_config):
     job = Job(config = job_config)
-    self._jobs.append(job)
+    self._jobs[job.get_name()] = job
     tags = job_config.tags
     if tags is not None:
       if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
@@ -144,7 +147,7 @@ class JobHandler:
       print_string += 'running (slurm/local/all): ({}/{}/{}); '.format(n_slurm, n_local, n_running)
     n_success = status_dict[Status.Success]
     n_failed = status_dict[Status.Failed]
-    n_all = len(self._jobs)
+    n_all = len(self._jobs.values())
     print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
     return print_string
@@ -152,11 +155,11 @@ class JobHandler:
   ## TODO: better print format
   def _get_summary_string(self, time_spent = None):
     summary_dict = OrderedDict()
-    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs)-self._config.local_counter, 'local': self._config.local_counter}
+    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs.values())-self._config.local_counter, 'local': self._config.local_counter}
     summary_dict['success'] = {'string': '     successful ', 'slurm': 0, 'local': 0}
     summary_dict['fail'] = {'string': '     failed ', 'slurm': 0, 'local': 0}
     jobs_failed = ''
-    for job in self._jobs:
+    for job in self._jobs.values():
       status = job.get_status()
       if status == Status.Success:
         if job.is_local():
@@ -192,7 +195,7 @@ class JobHandler:
   def run_jobs(self, intervall = 5):
     time_now = time.time()
     try:
-      n_all = len(self._jobs)
+      n_all = len(self._jobs.values())
       running = True
       while running:
         self.submit_jobs()
@@ -247,7 +250,7 @@ class JobHandler:
   ## TODO: must be rather check_jobs_status with some decision making if jobs failed (retry logic, maybe job can automatically gather on which machine it was running on)
   def _get_jobs_status(self):
     status_dict = {Status.Configured: 0, Status.Running: 0, Status.Finished: 0, Status.Success: 0, Status.Failed: 0, Status.Cancelled: 0}
-    for job in self._jobs:
+    for job in self._jobs.values():
       status = job.get_status()
       status_dict[status] += 1
 
@@ -256,7 +259,7 @@ class JobHandler:
   ## TODO: modify so that it allows to specify tags
   def check_status(self):
     status_dict = self._get_jobs_status()
-    n_all = str(len(self._jobs))
+    n_all = str(len(self._jobs.values()))
     for status, n_jobs in status_dict.items():
       print (status.name+':', '('+str(n_jobs)+'/'+n_all+')')
 

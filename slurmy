@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+
+import argparse
+from IPython import embed
+from slurmy import JobHandler
+
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Slurmy interactive')
+  parser.add_argument('jobhandler', metavar='JOBHANDLER', type=str, nargs=1, help='')
+  args = parser.parse_args()
+  jh_name = args.jobhandler[0]
+  jh_path = ''
+  if '/' in jh_name:
+    jh_path = jh_name.rsplit('/', 1)[0]
+    jh_name = jh_name.rsplit('/', 1)[-1]
+
+  jh = JobHandler(name = jh_name, work_dir = jh_path, use_snapshot = True)
+  embed()
