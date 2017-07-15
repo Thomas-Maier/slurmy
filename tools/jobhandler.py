@@ -3,15 +3,13 @@ from __future__ import print_function
 import os
 import time
 from sys import stdout
-import multiprocessing as mp
 from collections import OrderedDict
 import pickle
-from slurmyDef import Status
-from job import Job, JobConfig
-
+from slurmy.tools.defs import Status
+from slurmy.tools.job import Job, JobConfig
 
 class JobHandlerConfig:
-  def __init__(self, name = 'hans', work_dir = '', local_max = 0, is_verbose = False, partition = None, success_func = None, max_retries = 0):
+  def __init__(self, name, backend, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0):
     self.name = name
     ## For safety, if given name is emtpy set a default
     if not self.name: self.name = 'hans'
@@ -24,12 +22,12 @@ class JobHandlerConfig:
     self.path = self.snapshot_folder+'JobHandlerConfig.pkl'
     self.jobs_configs = []
     self.job_counter = 0
-    self.partition = partition
     self.success_func = success_func
     self.local_max = local_max
     self.local_counter = 0
     self.is_verbose = is_verbose
     self.max_retries = max_retries
+    self.backend = backend
 
 class JobHandler:
   ## Generates Jobs according to configuration
@@ -43,14 +41,13 @@ class JobHandler:
   ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
   ## TODO: Allow for predefined command line script with arguments to be submitted
 
-  def __init__(self, use_snapshot = False, name = 'hans', work_dir = '', local_max = 0, is_verbose = False, partition = None, success_func = None, max_retries = 0):
+  def __init__(self, name = 'hans', backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
     ## Variables that are not picklable
     self._jobs = []
     self._tagged_jobs = {}
     self._local_jobs = []
     ## JobHandler config
-    self._config = JobHandlerConfig(name = name, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, partition = partition, success_func = success_func,
-                                    max_retries = max_retries)
+    self._config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries)
     if use_snapshot and os.path.isfile(self._config.path):
       with open(self._config.path, 'rb') as in_file:
         self._config = pickle.load(in_file)
@@ -95,33 +92,31 @@ class JobHandler:
         if tags not in self._tagged_jobs: self._tagged_jobs[tags] = []
         self._tagged_jobs[tags].append(job)    
 
-  def add_job(self, run_script, run_args = None, partition = None, success_func = None, max_retries = None, tags = None, parent_tags = None):
+  def add_job(self, backend, success_func = None, max_retries = None, tags = None, parent_tags = None):
     self._config.job_counter += 1
-    name = self._config.name+'_'+str(self._config.job_counter)
-    run_script_name = run_script
-    if not os.path.isfile(run_script_name):
-      run_script_name = self._write_script(run_script, name)
-    log_name = self._config.log_folder+name
-    job_partition = partition or self._config.partition
+    name = '{}_{}'.format(self._config.name, self._config.job_counter)
+    backend.name = name
+    backend.write_script(self._config.script_folder)
+    backend.log = self._config.log_folder+name
+    backend.sync(self._config.backend)
     job_success_func = success_func or self._config.success_func
     job_max_retries = max_retries or self._config.max_retries
     config_path = self._config.snapshot_folder+name+'.pkl'
 
-    job_config = JobConfig(name = name, path = config_path, run_script = run_script_name, run_args = run_args, log_file = log_name, partition = job_partition,
-                           success_func = job_success_func, max_retries = job_max_retries, tags = tags, parent_tags = parent_tags)
+    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, max_retries = job_max_retries, tags = tags, parent_tags = parent_tags)
     self._config.jobs_configs.append(job_config)
     with open(job_config.path, 'wb') as out_file:
       pickle.dump(job_config, out_file)
     self._add_job_with_config(job_config)
 
-  def _write_script(self, run_script, name):
-    out_file_name = self._config.script_folder+name
-    with open(out_file_name, 'w') as out_file:
-      ## Required for slurm submission script
-      if not run_script.startswith('#!'): out_file.write('#!/bin/bash \n')
-      out_file.write(run_script)
+  # def _write_script(self, run_script, name):
+  #   out_file_name = self._config.script_folder+name
+  #   with open(out_file_name, 'w') as out_file:
+  #     ## Required for slurm submission script
+  #     if not run_script.startswith('#!'): out_file.write('#!/bin/bash \n')
+  #     out_file.write(run_script)
 
-    return out_file_name
+  #   return out_file_name
 
   ## TODO: needs to be more robust, i.e. what happens if the parent_tag is not in the tagged jobs dict.
   ## Put a check on this in submit_jobs?

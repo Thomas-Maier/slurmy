@@ -2,18 +2,14 @@
 import multiprocessing as mp
 import os
 import pickle
-from slurmyDef import Status
-from slurmUtils import slurm_submit, slurm_cancel, slurm_status, slurm_exitcode
+from slurmy.tools.defs import Status
 
 
 class JobConfig:
-  def __init__(self, name, path, run_script, run_args, log_file, partition, success_func = None, tags = None, parent_tags = None, is_local = False, max_retries = 0):
-    self.name = name
+  def __init__(self, backend, path, success_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False):
+    self.backend = backend
+    self.name = self.backend.name
     self.path = path
-    self.run_script = run_script
-    self.run_args = run_args
-    self.log_file = log_file
-    self.partition = partition
     self.tags = set()
     if tags is not None: self.add_tags(tags)
     self.parent_tags = set()
@@ -85,7 +81,7 @@ class Job:
       self._local_process = mp.Process(target = Job._submit_local, args = (self._config.run_script, self._config.log_file))
       self._local_process.start()
     else:
-      self._config.job_id = slurm_submit(self._config.name, self._config.log_file, self._config.partition, self._config.run_script, run_args = self._config.run_args)
+      self._config.job_id = self._config.backend.submit()
     self._config.status = Status.Running
     self._update_snapshot()
 
@@ -97,7 +93,7 @@ class Job:
       if self._config.is_local:
         self._local_process.terminate()
       else:
-        slurm_cancel(self._config.job_id)
+        self._config.backend.cancel()
     self._config.status = Status.Cancelled
     if clear_retry: self._config.max_retries = 0
     self._update_snapshot()
@@ -123,7 +119,7 @@ class Job:
       if self._config.is_local:
         self._config.status = Job._get_local_status(self._local_process)
       else:
-        self._config.status = slurm_status(self._config.job_id)
+        self._config.status = self._config.backend.status()
     if self._config.status == Status.Finished:
       if self._is_success():
         self._config.status = Status.Success
@@ -138,7 +134,7 @@ class Job:
       if self._config.is_local:
         success = (self._local_process.exitcode == 0)
       else:
-        success = (slurm_exitcode(self._config.job_id) == '0:0')
+        success = (self._config.backend.exitcode() == '0:0')
     else:
       success = self._config.success_func()
 

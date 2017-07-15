@@ -1,7 +1,7 @@
 
 import subprocess
 import os
-from slurmyDef import Status
+from slurmy.tools.defs import Status
 
 
 ## TODO: Make more stuff optional and add more options (clusters, qos)
