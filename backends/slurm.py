@@ -41,8 +41,8 @@ class Slurm:
     submit_list = ['sbatch']
     if self.name: submit_list += ['-J', self.name]
     if self.log: submit_list += ['-o', self.log]
-    if self.partition: submit_list += ['-p', partition]
-    if self.exclude: submit_list += ['-x', exclude]
+    if self.partition: submit_list += ['-p', self.partition]
+    if self.exclude: submit_list += ['-x', self.exclude]
     if self.cluster: submit_list += ['-M', self.cluster]
     if self.qos: submit_list += ['--qos', self.qos]
     submit_list.append(self.run_script)

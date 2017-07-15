@@ -50,7 +50,7 @@ class Job:
     self._config.status = Status.Configured
     self._config.job_id = None
     self._local_process = None
-    if os.path.isfile(self._config.log_file): os.remove(self._config.log_file)
+    if os.path.isfile(self._config.backend.log): os.remove(self._config.backend.log)
 
   def _update_snapshot(self):
     ## If no snapshot file is defined, do nothing
@@ -78,7 +78,7 @@ class Job:
       print ('Job is not in Configured state, cannot submit')
       raise
     if self._config.is_local:
-      self._local_process = mp.Process(target = Job._submit_local, args = (self._config.run_script, self._config.log_file))
+      self._local_process = mp.Process(target = Job._submit_local, args = (self._config.backend.run_script, self._config.backend.log))
       self._local_process.start()
     else:
       self._config.job_id = self._config.backend.submit()
@@ -136,7 +136,7 @@ class Job:
       else:
         success = (self._config.backend.exitcode() == '0:0')
     else:
-      success = self._config.success_func()
+      success = self._config.success_func(self._config)
 
     return success
 
