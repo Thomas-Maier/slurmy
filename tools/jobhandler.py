@@ -237,7 +237,7 @@ class JobHandler:
           local_jobs_running = False
       except KeyboardInterrupt:
         print ('Cancel local jobs...')
-        self.cancel_jobs(only_local = True)
+        self.cancel_jobs(only_local = True, make_snapshot = False)
     finally:
       ## Final snapshot
       self._update_snapshot()
@@ -263,19 +263,21 @@ class JobHandler:
       job.submit()
     if make_snapshot: self._update_snapshot()
       
-  def cancel_jobs(self, tags = None, only_local = False, only_batch = False):
+  def cancel_jobs(self, tags = None, only_local = False, only_batch = False, make_snapshot = True):
     for job in self.get_jobs(tags):
       ## Nothing to do when job is not in Running state
       if job.get_status() != Status.Running: continue
       if only_local and not job.is_local(): continue
       if only_batch and job.is_local(): continue
       job.cancel()
+    if make_snapshot: self._update_snapshot()
 
-  def retry_jobs(self, tags = None):
+  def retry_jobs(self, tags = None, make_snapshot = True):
     for job in self.get_jobs(tags):
       ## Retry only if job is failed or cancelled
       if job.get_status() != Status.Failed and job.get_status() != Status.Cancelled: continue
       job.retry()
+    if make_snapshot: self._update_snapshot()
 
   ## TODO: must be rather check_jobs_status with some decision making if jobs failed (retry logic, maybe job can automatically gather on which machine it was running on)
   def _get_jobs_status(self):
