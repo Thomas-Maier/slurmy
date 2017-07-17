@@ -40,6 +40,7 @@ class JobHandler:
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
   ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
   ## TODO: Allow for predefined command line script with arguments to be submitted
+  ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
 
   def __init__(self, name = 'hans', backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
     ## Variables that are not picklable
@@ -93,7 +94,9 @@ class JobHandler:
           self._tagged_jobs[tag].append(job)
       else:
         if tags not in self._tagged_jobs: self._tagged_jobs[tags] = []
-        self._tagged_jobs[tags].append(job)    
+        self._tagged_jobs[tags].append(job)
+
+    return job
 
   def add_job(self, backend, success_func = None, max_retries = None, tags = None, parent_tags = None):
     self._config.job_counter += 1
@@ -110,7 +113,16 @@ class JobHandler:
     self._config.jobs_configs.append(job_config)
     with open(job_config.path, 'wb') as out_file:
       pickle.dump(job_config, out_file)
-    self._add_job_with_config(job_config)
+      
+    return self._add_job_with_config(job_config)
+
+  ## This isn't really useful since the job names are by design not set by the user
+  def add_parent_job(self, backend, child_name, success_func = None, max_retries = None, tags = None, parent_tags = None):
+    parent_job = self.add_job(backend, success_func = success_func, max_retries = max_retries, tags = tags, parent_tags = parent_tags)
+    parent_tag = 'parent_{}'.format(parent_job.get_name())
+    self._jobs[child_name].add_tag(parent_tag, True)
+    parent_job.add_tag(parent_tag)
+    
 
   # def _write_script(self, run_script, name):
   #   out_file_name = self._config.script_folder+name
@@ -267,7 +279,11 @@ class JobHandler:
     for i, job in enumerate(self._local_jobs):
       if job.get_status() == Status.Running: continue
       self._local_jobs.pop(i)
-      
+
+  def jobs(self, tag = None):
+    for job_name, job in self._jobs.items():
+      if tag and tag not in job.get_tags(): continue
+      print ('Job "{}": {}'.format(job.get_name(), job.get_status().name))
 
   @staticmethod
   def _has_tag(job, tag):

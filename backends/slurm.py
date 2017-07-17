@@ -16,6 +16,7 @@ class Slurm:
     self.run_args = run_args
     if isinstance(self.run_args, str): self.run_args = self.run_args.split()
     self.job_id = None
+    self.bid = 'slurm'
 
   def write_script(self, script_folder):
     if os.path.isfile(self.run_script): return

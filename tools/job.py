@@ -46,6 +46,17 @@ class Job:
     ## Variables that are not picklable
     self._local_process = None
 
+  def __repr__(self):
+    print_string = 'Job "{}"\n'.format(self._config.name)
+    print_string += 'Backend: {}\n'.format(self._config.backend.bid)
+    print_string += 'Script: {}\n'.format(self._config.backend.run_script)
+    if self._config.backend.run_args: print_string += 'Args: {}\n'.format(self._config.backend.run_args)
+    print_string += 'Status: {}\n'.format(self._config.status.name)
+    if self._config.tags: print_string += 'Tags: {}\n'.format(self._config.tags)
+    if self._config.parent_tags: print_string += 'Parent tags: {}\n'.format(self._config.parent_tags)
+
+    return print_string
+
   def _reset(self):
     self._config.status = Status.Configured
     self._config.job_id = None
@@ -148,6 +159,12 @@ class Job:
 
   def get_name(self):
     return self._config.name
+
+  def log(self):
+    os.system('less {}'.format(self._config.backend.log))
+
+  def script(self):
+    os.system('less {}'.format(self._config.backend.run_script))
 
   @staticmethod
   def _submit_local(run_script, log_file):
