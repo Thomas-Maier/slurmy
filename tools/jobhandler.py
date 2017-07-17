@@ -31,16 +31,15 @@ class JobHandlerConfig:
 
 class JobHandler:
   ## Generates Jobs according to configuration
-  ## Allow for arbitrary combination of slurm jobs and local (multiprocessing) jobs
-  ## TODO: Currently not really working with jobs without any args
-  ## TODO: Make default setting of stuff like partition and make optional to also define on job to job basis
   ## TODO: Can I ask slurm if currently there are free slots?
   ## TODO: Give option to set a maximum number of submitted jobs
   ## TODO PACKAGE: Add a script that takes the JobHandler base folder and can make basic checks for the jobs
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
   ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
-  ## TODO: Allow for predefined command line script with arguments to be submitted
   ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
+  ## TODO: Find a way to make snapshots compatible with local processing jobs. In principle, local processes should always end before final snapshot is made, i.e. when loading the snapshot you shouldn't get a job which is set to local and in running state. The jobs will naturally end before python is closed (if python process ended gracefully), since the local processing is done via child processes of the main one.
+  ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
+  ## TODO: implement better debug printout machinery
 
   def __init__(self, name = 'hans', backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
     ## Variables that are not picklable
@@ -52,9 +51,9 @@ class JobHandler:
     if use_snapshot and os.path.isfile(self._config.path):
       with open(self._config.path, 'rb') as in_file:
         self._config = pickle.load(in_file)
-      if self._config.local_max > 0 or local_max > 0:
-        print ('Snapshot usage and local processing is not compatible...')
-        raise
+      # if self._config.local_max > 0 or local_max > 0:
+      #   print ('Snapshot usage and local processing is not compatible...')
+      #   raise Exception
       for job_config in self._config.jobs_configs:
         self._add_job_with_config(job_config)
     else:
@@ -71,6 +70,8 @@ class JobHandler:
     os.makedirs(self._config.snapshot_folder)
 
   def _update_snapshot(self):
+    for job in self._jobs.values():
+      job.update_snapshot()
     with open(self._config.path, 'wb') as out_file:
       pickle.dump(self._config, out_file)
 
@@ -117,11 +118,11 @@ class JobHandler:
     return self._add_job_with_config(job_config)
 
   ## This isn't really useful since the job names are by design not set by the user
-  def add_parent_job(self, backend, child_name, success_func = None, max_retries = None, tags = None, parent_tags = None):
-    parent_job = self.add_job(backend, success_func = success_func, max_retries = max_retries, tags = tags, parent_tags = parent_tags)
-    parent_tag = 'parent_{}'.format(parent_job.get_name())
-    self._jobs[child_name].add_tag(parent_tag, True)
-    parent_job.add_tag(parent_tag)
+  # def add_parent_job(self, backend, child_name, success_func = None, max_retries = None, tags = None, parent_tags = None):
+  #   parent_job = self.add_job(backend, success_func = success_func, max_retries = max_retries, tags = tags, parent_tags = parent_tags)
+  #   parent_tag = 'parent_{}'.format(parent_job.get_name())
+  #   self._jobs[child_name].add_tag(parent_tag, True)
+  #   parent_job.add_tag(parent_tag)
     
 
   # def _write_script(self, run_script, name):
@@ -204,18 +205,20 @@ class JobHandler:
     stdout.write('\r'+print_string)
     stdout.write('\n')
 
-  def run_jobs(self, intervall = 5):
+  ## TODO: Problem: keyboard interrupt kills child processes and they have exitcode 0
+  def run_jobs(self, interval = 5):
     time_now = time.time()
     try:
       n_all = len(self._jobs.values())
       running = True
       while running:
-        self.submit_jobs()
+        ## No need to make a snapshot evey round, will make one at the very end
+        self.submit_jobs(make_snapshot = False)
         status_dict = self._get_jobs_status()
         print_string = self._get_print_string(status_dict)
         stdout.write('\r'+print_string)
         stdout.flush()
-        time.sleep(intervall)
+        time.sleep(interval)
         n_success = status_dict[Status.Success]
         n_failed = status_dict[Status.Failed]
         n_cancelled = status_dict[Status.Cancelled]
@@ -223,14 +226,27 @@ class JobHandler:
     except KeyboardInterrupt:
       stdout.write('\n')
       print ('Quitting gracefully...')
-      self.cancel_jobs()
-      exit(0)
+      try:
+        print ('Waiting for local jobs, ctrl+c again to cancel them...')
+        local_jobs_running = True
+        while(local_jobs_running):
+          self._check_local_jobs()
+          if len(self._local_jobs) > 0:
+            time.sleep(interval)
+            continue
+          local_jobs_running = False
+      except KeyboardInterrupt:
+        print ('Cancel local jobs...')
+        self.cancel_jobs(only_local = True)
     finally:
+      ## Final snapshot
+      self._update_snapshot()
       time_now = time.time() - time_now
       self.print_summary(time_now)
+      exit(0)
       
 
-  def submit_jobs(self, tags = None):
+  def submit_jobs(self, tags = None, make_snapshot = True):
     ## Check local jobs progression
     self._check_local_jobs()
     for job in self.get_jobs(tags):
@@ -245,12 +261,16 @@ class JobHandler:
         self._local_jobs.append(job)
         self._config.local_counter += 1
       job.submit()
-    self._update_snapshot()
+    if make_snapshot: self._update_snapshot()
       
-  def cancel_jobs(self, tags = None):
+  def cancel_jobs(self, tags = None, only_local = False, only_batch = False):
     for job in self.get_jobs(tags):
       ## Nothing to do when job is not in Running state
+      print (job.is_local(), job.get_status())
       if job.get_status() != Status.Running: continue
+      if only_local and not job.is_local(): continue
+      if only_batch and job.is_local(): continue
+      print ('JH: cancel job...')
       job.cancel()
 
   def retry_jobs(self, tags = None):
@@ -271,9 +291,12 @@ class JobHandler:
   ## TODO: modify so that it allows to specify tags
   def check_status(self):
     status_dict = self._get_jobs_status()
-    n_all = str(len(self._jobs.values()))
-    for status, n_jobs in status_dict.items():
-      print (status.name+':', '('+str(n_jobs)+'/'+n_all+')')
+    print_string = self._get_print_string(status_dict)
+    print (print_string)
+    # status_dict = self._get_jobs_status()
+    # n_all = str(len(self._jobs.values()))
+    # for status, n_jobs in status_dict.items():
+    #   print (status.name+':', '('+str(n_jobs)+'/'+n_all+')')
 
   def _check_local_jobs(self):
     for i, job in enumerate(self._local_jobs):

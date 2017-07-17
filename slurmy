@@ -4,6 +4,8 @@ import argparse
 from IPython import embed
 from slurmy import JobHandler
 
+## TODO: encapsulate utility in helper funcitions that just take jobhandler/job instances (instead of putting everything into the classes)
+## TODO: make this independent of ipython (but still interactive), optionally allow for ipython
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Slurmy interactive')

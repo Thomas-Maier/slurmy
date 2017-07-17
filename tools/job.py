@@ -41,6 +41,8 @@ class Job:
   ## Checks itself if it was successful (by whatever means that are defined)
   ## Is able to submit as slurm job or run locally
 
+  ## TODO: snaphot trigger should come from jobhandler? Probably better to avoid unnecessary overhead (really only need to make snapshots when python process is stopped).
+
   def __init__(self, config):
     self._config = config
     ## Variables that are not picklable
@@ -62,8 +64,9 @@ class Job:
     self._config.job_id = None
     self._local_process = None
     if os.path.isfile(self._config.backend.log): os.remove(self._config.backend.log)
+    self.update_snapshot()
 
-  def _update_snapshot(self):
+  def update_snapshot(self):
     ## If no snapshot file is defined, do nothing
     if not self._config.path: return
     with open(self._config.path, 'wb') as out_file:
@@ -72,7 +75,7 @@ class Job:
   def set_local(self, is_local = True):
     if self._config.status != Status.Configured:
       print ('Job is not in Configured state, cannot set to local')
-      raise
+      raise Exception
     self._config.is_local = is_local
 
   def is_local(self):
@@ -87,14 +90,14 @@ class Job:
   def submit(self):
     if self._config.status != Status.Configured:
       print ('Job is not in Configured state, cannot submit')
-      raise
+      raise Exception
     if self._config.is_local:
       self._local_process = mp.Process(target = Job._submit_local, args = (self._config.backend.run_script, self._config.backend.log))
       self._local_process.start()
     else:
       self._config.job_id = self._config.backend.submit()
     self._config.status = Status.Running
-    self._update_snapshot()
+    # self.update_snapshot()
 
   def cancel(self, clear_retry = False):
     ## Do nothing if job is already in failed state
@@ -107,7 +110,7 @@ class Job:
         self._config.backend.cancel()
     self._config.status = Status.Cancelled
     if clear_retry: self._config.max_retries = 0
-    self._update_snapshot()
+    # self.update_snapshot()
 
   ## TODO: try to encapsulate any retry logic inside the job config and set it here
   def retry(self, force = False, submit = True):
@@ -126,6 +129,7 @@ class Job:
     return (self._config.max_retries > 0 and (self._config.n_retries < self._config.max_retries))
 
   def get_status(self):
+    status_before = self._config.status
     if self._config.status == Status.Running:
       if self._config.is_local:
         self._config.status = Job._get_local_status(self._local_process)
@@ -136,6 +140,8 @@ class Job:
         self._config.status = Status.Success
       else:
         self._config.status = Status.Failed
+    ## Status changed, update snapshot
+    # if status_before != self._config.status: self.update_snapshot()
         
     return self._config.status
 
