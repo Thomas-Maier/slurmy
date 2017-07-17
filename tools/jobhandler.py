@@ -266,11 +266,9 @@ class JobHandler:
   def cancel_jobs(self, tags = None, only_local = False, only_batch = False):
     for job in self.get_jobs(tags):
       ## Nothing to do when job is not in Running state
-      print (job.is_local(), job.get_status())
       if job.get_status() != Status.Running: continue
       if only_local and not job.is_local(): continue
       if only_batch and job.is_local(): continue
-      print ('JH: cancel job...')
       job.cancel()
 
   def retry_jobs(self, tags = None):
