@@ -1,8 +1,11 @@
 
 import subprocess
 import os
-from slurmy.tools.defs import Status
 import shlex
+import logging
+from ..tools.defs import Status
+
+log = logging.getLogger('Slurm')
 
 
 class Slurm:
@@ -50,6 +53,7 @@ class Slurm:
     if self.qos: submit_list += ['--qos', self.qos]
     submit_list.append(self.run_script)
     if self.run_args: submit_list += self.run_args
+    log.debug('({}) Submit job with command {}'.format(self.name, submit_list))
     submit_string = subprocess.check_output(submit_list, universal_newlines = True)
     job_id = int(submit_string.split(' ')[-1].rstrip('\n'))
     self.job_id = job_id
@@ -57,6 +61,7 @@ class Slurm:
     return job_id
 
   def cancel(self):
+    log.debug('({}) Cancel job'.format(self.name))
     os.system('scancel {}'.format(self.job_id))
 
   ## TODO: probably more robust to use sacct to identify if job is still running, squeue -j throws an error after some time of waiting...

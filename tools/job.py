@@ -1,9 +1,11 @@
 
-# import multiprocessing as mp
 import subprocess as sp
 import os
 import pickle
-from slurmy.tools.defs import Status
+import logging
+from .defs import Status
+
+log = logging.getLogger('slurmy')
 
 
 class JobConfig:
@@ -38,177 +40,165 @@ class JobConfig:
       self.add_tag(tags, is_parent)
 
 class Job:
-
-  ## Should know about all information that it needs to run a single slurm job
-  ## Checks itself if it was successful (by whatever means that are defined)
-  ## Is able to submit as slurm job or run locally
-
-  ## TODO: snaphot trigger should come from jobhandler? Probably better to avoid unnecessary overhead (really only need to make snapshots when python process is stopped).
-  ## TODO: local_job.terminate() does not properly terminate whatever was executed in the run_script...
-
   def __init__(self, config):
-    self._config = config
+    self.config = config
     ## Variables that are not picklable
     self._local_process = None
 
   def __repr__(self):
-    print_string = 'Job "{}"\n'.format(self._config.name)
-    print_string += 'Backend: {}\n'.format(self._config.backend.bid)
-    print_string += 'Script: {}\n'.format(self._config.backend.run_script)
-    if self._config.backend.run_args: print_string += 'Args: {}\n'.format(self._config.backend.run_args)
-    print_string += 'Status: {}\n'.format(self._config.status.name)
-    if self._config.tags: print_string += 'Tags: {}\n'.format(self._config.tags)
-    if self._config.parent_tags: print_string += 'Parent tags: {}\n'.format(self._config.parent_tags)
+    print_string = 'Job "{}"\n'.format(self.config.name)
+    print_string += 'Local: {}\n'.format(self.is_local())
+    print_string += 'Backend: {}\n'.format(self.config.backend.bid)
+    print_string += 'Script: {}\n'.format(self.config.backend.run_script)
+    if self.config.backend.run_args: print_string += 'Args: {}\n'.format(self.config.backend.run_args)
+    print_string += 'Status: {}\n'.format(self.config.status.name)
+    if self.config.tags: print_string += 'Tags: {}\n'.format(self.config.tags)
+    if self.config.parent_tags: print_string += 'Parent tags: {}\n'.format(self.config.parent_tags)
+    print_string.rstrip('\n')
 
     return print_string
 
   def _reset(self):
-    self._config.status = Status.Configured
-    self._config.job_id = None
+    log.debug('({}) Reset job'.format(self.config.name))
+    self.config.status = Status.Configured
+    self.config.job_id = None
     self._local_process = None
-    if os.path.isfile(self._config.backend.log): os.remove(self._config.backend.log)
+    if os.path.isfile(self.config.backend.log): os.remove(self.config.backend.log)
     self.update_snapshot()
 
   def _write_log(self):
-    with open(self._config.backend.log, 'w') as out_file:
+    log.debug('({}) Write log file'.format(self.config.name))
+    with open(self.config.backend.log, 'w') as out_file:
       out_file.write(self._local_process.stdout.read())
 
   def wait(self):
     if self._local_process is None:
-      print ('No local process present to wait for...')
+      log.warning('({}) No local process present to wait for...'.format(self.config.name))
       return
     self._local_process.wait()
 
   def update_snapshot(self):
     ## If no snapshot file is defined, do nothing
-    if not self._config.path: return
+    if not self.config.path: return
+    log.debug('({}) Update snapshot'.format(self.config.name))
     ## Check status again
     self.get_status()
-    with open(self._config.path, 'wb') as out_file:
-      pickle.dump(self._config, out_file)
+    with open(self.config.path, 'wb') as out_file:
+      pickle.dump(self.config, out_file)
 
   def set_local(self, is_local = True):
-    if self._config.status != Status.Configured:
-      print ('Job is not in Configured state, cannot set to local')
+    if self.config.status != Status.Configured:
+      log.warning('({}) Not in Configured state, cannot set to local'.format(self.config.name))
       raise Exception
-    self._config.is_local = is_local
+    self.config.is_local = is_local
 
   def is_local(self):
-    return self._config.is_local
+    return self.config.is_local
 
   def add_tag(self, tag, is_parent = False):
-    self._config.add_tag(tag, is_parent)
+    self.config.add_tag(tag, is_parent)
     
   def add_tags(self, tags, is_parent = False):
-    self._config.add_tags(tags, is_parent)
+    self.config.add_tags(tags, is_parent)
 
   def submit(self):
-    if self._config.status != Status.Configured:
-      print ('Job is not in Configured state, cannot submit')
+    if self.config.status != Status.Configured:
+      log.warning('({}) Not in Configured state, cannot submit'.format(self.config.name))
       raise Exception
-    if self._config.is_local:
+    if self.config.is_local:
       command = self._get_local_command()
       ## preexec_fn option tells child process to ignore signal sent to main app (for KeyboardInterrupt ignore)
       ## apparently more saver options available with python 3.2+, see "start_new_session = True"
+      log.debug('({}) Submit local process with command {}'.format(self.config.name, command))
       # self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, preexec_fn = os.setpgrp)
       self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)
     else:
-      self._config.job_id = self._config.backend.submit()
-    self._config.status = Status.Running
+      self.config.job_id = self.config.backend.submit()
+    self.config.status = Status.Running
 
   def cancel(self, clear_retry = False):
     ## Do nothing if job is already in failed state
-    if self._config.status == Status.Failed: return
+    if self.config.status == Status.Failed: return
+    log.debug('({}) Cancel job'.format(self.config.name))
     ## Stop job if it's in running state
-    if self._config.status == Status.Running:
-      if self._config.is_local:
+    if self.config.status == Status.Running:
+      if self.config.is_local:
         self._local_process.terminate()
       else:
-        self._config.backend.cancel()
-    self._config.status = Status.Cancelled
-    if clear_retry: self._config.max_retries = 0
+        self.config.backend.cancel()
+    self.config.status = Status.Cancelled
+    if clear_retry: self.config.max_retries = 0
 
   ## TODO: try to encapsulate any retry logic inside the job config and set it here
   def retry(self, force = False, submit = True):
     if not self.do_retry(): return
-    if self._config.status == Status.Running:
+    log.debug('({}) Retry job'.format(self.config.name))
+    if self.config.status == Status.Running:
       if enforce:
         self.cancel()
       else:
         print ("Job is still running, use force=True to force re-submit")
         return
     self._reset()
-    self._config.n_retries += 1
+    self.config.n_retries += 1
     if submit: self.submit()
 
   def do_retry(self):
-    return (self._config.max_retries > 0 and (self._config.n_retries < self._config.max_retries))
+    return (self.config.max_retries > 0 and (self.config.n_retries < self.config.max_retries))
 
   def get_status(self):
-    if self._config.status == Status.Running:
-      if self._config.is_local:
+    if self.config.status == Status.Running:
+      if self.config.is_local:
         self._get_local_status()
       else:
-        self._config.status = self._config.backend.status()
-    if self._config.status == Status.Finished:
+        self.config.status = self.config.backend.status()
+    if self.config.status == Status.Finished:
       if self._is_success():
-        self._config.status = Status.Success
+        self.config.status = Status.Success
       else:
-        self._config.status = Status.Failed
+        self.config.status = Status.Failed
         
-    return self._config.status
+    return self.config.status
 
   def _get_local_status(self):
-    self._config.exitcode = self._local_process.poll()
-    if self._config.exitcode is None:
-      self._config.status = Status.Running
+    self.config.exitcode = self._local_process.poll()
+    if self.config.exitcode is None:
+      self.config.status = Status.Running
     else:
-      self._config.status = Status.Finished
+      self.config.status = Status.Finished
       self._write_log()
 
   def _is_success(self):
     success = False
-    if self._config.success_func is None:
-      if self._config.is_local:
-        success = (self._config.exitcode == 0)
+    if self.config.success_func is None:
+      if self.config.is_local:
+        success = (self.config.exitcode == 0)
       else:
-        self._config.exitcode = self._config.backend.exitcode()
-        success = (self._config.exitcode == '0:0')
+        self.config.exitcode = self.config.backend.exitcode()
+        success = (self.config.exitcode == '0:0')
     else:
-      success = self._config.success_func(self._config)
+      success = self.config.success_func(self.config)
 
     return success
 
   def get_tags(self):
-    return self._config.tags
+    return self.config.tags
 
   def get_parent_tags(self):
-    return self._config.parent_tags
+    return self.config.parent_tags
 
   def get_name(self):
-    return self._config.name
+    return self.config.name
 
   def log(self):
-    os.system('less {}'.format(self._config.backend.log))
+    os.system('less {}'.format(self.config.backend.log))
 
   def script(self):
-    os.system('less {}'.format(self._config.backend.run_script))
+    os.system('less {}'.format(self.config.backend.run_script))
 
   def _get_local_command(self):
     command = ['/bin/bash']
-    command.append(self._config.backend.run_script)
-    if self._config.backend.run_args: command += self._config.backend.run_args
+    command.append(self.config.backend.run_script)
+    if self.config.backend.run_args: command += self.config.backend.run_args
 
     return command
-
-  @staticmethod
-  def _submit_local(run_script, log_file):
-    ## Make sure that the process finds the files, if relative paths are given
-    if not run_script.startswith('/'): run_script = './'+run_script
-    if not log_file.startswith('/'): log_file = './'+log_file
-    try:
-      r = -1
-      r = os.system('. '+run_script+' 2>&1 > '+log_file)
-      return r
-    except KeyboardInterrupt:
-      return -1

@@ -5,14 +5,21 @@ import time
 from sys import stdout
 from collections import OrderedDict
 import pickle
-from slurmy.tools.defs import Status
-from slurmy.tools.job import Job, JobConfig
+import logging
+from .defs import Status, NameGenerator
+from .job import Job, JobConfig
+
+logging.basicConfig(level=logging.WARNING)
+log = logging.getLogger('slurmy')
+
+name_gen = NameGenerator()
+
 
 class JobHandlerConfig:
-  def __init__(self, name, backend, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0):
     self.name = name
     ## For safety, if given name is emtpy set a default
-    if not self.name: self.name = 'hans'
+    if not self.name: self.name = name_gen.get_name()
     self.base_folder = self.name+'/'
     if work_dir: self.base_folder = work_dir.rstrip('/')+self.name+'/'
     self.script_folder = self.base_folder+'scripts/'
@@ -33,16 +40,15 @@ class JobHandler:
   ## Generates Jobs according to configuration
   ## TODO: Can I ask slurm if currently there are free slots?
   ## TODO: Give option to set a maximum number of submitted jobs
-  ## TODO PACKAGE: Add a script that takes the JobHandler base folder and can make basic checks for the jobs
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
   ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
   ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
-  ## TODO: Find a way to make snapshots compatible with local processing jobs. In principle, local processes should always end before final snapshot is made, i.e. when loading the snapshot you shouldn't get a job which is set to local and in running state. The jobs will naturally end before python is closed (if python process ended gracefully), since the local processing is done via child processes of the main one.
   ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
   ## TODO: implement better debug printout machinery
-  ## TODO: probably need some try except blocks in main job handling functions to clean up running local/all jobs if something happens
 
-  def __init__(self, name = 'hans', backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
+    self._debug = False
+    if log.level == 10: self._debug = True
     ## Variables that are not picklable
     self._jobs = {}
     self._tagged_jobs = {}
@@ -50,8 +56,10 @@ class JobHandler:
     ## JobHandler config
     self._config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries)
     if use_snapshot and os.path.isfile(self._config.path):
+      log.debug('Read snapshot from {}'.format(self._config.path))
       with open(self._config.path, 'rb') as in_file:
         self._config = pickle.load(in_file)
+      log.debug('Read job snapshots')
       for job_config in self._config.jobs_configs:
         self._add_job_with_config(job_config)
     else:
@@ -61,6 +69,7 @@ class JobHandler:
     return self._jobs[key]
 
   def _reset(self):
+    log.debug('Reset JobHandler')
     if os.path.isdir(self._config.base_folder): os.system('rm -r '+self._config.base_folder)
     os.makedirs(self._config.script_folder)
     os.makedirs(self._config.log_folder)
@@ -68,12 +77,13 @@ class JobHandler:
     os.makedirs(self._config.snapshot_folder)
 
   def _update_snapshot(self):
+    log.debug('Update job snapshots')
     for job in self._jobs.values():
       job.update_snapshot()
+    log.debug('Update snapshot')
     with open(self._config.path, 'wb') as out_file:
       pickle.dump(self._config, out_file)
 
-  ## TODO: Make this a generator instead
   def get_jobs(self, tags = None):
     job_list = []
     for job in self._jobs.values():
@@ -83,6 +93,7 @@ class JobHandler:
     return job_list
 
   def _add_job_with_config(self, job_config):
+    log.debug('Add job {}'.format(job_config.name))
     job = Job(config = job_config)
     self._jobs[job.get_name()] = job
     tags = job_config.tags
@@ -122,6 +133,9 @@ class JobHandler:
     if not parent_tags:
       return True
     for tag in parent_tags:
+      if tag not in self._tagged_jobs:
+        log.warning('Parent tag is not registered in jobs list!')
+        continue
       for tagged_job in self._tagged_jobs[tag]:
         status = tagged_job.get_status()
         if status == Status.Success: continue
@@ -184,6 +198,7 @@ class JobHandler:
   def _wait_for_jobs(self, tags = None):
     for job in self.get_jobs(tags):
       if not job.is_local(): continue
+      log.debug('Wait for job {}'.format(job.get_name()))
       job.wait()
 
   def print_summary(self, time_spent = None):
@@ -197,25 +212,27 @@ class JobHandler:
       n_all = len(self._jobs.values())
       running = True
       while running:
-        ## No need to make a snapshot, will make one at the very end
-        self.submit_jobs(make_snapshot = False)
+        self.submit_jobs(make_snapshot = False, wait = False)
         status_dict = self._get_jobs_status()
         print_string = self._get_print_string(status_dict)
-        stdout.write('\r'+print_string)
-        stdout.flush()
+        if not self._debug:
+          stdout.write('\r'+print_string)
+          stdout.flush()
+        else:
+          log.debug(print_string)
         time.sleep(interval)
         n_success = status_dict[Status.Success]
         n_failed = status_dict[Status.Failed]
         n_cancelled = status_dict[Status.Cancelled]
         if (n_success+n_failed+n_cancelled) == n_all: running = False
     except KeyboardInterrupt:
-      stdout.write('\n')
-      print ('Quitting gracefully...')
+      if not self._debug: stdout.write('\n')
+      log.warning('Quitting gracefully...')
       try:
-        print ('Waiting for local jobs, ctrl+c again to cancel them...')
+        log.warning('Waiting for local jobs, ctrl+c again to cancel them...')
         self._wait_for_jobs()
       except KeyboardInterrupt:
-        print ('Cancel local jobs...')
+        log.warning('Cancel local jobs...')
         ## Need to cancel cleanly, since jobs are setup to ignore signals to parent process
         self.cancel_jobs(only_local = True, make_snapshot = False)
     except:
@@ -226,10 +243,9 @@ class JobHandler:
       ## Final snapshot
       self._update_snapshot()
       time_now = time.time() - time_now
-      self.print_summary(time_now)
+      if not self._debug: self.print_summary(time_now)
 
-  ## TODO: include lock option which waits for local jobs to finish
-  def submit_jobs(self, tags = None, make_snapshot = True):
+  def submit_jobs(self, tags = None, make_snapshot = True, wait = True):
     try:
       ## Check local jobs progression
       self._check_local_jobs()
@@ -245,6 +261,7 @@ class JobHandler:
           self._local_jobs.append(job)
           self._config.local_counter += 1
         job.submit()
+      if wait: self._wait_for_jobs(tags)
       if make_snapshot: self._update_snapshot()
     except:
       ## If something explodes, cancel all running jobs
@@ -272,7 +289,6 @@ class JobHandler:
       self.cancel_jobs(make_snapshot = False)
       raise
 
-  ## TODO: must be rather check_jobs_status with some decision making if jobs failed (retry logic, maybe job can automatically gather on which machine it was running on)
   def _get_jobs_status(self):
     status_dict = {Status.Configured: 0, Status.Running: 0, Status.Finished: 0, Status.Success: 0, Status.Failed: 0, Status.Cancelled: 0}
     for job in self._jobs.values():

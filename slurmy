@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
 
 import argparse
-from IPython import embed
+import logging
 from slurmy import JobHandler
 
+log = logging.getLogger('slurmy')
+
 ## TODO: encapsulate utility in helper funcitions that just take jobhandler/job instances (instead of putting everything into the classes)
-## TODO: make this independent of ipython (but still interactive), optionally allow for ipython
+
+def get_prompt():
+  try:
+    from IPython import embed
+    return embed
+  except ImportError:
+    ## Fallback if ipython not available
+    import code
+    shell = code.InteractiveConsole(globals())
+    return shell.interact
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Slurmy interactive')
   parser.add_argument('jobhandler', metavar='JOBHANDLER', type=str, nargs=1, help='')
+  parser.add_argument("--debug", dest="debug", action="store_true", default=False, help="Debug mode")
   args = parser.parse_args()
   jh_name = args.jobhandler[0]
   jh_path = ''
@@ -17,5 +29,7 @@ if __name__ == '__main__':
     jh_path = jh_name.rsplit('/', 1)[0]
     jh_name = jh_name.rsplit('/', 1)[-1]
 
+  if args.debug: log.setLevel(level=logging.DEBUG)
   jh = JobHandler(name = jh_name, work_dir = jh_path, use_snapshot = True)
-  embed()
+  prompt = get_prompt()
+  prompt()
