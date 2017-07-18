@@ -2,6 +2,7 @@
 import subprocess
 import os
 from slurmy.tools.defs import Status
+import shlex
 
 
 class Slurm:
@@ -14,7 +15,8 @@ class Slurm:
     self.qos = qos
     self.run_script = run_script
     self.run_args = run_args
-    if isinstance(self.run_args, str): self.run_args = self.run_args.split()
+    # if isinstance(self.run_args, str): self.run_args = self.run_args.split()
+    if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
     self.job_id = None
     self.bid = 'slurm'
 

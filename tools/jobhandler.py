@@ -205,14 +205,13 @@ class JobHandler:
     stdout.write('\r'+print_string)
     stdout.write('\n')
 
-  ## TODO: Problem: keyboard interrupt kills child processes and they have exitcode 0
   def run_jobs(self, interval = 5):
     time_now = time.time()
     try:
       n_all = len(self._jobs.values())
       running = True
       while running:
-        ## No need to make a snapshot evey round, will make one at the very end
+        ## No need to make a snapshot, will make one at the very end
         self.submit_jobs(make_snapshot = False)
         status_dict = self._get_jobs_status()
         print_string = self._get_print_string(status_dict)
@@ -237,15 +236,15 @@ class JobHandler:
           local_jobs_running = False
       except KeyboardInterrupt:
         print ('Cancel local jobs...')
+        ## KeyboardInterrupt terminates subprocesses, but make clean cancel anyway
         self.cancel_jobs(only_local = True, make_snapshot = False)
     finally:
       ## Final snapshot
       self._update_snapshot()
       time_now = time.time() - time_now
       self.print_summary(time_now)
-      exit(0)
-      
 
+  ## TODO: include lock option which waits for local jobs to finish
   def submit_jobs(self, tags = None, make_snapshot = True):
     ## Check local jobs progression
     self._check_local_jobs()

@@ -1,5 +1,6 @@
 
-import multiprocessing as mp
+# import multiprocessing as mp
+import subprocess as sp
 import os
 import pickle
 from slurmy.tools.defs import Status
@@ -21,6 +22,7 @@ class JobConfig:
     self.status = Status.Configured
     self.job_id = None
     self.n_retries = 0
+    self.exitcode = None
 
   def add_tag(self, tag, is_parent = False):
     if is_parent:
@@ -29,7 +31,7 @@ class JobConfig:
       self.tags.add(tag)
 
   def add_tags(self, tags, is_parent = False):
-    if isinstance(tags, list) or isinstance(tags, tuple):
+    if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
       for tag in tags:
         self.add_tag(tag, is_parent)
     else:
@@ -66,9 +68,15 @@ class Job:
     if os.path.isfile(self._config.backend.log): os.remove(self._config.backend.log)
     self.update_snapshot()
 
+  def _write_log(self):
+    with open(self._config.backend.log, 'w') as out_file:
+      out_file.write(self._local_process.stdout.read())
+
   def update_snapshot(self):
     ## If no snapshot file is defined, do nothing
     if not self._config.path: return
+    ## Check status again
+    self.get_status()
     with open(self._config.path, 'wb') as out_file:
       pickle.dump(self._config, out_file)
 
@@ -92,8 +100,13 @@ class Job:
       print ('Job is not in Configured state, cannot submit')
       raise Exception
     if self._config.is_local:
-      self._local_process = mp.Process(target = Job._submit_local, args = (self._config.backend.run_script, self._config.backend.log))
-      self._local_process.start()
+      # self._local_process = mp.Process(target = Job._submit_local, args = (self._config.backend.run_script, self._config.backend.log))
+      # self._local_process.start()
+      command = self._get_local_command()
+      # print ('Submit local job {} with command {}'.format(self.get_name(), ' '.join(command)))
+      ## preexec_fn option tells child process to ignore signal sent to main app (for KeyboardInterrupt ignore)
+      ## apparently more saver options available with python 3.2+, see "start_new_session = True"
+      self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, preexec_fn = os.setpgrp)
     else:
       self._config.job_id = self._config.backend.submit()
     self._config.status = Status.Running
@@ -132,7 +145,8 @@ class Job:
     status_before = self._config.status
     if self._config.status == Status.Running:
       if self._config.is_local:
-        self._config.status = Job._get_local_status(self._local_process)
+        # self._config.status = Job._get_local_status(self._local_process)
+        self._get_local_status()
       else:
         self._config.status = self._config.backend.status()
     if self._config.status == Status.Finished:
@@ -145,13 +159,23 @@ class Job:
         
     return self._config.status
 
+  def _get_local_status(self):
+    self._config.exitcode = self._local_process.poll()
+    if self._config.exitcode is None:
+      self._config.status = Status.Running
+    else:
+      self._config.status = Status.Finished
+      self._write_log()
+
   def _is_success(self):
     success = False
     if self._config.success_func is None:
       if self._config.is_local:
-        success = (self._local_process.exitcode == 0)
+        # success = (self._local_process.exitcode == 0)
+        success = (self._config.exitcode == 0)
       else:
-        success = (self._config.backend.exitcode() == '0:0')
+        self._config.exitcode = self._config.backend.exitcode()
+        success = (self._config.exitcode == '0:0')
     else:
       success = self._config.success_func(self._config)
 
@@ -172,21 +196,32 @@ class Job:
   def script(self):
     os.system('less {}'.format(self._config.backend.run_script))
 
+  def _get_local_command(self):
+    command = ['/bin/bash']
+    command.append(self._config.backend.run_script)
+    if self._config.backend.run_args: command += self._config.backend.run_args
+
+    return command
+
   @staticmethod
   def _submit_local(run_script, log_file):
     ## Make sure that the process finds the files, if relative paths are given
     if not run_script.startswith('/'): run_script = './'+run_script
     if not log_file.startswith('/'): log_file = './'+log_file
-    r = os.system('. '+run_script+' 2>&1 > '+log_file)
+    try:
+      r = -1
+      r = os.system('. '+run_script+' 2>&1 > '+log_file)
+      return r
+    except KeyboardInterrupt:
+      return -1
 
-    return r
+  # @staticmethod
+  # def _get_local_status(process):
+  #   status = None
+  #   # if process.is_alive():
+  #   if process.poll() is None:
+  #     status = Status.Running
+  #   else:
+  #     status = Status.Finished
 
-  @staticmethod
-  def _get_local_status(process):
-    status = None
-    if process.is_alive():
-      status = Status.Running
-    else:
-      status = Status.Finished
-
-    return status
+  #   return status
