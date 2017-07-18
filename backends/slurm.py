@@ -5,7 +5,7 @@ import shlex
 import logging
 from ..tools.defs import Status
 
-log = logging.getLogger('Slurm')
+log = logging.getLogger('slurmy')
 
 
 class Slurm:
@@ -21,7 +21,7 @@ class Slurm:
     ## shlex splits run_args in a Popen digestable way
     if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
     self.job_id = None
-    self.bid = 'slurm'
+    self.bid = 'Slurm'
 
   def write_script(self, script_folder):
     if os.path.isfile(self.run_script): return
