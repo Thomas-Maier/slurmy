@@ -50,7 +50,7 @@ class Slurm:
     if self.qos: submit_list += ['--qos', self.qos]
     submit_list.append(self.run_script)
     if self.run_args: submit_list += self.run_args
-    submit_string = subprocess.check_output(submit_list)
+    submit_string = subprocess.check_output(submit_list, universal_newlines = True)
     job_id = int(submit_string.split(' ')[-1].rstrip('\n'))
     self.job_id = job_id
 
@@ -61,7 +61,7 @@ class Slurm:
 
   ## TODO: probably more robust to use sacct to identify if job is still running, squeue -j throws an error after some time of waiting...
   def status(self):
-    status_string = subprocess.check_output(['squeue', '-j', str(self.job_id)])
+    status_string = subprocess.check_output(['squeue', '-j', str(self.job_id)], universal_newlines = True)
     n_lines = status_string.count('\n')
     status = Status.Finished
     if n_lines > 1: status = Status.Running
@@ -69,7 +69,7 @@ class Slurm:
     return status
 
   def exitcode(self):
-    sacct_string = subprocess.check_output(['sacct', '-j', str(self.job_id), '-P', '-o', 'ExitCode'])
+    sacct_string = subprocess.check_output(['sacct', '-j', str(self.job_id), '-P', '-o', 'ExitCode'], universal_newlines = True)
     exitcode = sacct_string.split('\n')[1]
 
     return exitcode

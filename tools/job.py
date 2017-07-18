@@ -110,7 +110,8 @@ class Job:
       command = self._get_local_command()
       ## preexec_fn option tells child process to ignore signal sent to main app (for KeyboardInterrupt ignore)
       ## apparently more saver options available with python 3.2+, see "start_new_session = True"
-      self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, preexec_fn = os.setpgrp)
+      # self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, preexec_fn = os.setpgrp)
+      self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)
     else:
       self._config.job_id = self._config.backend.submit()
     self._config.status = Status.Running
