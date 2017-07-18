@@ -15,7 +15,7 @@ class Slurm:
     self.qos = qos
     self.run_script = run_script
     self.run_args = run_args
-    # if isinstance(self.run_args, str): self.run_args = self.run_args.split()
+    ## shlex splits run_args in a Popen digestable way
     if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
     self.job_id = None
     self.bid = 'slurm'
@@ -59,6 +59,7 @@ class Slurm:
   def cancel(self):
     os.system('scancel {}'.format(self.job_id))
 
+  ## TODO: probably more robust to use sacct to identify if job is still running, squeue -j throws an error after some time of waiting...
   def status(self):
     status_string = subprocess.check_output(['squeue', '-j', str(self.job_id)])
     n_lines = status_string.count('\n')

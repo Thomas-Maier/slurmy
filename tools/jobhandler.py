@@ -40,6 +40,7 @@ class JobHandler:
   ## TODO: Find a way to make snapshots compatible with local processing jobs. In principle, local processes should always end before final snapshot is made, i.e. when loading the snapshot you shouldn't get a job which is set to local and in running state. The jobs will naturally end before python is closed (if python process ended gracefully), since the local processing is done via child processes of the main one.
   ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
   ## TODO: implement better debug printout machinery
+  ## TODO: probably need some try except blocks in main job handling functions to clean up running local/all jobs if something happens
 
   def __init__(self, name = 'hans', backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
     ## Variables that are not picklable
@@ -51,9 +52,6 @@ class JobHandler:
     if use_snapshot and os.path.isfile(self._config.path):
       with open(self._config.path, 'rb') as in_file:
         self._config = pickle.load(in_file)
-      # if self._config.local_max > 0 or local_max > 0:
-      #   print ('Snapshot usage and local processing is not compatible...')
-      #   raise Exception
       for job_config in self._config.jobs_configs:
         self._add_job_with_config(job_config)
     else:
@@ -116,23 +114,6 @@ class JobHandler:
       pickle.dump(job_config, out_file)
       
     return self._add_job_with_config(job_config)
-
-  ## This isn't really useful since the job names are by design not set by the user
-  # def add_parent_job(self, backend, child_name, success_func = None, max_retries = None, tags = None, parent_tags = None):
-  #   parent_job = self.add_job(backend, success_func = success_func, max_retries = max_retries, tags = tags, parent_tags = parent_tags)
-  #   parent_tag = 'parent_{}'.format(parent_job.get_name())
-  #   self._jobs[child_name].add_tag(parent_tag, True)
-  #   parent_job.add_tag(parent_tag)
-    
-
-  # def _write_script(self, run_script, name):
-  #   out_file_name = self._config.script_folder+name
-  #   with open(out_file_name, 'w') as out_file:
-  #     ## Required for slurm submission script
-  #     if not run_script.startswith('#!'): out_file.write('#!/bin/bash \n')
-  #     out_file.write(run_script)
-
-  #   return out_file_name
 
   ## TODO: needs to be more robust, i.e. what happens if the parent_tag is not in the tagged jobs dict.
   ## Put a check on this in submit_jobs?
@@ -200,6 +181,11 @@ class JobHandler:
 
     return print_string
 
+  def _wait_for_jobs(self, tags = None):
+    for job in self.get_jobs(tags):
+      if not job.is_local(): continue
+      job.wait()
+
   def print_summary(self, time_spent = None):
     print_string = self._get_summary_string(time_spent)
     stdout.write('\r'+print_string)
@@ -227,17 +213,15 @@ class JobHandler:
       print ('Quitting gracefully...')
       try:
         print ('Waiting for local jobs, ctrl+c again to cancel them...')
-        local_jobs_running = True
-        while(local_jobs_running):
-          self._check_local_jobs()
-          if len(self._local_jobs) > 0:
-            time.sleep(interval)
-            continue
-          local_jobs_running = False
+        self._wait_for_jobs()
       except KeyboardInterrupt:
         print ('Cancel local jobs...')
-        ## KeyboardInterrupt terminates subprocesses, but make clean cancel anyway
+        ## Need to cancel cleanly, since jobs are setup to ignore signals to parent process
         self.cancel_jobs(only_local = True, make_snapshot = False)
+    except:
+      ## If something explodes, cancel all running jobs
+      self.cancel_jobs(make_snapshot = False)
+      raise
     finally:
       ## Final snapshot
       self._update_snapshot()
@@ -246,21 +230,26 @@ class JobHandler:
 
   ## TODO: include lock option which waits for local jobs to finish
   def submit_jobs(self, tags = None, make_snapshot = True):
-    ## Check local jobs progression
-    self._check_local_jobs()
-    for job in self.get_jobs(tags):
-      status = job.get_status()
-      if (status == Status.Failed or status == Status.Cancelled): job.retry(submit = False)
-      ## If job is not in Configured state there is nothing to do
-      if status != Status.Configured: continue
-      ## Check if job is ready to be submitted
-      if not self._job_ready(job): continue
-      if len(self._local_jobs) < self._config.local_max:
-        job.set_local()
-        self._local_jobs.append(job)
-        self._config.local_counter += 1
-      job.submit()
-    if make_snapshot: self._update_snapshot()
+    try:
+      ## Check local jobs progression
+      self._check_local_jobs()
+      for job in self.get_jobs(tags):
+        status = job.get_status()
+        if (status == Status.Failed or status == Status.Cancelled): job.retry(submit = False)
+        ## If job is not in Configured state there is nothing to do
+        if status != Status.Configured: continue
+        ## Check if job is ready to be submitted
+        if not self._job_ready(job): continue
+        if len(self._local_jobs) < self._config.local_max:
+          job.set_local()
+          self._local_jobs.append(job)
+          self._config.local_counter += 1
+        job.submit()
+      if make_snapshot: self._update_snapshot()
+    except:
+      ## If something explodes, cancel all running jobs
+      self.cancel_jobs(make_snapshot = False)
+      raise
       
   def cancel_jobs(self, tags = None, only_local = False, only_batch = False, make_snapshot = True):
     for job in self.get_jobs(tags):
@@ -272,11 +261,16 @@ class JobHandler:
     if make_snapshot: self._update_snapshot()
 
   def retry_jobs(self, tags = None, make_snapshot = True):
-    for job in self.get_jobs(tags):
-      ## Retry only if job is failed or cancelled
-      if job.get_status() != Status.Failed and job.get_status() != Status.Cancelled: continue
-      job.retry()
-    if make_snapshot: self._update_snapshot()
+    try:
+      for job in self.get_jobs(tags):
+        ## Retry only if job is failed or cancelled
+        if job.get_status() != Status.Failed and job.get_status() != Status.Cancelled: continue
+        job.retry()
+      if make_snapshot: self._update_snapshot()
+    except:
+      ## If something explodes, cancel all running jobs
+      self.cancel_jobs(make_snapshot = False)
+      raise
 
   ## TODO: must be rather check_jobs_status with some decision making if jobs failed (retry logic, maybe job can automatically gather on which machine it was running on)
   def _get_jobs_status(self):
@@ -292,10 +286,6 @@ class JobHandler:
     status_dict = self._get_jobs_status()
     print_string = self._get_print_string(status_dict)
     print (print_string)
-    # status_dict = self._get_jobs_status()
-    # n_all = str(len(self._jobs.values()))
-    # for status, n_jobs in status_dict.items():
-    #   print (status.name+':', '('+str(n_jobs)+'/'+n_all+')')
 
   def _check_local_jobs(self):
     for i, job in enumerate(self._local_jobs):

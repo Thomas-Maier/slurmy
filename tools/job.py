@@ -44,6 +44,7 @@ class Job:
   ## Is able to submit as slurm job or run locally
 
   ## TODO: snaphot trigger should come from jobhandler? Probably better to avoid unnecessary overhead (really only need to make snapshots when python process is stopped).
+  ## TODO: local_job.terminate() does not properly terminate whatever was executed in the run_script...
 
   def __init__(self, config):
     self._config = config
@@ -71,6 +72,12 @@ class Job:
   def _write_log(self):
     with open(self._config.backend.log, 'w') as out_file:
       out_file.write(self._local_process.stdout.read())
+
+  def wait(self):
+    if self._local_process is None:
+      print ('No local process present to wait for...')
+      return
+    self._local_process.wait()
 
   def update_snapshot(self):
     ## If no snapshot file is defined, do nothing
@@ -100,17 +107,13 @@ class Job:
       print ('Job is not in Configured state, cannot submit')
       raise Exception
     if self._config.is_local:
-      # self._local_process = mp.Process(target = Job._submit_local, args = (self._config.backend.run_script, self._config.backend.log))
-      # self._local_process.start()
       command = self._get_local_command()
-      # print ('Submit local job {} with command {}'.format(self.get_name(), ' '.join(command)))
       ## preexec_fn option tells child process to ignore signal sent to main app (for KeyboardInterrupt ignore)
       ## apparently more saver options available with python 3.2+, see "start_new_session = True"
       self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, preexec_fn = os.setpgrp)
     else:
       self._config.job_id = self._config.backend.submit()
     self._config.status = Status.Running
-    # self.update_snapshot()
 
   def cancel(self, clear_retry = False):
     ## Do nothing if job is already in failed state
@@ -123,7 +126,6 @@ class Job:
         self._config.backend.cancel()
     self._config.status = Status.Cancelled
     if clear_retry: self._config.max_retries = 0
-    # self.update_snapshot()
 
   ## TODO: try to encapsulate any retry logic inside the job config and set it here
   def retry(self, force = False, submit = True):
@@ -142,10 +144,8 @@ class Job:
     return (self._config.max_retries > 0 and (self._config.n_retries < self._config.max_retries))
 
   def get_status(self):
-    status_before = self._config.status
     if self._config.status == Status.Running:
       if self._config.is_local:
-        # self._config.status = Job._get_local_status(self._local_process)
         self._get_local_status()
       else:
         self._config.status = self._config.backend.status()
@@ -154,8 +154,6 @@ class Job:
         self._config.status = Status.Success
       else:
         self._config.status = Status.Failed
-    ## Status changed, update snapshot
-    # if status_before != self._config.status: self.update_snapshot()
         
     return self._config.status
 
@@ -171,7 +169,6 @@ class Job:
     success = False
     if self._config.success_func is None:
       if self._config.is_local:
-        # success = (self._local_process.exitcode == 0)
         success = (self._config.exitcode == 0)
       else:
         self._config.exitcode = self._config.backend.exitcode()
@@ -214,14 +211,3 @@ class Job:
       return r
     except KeyboardInterrupt:
       return -1
-
-  # @staticmethod
-  # def _get_local_status(process):
-  #   status = None
-  #   # if process.is_alive():
-  #   if process.poll() is None:
-  #     status = Status.Running
-  #   else:
-  #     status = Status.Finished
-
-  #   return status
