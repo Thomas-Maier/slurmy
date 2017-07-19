@@ -13,3 +13,6 @@ class Status(Enum):
 class Theme(Enum):
   Boring = 0
   Lovecraft = 1
+  Nordic = 2
+  Warhammer = 3
+  
