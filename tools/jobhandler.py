@@ -6,8 +6,9 @@ from sys import stdout
 from collections import OrderedDict
 import pickle
 import logging
-from .defs import Status, NameGenerator
+from .defs import Status
 from .job import Job, JobConfig
+from .namegenerator import NameGenerator
 
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('slurmy')

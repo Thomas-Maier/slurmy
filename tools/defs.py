@@ -1,6 +1,5 @@
 
 from enum import Enum
-import random
 
 
 class Status(Enum):
@@ -11,9 +10,6 @@ class Status(Enum):
   Failed = 4
   Cancelled = 5
 
-class NameGenerator:
-  def __init__(self):
-    self._name_list = ['Cthulhu', 'Azathoth', 'Ghatanothoa', 'Hastur', 'Nyarlathotep', 'Rhan-Tegoth', 'Shub-Niggurath', 'Tsathoggua', 'Yig', 'Yog-Sothoth', 'Shoggoth', 'Yith']
-    
-  def get_name(self):
-    return self._name_list[random.randint(0, len(self._name_list)-1)]
+class Theme(Enum):
+  Lame = 0
+  Lovecraft = 1
