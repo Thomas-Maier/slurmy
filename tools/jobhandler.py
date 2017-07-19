@@ -6,21 +6,18 @@ from sys import stdout
 from collections import OrderedDict
 import pickle
 import logging
-from .defs import Status
+from .defs import Status, Theme
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
 
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('slurmy')
 
-name_gen = NameGenerator()
-
 
 class JobHandlerConfig:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0):
-    self.name = name
-    ## For safety, if given name is emtpy set a default
-    if not self.name: self.name = name_gen.get_name()
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft):
+    self._name_gen = NameGenerator(name = name, theme = theme)
+    self.name = self._name_gen.name
     self.base_folder = self.name+'/'
     if work_dir: self.base_folder = work_dir.rstrip('/')+self.name+'/'
     self.script_folder = self.base_folder+'scripts/'
@@ -47,7 +44,7 @@ class JobHandler:
   ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
   ## TODO: implement better debug printout machinery
 
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, use_snapshot = False):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, use_snapshot = False):
     self._debug = False
     if log.level == 10: self._debug = True
     ## Variables that are not picklable
@@ -55,7 +52,7 @@ class JobHandler:
     self._tagged_jobs = {}
     self._local_jobs = []
     ## JobHandler config
-    self._config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries)
+    self._config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme)
     if use_snapshot and os.path.isfile(self._config.path):
       log.debug('Read snapshot from {}'.format(self._config.path))
       with open(self._config.path, 'rb') as in_file:
@@ -111,7 +108,7 @@ class JobHandler:
 
   def add_job(self, backend, success_func = None, max_retries = None, tags = None, parent_tags = None):
     self._config.job_counter += 1
-    name = '{}_{}'.format(self._config.name, self._config.job_counter)
+    name = self._config._name_gen.get_name()
     backend.name = name
     backend.write_script(self._config.script_folder)
     backend.log = self._config.log_folder+name
