@@ -10,7 +10,8 @@ class NameGenerator:
     if theme == Theme.Lovecraft:
       self._name = 'Azathoth'
       self._name_list = ['Cthulhu', 'Ghatanothoa', 'Hastur', 'Nyarlathotep', 'Rhan-Tegoth', 'Shub-Niggurath', 'Tsathoggua', 'Yig', 'Yog-Sothoth', 'Shoggoth', 'Yith']
-    elif theme == Theme.Lame:
+    elif theme == Theme.Boring:
+      pass
     
   def get_name(self):
     return self._name_list[random.randint(0, len(self._name_list)-1)]

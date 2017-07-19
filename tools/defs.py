@@ -11,5 +11,5 @@ class Status(Enum):
   Cancelled = 5
 
 class Theme(Enum):
-  Lame = 0
+  Boring = 0
   Lovecraft = 1
