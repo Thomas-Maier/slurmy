@@ -7,6 +7,7 @@ from ..tools.defs import Status
 
 log = logging.getLogger('slurmy')
 
+## TODO: General check for backends needed, if their respective executables/binaries/whatever are present on the system, if not throw an error. Otherwise you only get a (to the user) cryptic subprocess exception (in the case of Slurm)
 
 class Slurm:
   def __init__(self, name = None, log = None, partition = None, exclude = None, cluster = None, qos = None, run_script = None, run_args = None):

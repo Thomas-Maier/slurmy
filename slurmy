@@ -7,6 +7,7 @@ from slurmy import JobHandler
 log = logging.getLogger('slurmy')
 
 ## TODO: encapsulate utility in helper funcitions that just take jobhandler/job instances (instead of putting everything into the classes)
+## TODO: allow for passing a config file, which holds the full jobs conifguration
 
 def get_prompt():
   try:

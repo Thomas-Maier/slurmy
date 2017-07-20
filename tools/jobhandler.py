@@ -26,7 +26,6 @@ class JobHandlerConfig:
     self.snapshot_folder = self.base_folder+'/snapshot/'
     self.path = self.snapshot_folder+'JobHandlerConfig.pkl'
     self.jobs_configs = []
-    self.job_counter = 0
     self.success_func = success_func
     self.local_max = local_max
     self.local_counter = 0
@@ -43,6 +42,8 @@ class JobHandler:
   ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
   ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
   ## TODO: implement better debug printout machinery
+  ## TODO: .slurmy config file for default configurations and a .slurmy_bookkeeping file that is read by slurmy script to interactively browse past jobhandler instances
+  ## TODO: Allow for copy construction in interactive slurmy, so that you can easily create another jobhandler instance with the same setup (including some easy modification utility)
 
   def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, use_snapshot = False):
     self._debug = False
@@ -107,7 +108,6 @@ class JobHandler:
     return job
 
   def add_job(self, backend, success_func = None, max_retries = None, tags = None, parent_tags = None):
-    self._config.job_counter += 1
     name = self._config._name_gen.get_name()
     backend.name = name
     backend.write_script(self._config.script_folder)

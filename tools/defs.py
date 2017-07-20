@@ -15,4 +15,3 @@ class Theme(Enum):
   Lovecraft = 1
   Nordic = 2
   Warhammer = 3
-  
