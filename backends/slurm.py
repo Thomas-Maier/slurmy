@@ -4,18 +4,20 @@ import os
 import shlex
 import logging
 from ..tools.defs import Status
+from .base import Base
 
 log = logging.getLogger('slurmy')
 
 ## TODO: General check for backends needed, if their respective executables/binaries/whatever are present on the system, if not throw an error. Otherwise you only get a (to the user) cryptic subprocess exception (in the case of Slurm)
+## TODO: add more sbatch options
 
-class Slurm:
-  def __init__(self, name = None, log = None, partition = None, exclude = None, cluster = None, qos = None, run_script = None, run_args = None):
+class Slurm(Base):
+  def __init__(self, name = None, log = None, partition = None, exclude = None, clusters = None, qos = None, run_script = None, run_args = None):
     self.name = name
     self.log = log
     self.partition = partition
     self.exclude = exclude
-    self.cluster = cluster
+    self.clusters = clusters
     self.qos = qos
     self.run_script = run_script
     self.run_args = run_args
@@ -39,7 +41,7 @@ class Slurm:
     self.log = self.log or config.log
     self.partition = self.partition or config.partition
     self.exclude = self.exclude or config.exclude
-    self.cluster = self.cluster or config.cluster
+    self.clusters = self.clusters or config.clusters
     self.qos = self.qos or config.qos
     self.run_script = self.run_script or config.run_script
     self.run_args = self.run_args or config.run_args
@@ -50,7 +52,7 @@ class Slurm:
     if self.log: submit_list += ['-o', self.log]
     if self.partition: submit_list += ['-p', self.partition]
     if self.exclude: submit_list += ['-x', self.exclude]
-    if self.cluster: submit_list += ['-M', self.cluster]
+    if self.clusters: submit_list += ['-M', self.clusters]
     if self.qos: submit_list += ['--qos', self.qos]
     submit_list.append(self.run_script)
     if self.run_args: submit_list += self.run_args

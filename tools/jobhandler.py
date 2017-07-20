@@ -9,6 +9,7 @@ import logging
 from .defs import Status, Theme
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
+from . import options as ops
 
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('slurmy')
@@ -19,7 +20,7 @@ class JobHandlerConfig:
     self._name_gen = NameGenerator(name = name, theme = theme)
     self.name = self._name_gen.name
     self.base_folder = self.name+'/'
-    if work_dir: self.base_folder = work_dir.rstrip('/')+self.name+'/'
+    if work_dir: self.base_folder = work_dir.rstrip('/')+'/'+self.name+'/'
     self.script_folder = self.base_folder+'scripts/'
     self.log_folder = self.base_folder+'logs/'
     self.output_folder = self.base_folder+'output/'
@@ -53,35 +54,36 @@ class JobHandler:
     self._tagged_jobs = {}
     self._local_jobs = []
     ## JobHandler config
-    self._config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme)
-    if use_snapshot and os.path.isfile(self._config.path):
-      log.debug('Read snapshot from {}'.format(self._config.path))
-      with open(self._config.path, 'rb') as in_file:
-        self._config = pickle.load(in_file)
+    self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme)
+    if use_snapshot and os.path.isfile(self.config.path):
+      log.debug('Read snapshot from {}'.format(self.config.path))
+      with open(self.config.path, 'rb') as in_file:
+        self.config = pickle.load(in_file)
       log.debug('Read job snapshots')
-      for job_config in self._config.jobs_configs:
+      for job_config in self.config.jobs_configs:
         self._add_job_with_config(job_config)
     else:
       self._reset()
-
+      JobHandler._add_bookkeeping(self.config.name, work_dir)
+      
   def __getitem__(self, key):
     return self._jobs[key]
 
   def _reset(self):
     log.debug('Reset JobHandler')
-    if os.path.isdir(self._config.base_folder): os.system('rm -r '+self._config.base_folder)
-    os.makedirs(self._config.script_folder)
-    os.makedirs(self._config.log_folder)
-    if os.path.isdir(self._config.snapshot_folder): os.system('rm -r '+self._config.snapshot_folder)
-    os.makedirs(self._config.snapshot_folder)
+    if os.path.isdir(self.config.base_folder): os.system('rm -r '+self.config.base_folder)
+    os.makedirs(self.config.script_folder)
+    os.makedirs(self.config.log_folder)
+    if os.path.isdir(self.config.snapshot_folder): os.system('rm -r '+self.config.snapshot_folder)
+    os.makedirs(self.config.snapshot_folder)
 
   def _update_snapshot(self):
     log.debug('Update job snapshots')
     for job in self._jobs.values():
       job.update_snapshot()
     log.debug('Update snapshot')
-    with open(self._config.path, 'wb') as out_file:
-      pickle.dump(self._config, out_file)
+    with open(self.config.path, 'wb') as out_file:
+      pickle.dump(self.config, out_file)
 
   def get_jobs(self, tags = None):
     job_list = []
@@ -108,17 +110,17 @@ class JobHandler:
     return job
 
   def add_job(self, backend, success_func = None, max_retries = None, tags = None, parent_tags = None):
-    name = self._config._name_gen.get_name()
+    name = self.config._name_gen.get_name()
     backend.name = name
-    backend.write_script(self._config.script_folder)
-    backend.log = self._config.log_folder+name
-    backend.sync(self._config.backend)
-    job_success_func = success_func or self._config.success_func
-    job_max_retries = max_retries or self._config.max_retries
-    config_path = self._config.snapshot_folder+name+'.pkl'
+    backend.write_script(self.config.script_folder)
+    backend.log = self.config.log_folder+name
+    backend.sync(self.config.backend)
+    job_success_func = success_func or self.config.success_func
+    job_max_retries = max_retries or self.config.max_retries
+    config_path = self.config.snapshot_folder+name+'.pkl'
 
     job_config = JobConfig(backend, path = config_path, success_func = job_success_func, max_retries = job_max_retries, tags = tags, parent_tags = parent_tags)
-    self._config.jobs_configs.append(job_config)
+    self.config.jobs_configs.append(job_config)
     with open(job_config.path, 'wb') as out_file:
       pickle.dump(job_config, out_file)
       
@@ -146,7 +148,7 @@ class JobHandler:
   ## TODO: think of better information printing
   def _get_print_string(self, status_dict):
     print_string = 'Jobs '
-    if self._config.is_verbose:
+    if self.config.is_verbose:
       n_local = len(self._local_jobs)
       n_running = status_dict[Status.Running]
       n_slurm = n_running - n_local
@@ -161,7 +163,7 @@ class JobHandler:
   ## TODO: better print format
   def _get_summary_string(self, time_spent = None):
     summary_dict = OrderedDict()
-    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs.values())-self._config.local_counter, 'local': self._config.local_counter}
+    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs.values())-self.config.local_counter, 'local': self.config.local_counter}
     summary_dict['success'] = {'string': '     successful ', 'slurm': 0, 'local': 0}
     summary_dict['fail'] = {'string': '     failed ', 'slurm': 0, 'local': 0}
     jobs_failed = ''
@@ -186,7 +188,7 @@ class JobHandler:
       n_local = summary_val['local']
       n_all = summary_val['slurm'] + summary_val['local']
       print_string += '{}(slurm/local/all): ({}/{}/{})\n'.format(summary_val['string'], n_slurm, n_local, n_all)
-    if self._config.is_verbose and jobs_failed:
+    if self.config.is_verbose and jobs_failed:
       print_string += 'Failed jobs: {}\n'.format(jobs_failed)
     if time_spent:
       print_string += 'time spent: {:.1f} s'.format(time_spent)
@@ -254,10 +256,10 @@ class JobHandler:
         if status != Status.Configured: continue
         ## Check if job is ready to be submitted
         if not self._job_ready(job): continue
-        if len(self._local_jobs) < self._config.local_max:
+        if len(self._local_jobs) < self.config.local_max:
           job.set_local()
           self._local_jobs.append(job)
-          self._config.local_counter += 1
+          self.config.local_counter += 1
         job.submit()
       if wait: self._wait_for_jobs(tags)
       if make_snapshot: self._update_snapshot()
@@ -329,3 +331,10 @@ class JobHandler:
       ret_val = JobHander._has_tag(job, tags)
 
     return ret_val
+
+  @staticmethod
+  def _add_bookkeeping(name, folder):
+    pwd = os.environ['PWD']
+    work_dir = folder
+    if not work_dir.startswith('/'): work_dir = '{}/{}'.format(pwd.rstrip('/'), work_dir)
+    ops.Main.add_bookkeeping(name, work_dir)
