@@ -53,6 +53,9 @@ class JobHandler:
     self._jobs = {}
     self._tagged_jobs = {}
     self._local_jobs = []
+    ## Backend setup
+    if backend is None:
+      pass
     ## JobHandler config
     self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme)
     if use_snapshot and os.path.isfile(self.config.path):
