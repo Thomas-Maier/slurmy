@@ -3,10 +3,10 @@ import logging
 import json
 import os
 import datetime
+from ..backends import backend_list
 
 log = logging.getLogger('slurmy')
 
-## TODO: any function call should trigger reading the options file and just store all of the options (in a dictionary), top layer is like ['General', 'Backend1', 'Backend2'...] and the options for the backends can then easily be set using __dict__ if the names between the options file and the member vars of the backends match properly
 
 class Options:
   _options_file = '{}/.slurmy'.format(os.environ['HOME'])
@@ -39,11 +39,6 @@ class Options:
     print_string = print_string.rstrip('\n')
 
     return print_string
-
-  # def get_backend_name(self):
-  #   self._read_options()
-    
-  #   return self.backend
 
   def get_bookkeeping(self):
     ## If bookkeeping was already retrieved, do nothing
@@ -97,16 +92,36 @@ class Options:
           log.warning('Unknown general option "{}"'.format(option))
           continue
         if self[option] is not None:
-          log.warning('You are trying to set a general option twice, ignoring duplicate')
+          log.warning('Trying to set a general option twice, ignoring duplicate')
           continue
         self[option] = val
       else:
         ## Fill options dict with backend options
+        if domain not in backend_list:
+          log.warning('Trying to add an option for unknown backend "{}", list of available backends: {}'.format(domain, backend_list))
+          continue
         if domain not in self._backend_options: self._backend_options[domain] = {}
         if option in self._backend_options[domain]:
-          log.warning('You are trying to set a backend option twice, ignoring duplicate')
+          log.warning('Trying to set a backend option twice, ignoring duplicate')
           continue
         self._backend_options[domain][option] = val
+    ## Check if backend from options file is refering to an available backend
+    if self.backend is not None and self.backend not in backend_list:
+      log.warning('Unknown backend "{}", list of available backends: {}'.format(self.backend, backend_list))
+      ## Setting backend to None
+      self.backend = None
+      
+    
+  def get_backend_options(self, backend):
+    bid = backend.bid
+    ## If no options set for this backend, nothing to do
+    if bid not in self._backend_options: return
+    for option, val in self._backend_options[bid].items():
+      if not option in backend:
+        log.warning('Option "{}" not in backend "{}"'.format(option, backend.bid))
+        continue
+      ## If option was already set, give priority to that
+      backend[option] = backend[option] or val
 
   @staticmethod
   def _parse_file_name(file_name):
@@ -114,42 +129,19 @@ class Options:
     if file_name.startswith('~/'): name_return = '{}{}'.format(os.environ['HOME'], file_name.replace('~', '', 1))
 
     return name_return
-    
-
-  @staticmethod
-  def get_backend_options(backend):
-    lines = None
-    with open(Options._options_file, 'r') as in_file:
-      lines = filter(None, [line.strip() for line in in_file if not line.startswith('#') and line.startswith('{}.'.format(backend.bid))])
-    for line in lines:
-      if not Options._check_line(line): continue
-      line_list = line.split('=', 1)
-      option = line_list[0].split('.', 1)[-1].strip()
-      ## Remove potential comment at end of the line
-      val = line_list[-1].split('#', 1)[0].strip()
-      if not option in backend:
-        log.warning('Option "{}" not in backend "{}"'.format(option, backend.bid))
-        continue
-      backend[option] = val
 
   @staticmethod
   def _check_line(line):
     if line.count('.') > 1:
-      log.warning('Bad line in options file (too many . delimiter): {}'.format(line))
+      log.warning('Bad line in options file (too many "." delimiter): {}'.format(line))
       return False
     if line.count('=') > 1:
-      log.warning('Bad line in options file (too many = delimiter): {}'.format(line))
+      log.warning('Bad line in options file (too many "=" delimiter): {}'.format(line))
       return False
     if line.count('=') == 0:
-      log.warning('Bad line in options file (missing = delimiter): {}'.format(line))
+      log.warning('Bad line in options file (missing "=" delimiter): {}'.format(line))
 
     return True
 
 ## Main options singleton
 Main = Options()
-
-if __name__ == '__main__':
-  print (Main)
-  print (Main.backend, Main.workdir)
-  Main.get_bookkeeping()
-  print (Main)

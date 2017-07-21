@@ -5,6 +5,7 @@ import shlex
 import logging
 from ..tools.defs import Status
 from .base import Base
+from ..tools import options as ops
 
 log = logging.getLogger('slurmy')
 
@@ -12,6 +13,8 @@ log = logging.getLogger('slurmy')
 ## TODO: add more sbatch options
 
 class Slurm(Base):
+  bid = 'Slurm'
+  
   def __init__(self, name = None, log = None, partition = None, exclude = None, clusters = None, qos = None, run_script = None, run_args = None):
     self.name = name
     self.log = log
@@ -24,7 +27,8 @@ class Slurm(Base):
     ## shlex splits run_args in a Popen digestable way
     if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
     self.job_id = None
-    self.bid = 'Slurm'
+    ## Get default options
+    ops.Main.get_backend_options(self)
 
   def write_script(self, script_folder):
     if os.path.isfile(self.run_script): return

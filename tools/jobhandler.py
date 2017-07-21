@@ -10,7 +10,9 @@ from .defs import Status, Theme
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
 from . import options as ops
+from ..backends import get_backend
 
+## TODO: This, or rather a specified loghandle should be in the main __inin__.py instead
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('slurmy')
 
@@ -43,7 +45,6 @@ class JobHandler:
   ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
   ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
   ## TODO: implement better debug printout machinery
-  ## TODO: .slurmy config file for default configurations and a .slurmy_bookkeeping file that is read by slurmy script to interactively browse past jobhandler instances
   ## TODO: Allow for copy construction in interactive slurmy, so that you can easily create another jobhandler instance with the same setup (including some easy modification utility)
 
   def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, use_snapshot = False):
@@ -54,8 +55,8 @@ class JobHandler:
     self._tagged_jobs = {}
     self._local_jobs = []
     ## Backend setup
-    if backend is None:
-      pass
+    if backend is None and ops.Main.backend is not None:
+      backend = get_backend(ops.Main.backend)
     ## JobHandler config
     self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme)
     if use_snapshot and os.path.isfile(self.config.path):
