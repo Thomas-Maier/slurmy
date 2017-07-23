@@ -17,8 +17,7 @@ class JobConfig:
     if tags is not None: self.add_tags(tags)
     self.parent_tags = set()
     if parent_tags is not None: self.add_tags(parent_tags, True)
-    self.success_func = None
-    if success_func is not None: self.success_func = success_func
+    self.success_func = success_func
     self.is_local = is_local
     self.max_retries = max_retries
     self.status = Status.Configured

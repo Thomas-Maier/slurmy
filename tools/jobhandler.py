@@ -12,7 +12,7 @@ from .namegenerator import NameGenerator
 from . import options as ops
 from ..backends import get_backend
 
-## TODO: This, or rather a specified loghandle should be in the main __inin__.py instead
+## TODO: This, or rather a specified loghandle should be in the main __init__.py instead
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('slurmy')
 

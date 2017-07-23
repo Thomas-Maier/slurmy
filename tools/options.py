@@ -1,5 +1,4 @@
 
-import logging
 import json
 import os
 import datetime
@@ -10,6 +9,8 @@ log = logging.getLogger('slurmy')
 
 class Options:
   _options_file = '{}/.slurmy'.format(os.environ['HOME'])
+  _bk_keys_name = 'keys'
+  _bk_sessions_name = 'sessions'
 
   def __init__(self):
     ## General options (as defined in _options_file)
@@ -20,8 +21,6 @@ class Options:
     self._backend_options = {}
     ## Internal vars
     self._bookkeeping = None
-    self._bk_keys_name = 'keys'
-    self._bk_sessions_name = 'sessions'
     ## Read options from _options_file
     self._read_options()
 
@@ -45,28 +44,40 @@ class Options:
   def get_bookkeeping(self):
     ## If bookkeeping was already retrieved, do nothing
     if self._bookkeeping:
-      return self._bookkeeping[self._bk_keys_name], self._bookkeeping[self._bk_sessions_name]
+      return self._bookkeeping[Options._bk_keys_name], self._bookkeeping[Options._bk_sessions_name]
     if self.bookkeeping is None:
       log.error('No bookkeeping file defined')
       return
     self.bookkeeping = Options._parse_file_name(self.bookkeeping)
     ## Set empty dictionary as default
-    self._bookkeeping = {self._bk_keys_name: {}, self._bk_sessions_name: {}}
+    self._bookkeeping = {Options._bk_keys_name: {}, Options._bk_sessions_name: {}}
     if os.path.isfile(self.bookkeeping):
       with open(self.bookkeeping, 'r') as in_file:
         self._bookkeeping = json.load(in_file)
 
-    return self._bookkeeping[self._bk_keys_name], self._bookkeeping[self._bk_sessions_name]
+    return self._bookkeeping[Options._bk_keys_name], self._bookkeeping[Options._bk_sessions_name]
 
   def add_bookkeeping(self, name, work_dir, description = None):
     ## Make sure bookkeeping is already loaded from file
     self.get_bookkeeping()
     timestamp = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
     path = '{}/{}'.format(work_dir.rstrip('/'), name)
-    self._bookkeeping[self._bk_sessions_name][path] = {'timestamp': timestamp, 'name': name, 'work_dir': work_dir, 'description': description}
-    if path not in set(self._bookkeeping[self._bk_keys_name].values()):
-      key = 'session{}'.format(len(self._bookkeeping[self._bk_sessions_name]))
-      self._bookkeeping[self._bk_keys_name][key] = path
+    self._bookkeeping[Options._bk_sessions_name][path] = {'timestamp': timestamp, 'name': name, 'work_dir': work_dir, 'description': description}
+    if path not in set(self._bookkeeping[Options._bk_keys_name].values()):
+      key = 'session{}'.format(len(self._bookkeeping[Options._bk_sessions_name]))
+      self._bookkeeping[Options._bk_keys_name][key] = path
+    self._update_bookkeeping()
+
+  def sync_bookkeeping(self):
+    ## Make sure bookkeeping is already loaded from file
+    self.get_bookkeeping()
+    for path in self._bookkeeping[Options._bk_sessions_name].keys():
+      ## If folder exists, assume that bookkeeping entry still exists on disk
+      if os.path.isdir(path): continue
+      self._bookkeeping[Options._bk_sessions_name].pop(path)
+      for key, val in self._bookkeeping[Options._bk_keys_name].items():
+        if val != path: continue
+        self._bookkeeping[Options._bk_keys_name].pop(key)
     self._update_bookkeeping()
 
   def _update_bookkeeping(self):

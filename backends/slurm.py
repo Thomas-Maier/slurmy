@@ -8,8 +8,6 @@ from .base import Base
 from ..tools import options as ops
 
 log = logging.getLogger('slurmy')
-
-## TODO: General check for backends needed, if their respective executables/binaries/whatever are present on the system, if not throw an error. Otherwise you only get a (to the user) cryptic subprocess exception (in the case of Slurm)
 ## TODO: add more sbatch options
 
 class Slurm(Base):
@@ -51,6 +49,14 @@ class Slurm(Base):
     self.run_args = self.run_args or config.run_args
 
   def submit(self):
+    ## Check if sbatch command exists
+    ## TODO: suppress output properly
+    ## TODO: Add to each function that needs slurm commands?
+    proc = subprocess.Popen(shlex.split('which sbatch'), universal_newlines = True)
+    ret_code = proc.wait()
+    if ret_code != 0:
+      log.error('Slurm submit command not found')
+      return None
     submit_list = ['sbatch']
     if self.name: submit_list += ['-J', self.name]
     if self.log: submit_list += ['-o', self.log]
