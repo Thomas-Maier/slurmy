@@ -47,7 +47,7 @@ class JobHandler:
   ## TODO: implement better debug printout machinery
   ## TODO: Allow for copy construction in interactive slurmy, so that you can easily create another jobhandler instance with the same setup (including some easy modification utility)
 
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, use_snapshot = False):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, use_snapshot = False, description = None):
     self._debug = False
     if log.level == 10: self._debug = True
     ## Variables that are not picklable
@@ -68,7 +68,7 @@ class JobHandler:
         self._add_job_with_config(job_config)
     else:
       self._reset()
-      JobHandler._add_bookkeeping(self.config.name, work_dir)
+      JobHandler._add_bookkeeping(self.config.name, work_dir, description)
       
   def __getitem__(self, key):
     return self._jobs[key]
@@ -85,7 +85,7 @@ class JobHandler:
     log.debug('Update job snapshots')
     for job in self._jobs.values():
       job.update_snapshot()
-    log.debug('Update snapshot')
+    log.debug('Update JobHandler snapshot')
     with open(self.config.path, 'wb') as out_file:
       pickle.dump(self.config, out_file)
 
@@ -113,7 +113,15 @@ class JobHandler:
 
     return job
 
-  def add_job(self, backend, success_func = None, max_retries = None, tags = None, parent_tags = None):
+  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, max_retries = None, tags = None, parent_tags = None):
+    if backend is None and ops.Main.backend is not None:
+      backend = get_backend(ops.Main.backend)
+    if backend is None:
+      log.error('No backend set for job, either set directly or define default in ~/.slurmy')
+      return
+    ## Set run_script and run_args if not already done
+    backend.run_script = backend.run_script or run_script
+    backend.run_args = backend.run_args or run_args
     name = self.config._name_gen.get_name()
     backend.name = name
     backend.write_script(self.config.script_folder)
@@ -337,8 +345,8 @@ class JobHandler:
     return ret_val
 
   @staticmethod
-  def _add_bookkeeping(name, folder):
+  def _add_bookkeeping(name, folder, description = None):
     pwd = os.environ['PWD']
     work_dir = folder
     if not work_dir.startswith('/'): work_dir = '{}/{}'.format(pwd.rstrip('/'), work_dir)
-    ops.Main.add_bookkeeping(name, work_dir)
+    ops.Main.add_bookkeeping(name, work_dir, description)
