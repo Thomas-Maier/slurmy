@@ -27,6 +27,7 @@ class JobHandlerConfig:
     self.snapshot_folder = self.base_folder+'/snapshot/'
     self.path = self.snapshot_folder+'JobHandlerConfig.pkl'
     self.jobs_configs = []
+    self.job_states = {Status.Configured: set(), Status.Running: set(), Status.Finished: set(), Status.Success: set(), Status.Failed: set(), Status.Cancelled: set()}
     self.success_func = success_func
     self.local_max = local_max
     self.local_counter = 0
@@ -157,15 +158,15 @@ class JobHandler:
     return True
 
   ## TODO: think of better information printing
-  def _get_print_string(self, status_dict):
+  def _get_print_string(self):
     print_string = 'Jobs '
     if self.config.is_verbose:
-      n_running = status_dict[Status.Running]
+      n_running = len(self.config.job_states[Status.Running])
       n_local = len(self._local_jobs)
       n_batch = n_running - n_local
       print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
-    n_success = status_dict[Status.Success]
-    n_failed = status_dict[Status.Failed]
+    n_success = len(self.config.job_states[Status.Success])
+    n_failed = len(self.config.job_states[Status.Failed])
     n_all = len(self._jobs.values())
     print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
@@ -212,6 +213,22 @@ class JobHandler:
       log.debug('Wait for job {}'.format(job.get_name()))
       job.wait()
 
+  def _update_job_status(self, job):
+    name = job.get_name()
+    new_status = job.get_status()
+    ## If old and new status are the same, do nothing
+    if name in self.config.job_states[new_status]: return
+    ## Remove current status entry for job
+    for status in self.config.job_states.keys():
+      if name not in self.config.job_states[status]: continue
+      self.config.job_states[status].remove(name)
+    ## Add new one
+    self.config.job_states[new_status].add(name)
+
+  def _update_job_states(self):
+    for job in self._jobs.values():
+      self._update_job_status(job)
+
   def print_summary(self, time_spent = None):
     print_string = self._get_summary_string(time_spent)
     stdout.write('\r'+print_string)
@@ -224,17 +241,17 @@ class JobHandler:
       running = True
       while running:
         self.submit_jobs(make_snapshot = False, wait = False)
-        status_dict = self._get_jobs_status()
-        print_string = self._get_print_string(status_dict)
+        self._update_job_states()
+        print_string = self._get_print_string()
         if not self._debug:
           stdout.write('\r'+print_string)
           stdout.flush()
         else:
           log.debug(print_string)
         time.sleep(interval)
-        n_success = status_dict[Status.Success]
-        n_failed = status_dict[Status.Failed]
-        n_cancelled = status_dict[Status.Cancelled]
+        n_success = len(self.config.job_states[Status.Success])
+        n_failed = len(self.config.job_states[Status.Failed])
+        n_cancelled = len(self.config.job_states[Status.Cancelled])
         if (n_success+n_failed+n_cancelled) == n_all: running = False
     except KeyboardInterrupt:
       if not self._debug: stdout.write('\n')
@@ -300,18 +317,9 @@ class JobHandler:
       self.cancel_jobs(make_snapshot = False)
       raise
 
-  def _get_jobs_status(self):
-    status_dict = {Status.Configured: 0, Status.Running: 0, Status.Finished: 0, Status.Success: 0, Status.Failed: 0, Status.Cancelled: 0}
-    for job in self._jobs.values():
-      status = job.get_status()
-      status_dict[status] += 1
-
-    return status_dict
-
-  ## TODO: modify so that it allows to specify tags
   def check_status(self):
-    status_dict = self._get_jobs_status()
-    print_string = self._get_print_string(status_dict)
+    self._update_job_states()
+    print_string = self._get_print_string()
     print (print_string)
 
   def _check_local_jobs(self):
