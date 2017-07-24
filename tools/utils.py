@@ -29,6 +29,7 @@ def list_sessions():
 
 def load(key):
   from slurmy.tools import options as ops
+  from slurmy import JobHandler
   import logging
   log = logging.getLogger('slurmy')
   ## Synchronise bookkeeping with entries on disk

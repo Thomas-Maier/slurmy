@@ -9,9 +9,11 @@ from ..tools import options as ops
 
 log = logging.getLogger('slurmy')
 ## TODO: add more sbatch options
+## TODO: Make one check at the start to see if all necessary commands are present on the system, rather than with each function call
 
 class Slurm(Base):
   bid = 'Slurm'
+  _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
   
   def __init__(self, name = None, log = None, partition = None, exclude = None, clusters = None, qos = None, run_script = None, run_args = None):
     self.name = name
@@ -27,10 +29,12 @@ class Slurm(Base):
     self.job_id = None
     ## Get default options
     ops.Main.get_backend_options(self)
+    ## Check if necessary slurm commands are available on the system
+    self._check_commands()
 
   def write_script(self, script_folder):
     if os.path.isfile(self.run_script): return
-    out_file_name = script_folder+self.name
+    out_file_name = '{}/{}'.format(script_folder.rstrip('/'), self.name)
     with open(out_file_name, 'w') as out_file:
       ## Required for slurm submission script
       if not self.run_script.startswith('#!'): out_file.write('#!/bin/bash \n')
@@ -49,14 +53,6 @@ class Slurm(Base):
     self.run_args = self.run_args or config.run_args
 
   def submit(self):
-    ## Check if sbatch command exists
-    ## TODO: suppress output properly
-    ## TODO: Add to each function that needs slurm commands?
-    proc = subprocess.Popen(shlex.split('which sbatch'), universal_newlines = True)
-    ret_code = proc.wait()
-    if ret_code != 0:
-      log.error('Slurm submit command not found')
-      return None
     submit_list = ['sbatch']
     if self.name: submit_list += ['-J', self.name]
     if self.log: submit_list += ['-o', self.log]

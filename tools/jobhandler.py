@@ -12,13 +12,11 @@ from .namegenerator import NameGenerator
 from . import options as ops
 from ..backends import get_backend
 
-## TODO: This, or rather a specified loghandle should be in the main __init__.py instead
-logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('slurmy')
 
 
 class JobHandlerConfig:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None):
     self._name_gen = NameGenerator(name = name, theme = theme)
     self.name = self._name_gen.name
     self.base_folder = self.name+'/'
@@ -34,20 +32,21 @@ class JobHandlerConfig:
     self.local_counter = 0
     self.is_verbose = is_verbose
     self.max_retries = max_retries
+    self.run_max = run_max
     self.backend = backend
 
 class JobHandler:
   ## Generates Jobs according to configuration
-  ## TODO: Can I ask slurm if currently there are free slots?
+  ## QUESTION: Can I ask slurm if currently there are free slots?
   ## TODO: Give option to set a maximum number of submitted jobs
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
   ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
   ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
   ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
-  ## TODO: implement better debug printout machinery
   ## TODO: Allow for copy construction in interactive slurmy, so that you can easily create another jobhandler instance with the same setup (including some easy modification utility)
+  ## TODO (Long Term): make variables that should be unchangeable fixed with python class properties and disabling of setter functionalities
 
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, use_snapshot = False, description = None):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, use_snapshot = False, description = None):
     self._debug = False
     if log.level == 10: self._debug = True
     ## Variables that are not picklable
@@ -161,10 +160,10 @@ class JobHandler:
   def _get_print_string(self, status_dict):
     print_string = 'Jobs '
     if self.config.is_verbose:
-      n_local = len(self._local_jobs)
       n_running = status_dict[Status.Running]
-      n_slurm = n_running - n_local
-      print_string += 'running (slurm/local/all): ({}/{}/{}); '.format(n_slurm, n_local, n_running)
+      n_local = len(self._local_jobs)
+      n_batch = n_running - n_local
+      print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
     n_success = status_dict[Status.Success]
     n_failed = status_dict[Status.Failed]
     n_all = len(self._jobs.values())
