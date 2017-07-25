@@ -38,7 +38,6 @@ class JobHandlerConfig:
 
 class JobHandler:
   ## Generates Jobs according to configuration
-  ## TODO: Give option to set a maximum number of submitted jobs
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
   ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
   ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
@@ -112,7 +111,7 @@ class JobHandler:
 
     return job
 
-  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, max_retries = None, tags = None, parent_tags = None):
+  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, max_retries = None, output = None, tags = None, parent_tags = None):
     if backend is None and ops.Main.backend is not None:
       backend = get_backend(ops.Main.backend)
     if backend is None:
@@ -130,7 +129,7 @@ class JobHandler:
     job_max_retries = max_retries or self.config.max_retries
     config_path = self.config.snapshot_folder+name+'.pkl'
 
-    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, max_retries = job_max_retries, tags = tags, parent_tags = parent_tags)
+    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
     self.config.jobs_configs.append(job_config)
     with open(job_config.path, 'wb') as out_file:
       pickle.dump(job_config, out_file)

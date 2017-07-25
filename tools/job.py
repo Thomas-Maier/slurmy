@@ -9,7 +9,7 @@ log = logging.getLogger('slurmy')
 
 
 class JobConfig:
-  def __init__(self, backend, path, success_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False):
+  def __init__(self, backend, path, success_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
     self.backend = backend
     self.name = self.backend.name
     self.path = path
@@ -20,6 +20,7 @@ class JobConfig:
     self.success_func = success_func
     self.is_local = is_local
     self.max_retries = max_retries
+    self.output = output
     self.status = Status.Configured
     self.job_id = None
     self.n_retries = 0

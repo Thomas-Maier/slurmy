@@ -1,6 +1,9 @@
 
 import subprocess
 import shlex
+import logging
+
+log = logging.getLogger('slurmy')
 
 
 class Base:
@@ -22,6 +25,16 @@ class Base:
     print_string = print_string.rstrip('\n')
 
     return print_string
+
+  def sync(self, config):
+    if config is None: return
+    if not isinstance(config, self.__class__):
+      log.error('({})Backend class "{}" does not match class "{}" of sync object'.format(self.name, self.__class__, config.__class__))
+      return
+    for key in self.__dict__.keys():
+      if key.startswith('_'): continue
+      log.debug('({})Synchronising option "{}"'.format(self.name, key))
+      self[key] = self[key] or config[key]
 
   def _check_commands(self):
     for command in self._commands:

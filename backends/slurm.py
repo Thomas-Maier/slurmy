@@ -10,21 +10,24 @@ from ..tools import options as ops
 log = logging.getLogger('slurmy')
 ## TODO: add more sbatch options
 ## QUESTION: Can I ask slurm if currently there are free slots?
+## TODO: Common stuff should be present in Base, like name/log/run_script/run_args and write_script (or make stuff more general)
 
 class Slurm(Base):
   bid = 'Slurm'
   _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
-  
-  def __init__(self, name = None, log = None, partition = None, exclude = None, clusters = None, qos = None, run_script = None, run_args = None):
+  def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None):
+    ## Common backend options
     self.name = name
     self.log = log
+    self.run_script = run_script
+    self.run_args = run_args
+    ## Batch options
     self.partition = partition
     self.exclude = exclude
     self.clusters = clusters
     self.qos = qos
-    self.run_script = run_script
-    self.run_args = run_args
-    self.job_id = None
+    ## Internal variables
+    self._job_id = None
     ## Get default options
     ops.Main.get_backend_options(self)
     ## Check if necessary slurm commands are available on the system
@@ -38,17 +41,6 @@ class Slurm(Base):
       if not self.run_script.startswith('#!'): out_file.write('#!/bin/bash \n')
       out_file.write(self.run_script)
     self.run_script = out_file_name
-
-  def sync(self, config):
-    if config is None or not isinstance(config, Slurm): return
-    self.name = self.name or config.name
-    self.log = self.log or config.log
-    self.partition = self.partition or config.partition
-    self.exclude = self.exclude or config.exclude
-    self.clusters = self.clusters or config.clusters
-    self.qos = self.qos or config.qos
-    self.run_script = self.run_script or config.run_script
-    self.run_args = self.run_args or config.run_args
 
   def submit(self):
     submit_list = ['sbatch']
@@ -66,13 +58,13 @@ class Slurm(Base):
     log.debug('({}) Submit job with command {}'.format(self.name, submit_list))
     submit_string = subprocess.check_output(submit_list, universal_newlines = True)
     job_id = int(submit_string.split(' ')[-1].rstrip('\n'))
-    self.job_id = job_id
+    self._job_id = job_id
 
     return job_id
 
   def cancel(self):
     log.debug('({}) Cancel job'.format(self.name))
-    os.system('scancel {}'.format(self.job_id))
+    os.system('scancel {}'.format(self._job_id))
 
   ## TODO: internally already set the exitcode here and just return it in exitcode(self)
   def status(self):
@@ -90,7 +82,7 @@ class Slurm(Base):
 
   def _get_sacct_entry(self, column):
     sacct_list = []
-    sacct_list = subprocess.check_output(['sacct', '-j', '{}.batch'.format(self.job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
+    sacct_list = subprocess.check_output(['sacct', '-j', '{}.batch'.format(self._job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
     sacct_string = None
     if len(sacct_list) > 1:
       sacct_string = sacct_list[1].strip()

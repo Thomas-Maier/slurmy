@@ -1,4 +1,13 @@
 
+## Success classes
+class SuccessOutputFile:
+  def __call__(self, config):
+    import os, time
+    time.sleep(1)
+    
+    return os.path.isfile(config.output)
+
+## Functions for interactive slurmy
 def _get_prompt():
   try:
     from IPython import embed
@@ -42,5 +51,24 @@ def load(key):
   name = session['name']
   work_dir = session['work_dir']
   jh = JobHandler(name = name, work_dir = work_dir, use_snapshot = True)
+
+  return jh
+
+def load_path(path):
+  from slurmy import JobHandler
+  jh_name = path
+  jh_path = ''
+  if '/' in jh_name:
+    jh_path = jh_name.rsplit('/', 1)[0]
+    jh_name = jh_name.rsplit('/', 1)[-1]
+  jh = None
+  # try:
+  jh = JobHandler(name = jh_name, work_dir = jh_path, use_snapshot = True)
+  # except ImportError:
+  #   _log.error('Import error during pickle load, please make sure that your success class definition is in your PYTHONPATH')
+  #   raise
+  # except AttributeError:
+  #   _log.error('')
+  #   raise
 
   return jh
