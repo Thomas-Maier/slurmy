@@ -3,7 +3,6 @@ import subprocess
 import os
 import shlex
 import logging
-import time
 from ..tools.defs import Status
 from .base import Base
 from ..tools import options as ops
@@ -25,8 +24,6 @@ class Slurm(Base):
     self.qos = qos
     self.run_script = run_script
     self.run_args = run_args
-    ## shlex splits run_args in a Popen digestable way
-    if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
     self.job_id = None
     ## Get default options
     ops.Main.get_backend_options(self)
@@ -62,7 +59,10 @@ class Slurm(Base):
     if self.clusters: submit_list += ['-M', self.clusters]
     if self.qos: submit_list += ['--qos', self.qos]
     submit_list.append(self.run_script)
-    if self.run_args: submit_list += self.run_args
+    if self.run_args:
+      ## shlex splits run_args in a Popen digestable way
+      if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
+      submit_list += self.run_args
     log.debug('({}) Submit job with command {}'.format(self.name, submit_list))
     submit_string = subprocess.check_output(submit_list, universal_newlines = True)
     job_id = int(submit_string.split(' ')[-1].rstrip('\n'))
@@ -77,8 +77,9 @@ class Slurm(Base):
   ## TODO: internally already set the exitcode here and just return it in exitcode(self)
   def status(self):
     status_string = self._get_sacct_entry('State')
-    status = Status.Finished
-    if not (status_string == 'CANCELLED' or status_string == 'COMPLETED' or status_string == 'FAILED' or status_string == 'NODE_FAIL' or status_string == 'BOOT_FAIL' or status == 'NODE_FAIL'): status = Status.Running
+    status = Status.Running
+    # if not (status_string == 'CANCELLED' or status_string == 'COMPLETED' or status_string == 'FAILED' or status_string == 'NODE_FAIL' or status_string == 'BOOT_FAIL' or status == 'NODE_FAIL'): status = Status.Running
+    if status_string is not None: status = Status.Finished
       
     return status
 
@@ -89,12 +90,11 @@ class Slurm(Base):
 
   def _get_sacct_entry(self, column):
     sacct_list = []
-    while(True):
-      sacct_list = subprocess.check_output(['sacct', '-j', str(self.job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
-      if len(sacct_list) > 1: break
-      time.time(0.5)
-    status_string = sacct_list[1].strip()
-    log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, status_string))
+    sacct_list = subprocess.check_output(['sacct', '-j', '{}.batch'.format(self.job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
+    sacct_string = None
+    if len(sacct_list) > 1:
+      sacct_string = sacct_list[1].strip()
+      log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_string))
     
-    return status_string
+    return sacct_string
     

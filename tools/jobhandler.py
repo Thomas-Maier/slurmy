@@ -57,7 +57,7 @@ class JobHandler:
     if backend is None and ops.Main.backend is not None:
       backend = get_backend(ops.Main.backend)
     ## JobHandler config
-    self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme)
+    self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme, run_max = run_max)
     if use_snapshot and os.path.isfile(self.config.path):
       log.debug('Read snapshot from {}'.format(self.config.path))
       with open(self.config.path, 'rb') as in_file:
@@ -202,7 +202,7 @@ class JobHandler:
     if self.config.is_verbose and jobs_failed:
       print_string += 'Failed jobs: {}\n'.format(jobs_failed)
     if time_spent:
-      print_string += 'time spent: {:.1f} s'.format(time_spent)
+      print_string += 'Time spent: {:.1f} s'.format(time_spent)
 
     return print_string
 
@@ -271,8 +271,6 @@ class JobHandler:
       time_now = time.time() - time_now
       if not self._debug: self.print_summary(time_now)
 
-  ## TODO: Small delay in the batch system bookkeeping can lead to jobs being identified as failed when the status is updated in the loop directly after the submission...
-  ## TODO: Probably should just make this more robust in the backend class
   def submit_jobs(self, tags = None, make_snapshot = True, wait = True):
     try:
       ## Get current job states
@@ -280,7 +278,7 @@ class JobHandler:
       ## Check local jobs progression
       self._check_local_jobs()
       for job in self.get_jobs(tags):
-        ## Submit new jobs only if current number of running jobs is below maximum
+        ## Submit new jobs only if current number of running jobs is below maximum, if set
         if self.config.run_max and not (len(self.config.job_states[Status.Running]) < self.config.run_max):
           log.debug('Maximum number of running jobs reached, skip job submission')
           break
@@ -350,7 +348,7 @@ class JobHandler:
   @staticmethod
   def _has_tags(job, tags):
     ret_val = False
-    if isinstance(tags, list) or isinstance(tags, tuple):
+    if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
       for tag in tags:
         ret_val = JobHander._has_tag(job, tag)
         if ret_val: break
