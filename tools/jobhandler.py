@@ -38,7 +38,6 @@ class JobHandlerConfig:
 
 class JobHandler:
   ## Generates Jobs according to configuration
-  ## QUESTION: Can I ask slurm if currently there are free slots?
   ## TODO: Give option to set a maximum number of submitted jobs
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
   ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
@@ -175,9 +174,9 @@ class JobHandler:
   ## TODO: better print format
   def _get_summary_string(self, time_spent = None):
     summary_dict = OrderedDict()
-    summary_dict['all'] = {'string': 'Jobs processed ', 'slurm': len(self._jobs.values())-self.config.local_counter, 'local': self.config.local_counter}
-    summary_dict['success'] = {'string': '     successful ', 'slurm': 0, 'local': 0}
-    summary_dict['fail'] = {'string': '     failed ', 'slurm': 0, 'local': 0}
+    summary_dict['all'] = {'string': 'Jobs processed ', 'batch': len(self._jobs.values())-self.config.local_counter, 'local': self.config.local_counter}
+    summary_dict['success'] = {'string': '     successful ', 'batch': 0, 'local': 0}
+    summary_dict['fail'] = {'string': '     failed ', 'batch': 0, 'local': 0}
     jobs_failed = ''
     for job in self._jobs.values():
       status = job.get_status()
@@ -185,21 +184,21 @@ class JobHandler:
         if job.is_local():
           summary_dict['success']['local'] += 1
         else:
-          summary_dict['success']['slurm'] += 1
+          summary_dict['success']['batch'] += 1
       elif status == Status.Failed or status == Status.Cancelled:
         jobs_failed += '{} '.format(job.get_name())
         if job.is_local():
           summary_dict['fail']['local'] += 1
         else:
-          summary_dict['fail']['slurm'] += 1
+          summary_dict['fail']['batch'] += 1
 
     print_string = ''
     for key, summary_val in summary_dict.items():
       if key == 'fail' and not jobs_failed: continue
-      n_slurm = summary_val['slurm']
+      n_batch = summary_val['batch']
       n_local = summary_val['local']
-      n_all = summary_val['slurm'] + summary_val['local']
-      print_string += '{}(slurm/local/all): ({}/{}/{})\n'.format(summary_val['string'], n_slurm, n_local, n_all)
+      n_all = summary_val['batch'] + summary_val['local']
+      print_string += '{}(batch/local/all): ({}/{}/{})\n'.format(summary_val['string'], n_batch, n_local, n_all)
     if self.config.is_verbose and jobs_failed:
       print_string += 'Failed jobs: {}\n'.format(jobs_failed)
     if time_spent:
@@ -241,18 +240,17 @@ class JobHandler:
       running = True
       while running:
         self.submit_jobs(make_snapshot = False, wait = False)
-        self._update_job_states()
         print_string = self._get_print_string()
         if not self._debug:
           stdout.write('\r'+print_string)
           stdout.flush()
         else:
           log.debug(print_string)
-        time.sleep(interval)
         n_success = len(self.config.job_states[Status.Success])
         n_failed = len(self.config.job_states[Status.Failed])
         n_cancelled = len(self.config.job_states[Status.Cancelled])
         if (n_success+n_failed+n_cancelled) == n_all: running = False
+        time.sleep(interval)
     except KeyboardInterrupt:
       if not self._debug: stdout.write('\n')
       log.warning('Quitting gracefully...')
@@ -273,11 +271,19 @@ class JobHandler:
       time_now = time.time() - time_now
       if not self._debug: self.print_summary(time_now)
 
+  ## TODO: Small delay in the batch system bookkeeping can lead to jobs being identified as failed when the status is updated in the loop directly after the submission...
+  ## TODO: Probably should just make this more robust in the backend class
   def submit_jobs(self, tags = None, make_snapshot = True, wait = True):
     try:
+      ## Get current job states
+      self._update_job_states()
       ## Check local jobs progression
       self._check_local_jobs()
       for job in self.get_jobs(tags):
+        ## Submit new jobs only if current number of running jobs is below maximum
+        if self.config.run_max and not (len(self.config.job_states[Status.Running]) < self.config.run_max):
+          log.debug('Maximum number of running jobs reached, skip job submission')
+          break
         status = job.get_status()
         if (status == Status.Failed or status == Status.Cancelled): job.retry(submit = False)
         ## If job is not in Configured state there is nothing to do
@@ -289,6 +295,8 @@ class JobHandler:
           self._local_jobs.append(job)
           self.config.local_counter += 1
         job.submit()
+        ## Update job status
+        self._update_job_status(job)
       if wait: self._wait_for_jobs(tags)
       if make_snapshot: self._update_snapshot()
     except:

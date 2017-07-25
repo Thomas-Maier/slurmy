@@ -3,13 +3,14 @@ import subprocess
 import os
 import shlex
 import logging
+import time
 from ..tools.defs import Status
 from .base import Base
 from ..tools import options as ops
 
 log = logging.getLogger('slurmy')
 ## TODO: add more sbatch options
-## TODO: Make one check at the start to see if all necessary commands are present on the system, rather than with each function call
+## QUESTION: Can I ask slurm if currently there are free slots?
 
 class Slurm(Base):
   bid = 'Slurm'
@@ -73,17 +74,27 @@ class Slurm(Base):
     log.debug('({}) Cancel job'.format(self.name))
     os.system('scancel {}'.format(self.job_id))
 
-  ## TODO: probably more robust to use sacct to identify if job is still running, squeue -j throws an error after some time of waiting...
+  ## TODO: internally already set the exitcode here and just return it in exitcode(self)
   def status(self):
-    status_string = subprocess.check_output(['squeue', '-j', str(self.job_id)], universal_newlines = True)
-    n_lines = status_string.count('\n')
+    status_string = self._get_sacct_entry('State')
     status = Status.Finished
-    if n_lines > 1: status = Status.Running
+    if not (status_string == 'CANCELLED' or status_string == 'COMPLETED' or status_string == 'FAILED' or status_string == 'NODE_FAIL' or status_string == 'BOOT_FAIL' or status == 'NODE_FAIL'): status = Status.Running
       
     return status
 
   def exitcode(self):
-    sacct_string = subprocess.check_output(['sacct', '-j', str(self.job_id), '-P', '-o', 'ExitCode'], universal_newlines = True)
-    exitcode = sacct_string.split('\n')[1]
+    exitcode = self._get_sacct_entry('ExitCode')
 
     return exitcode
+
+  def _get_sacct_entry(self, column):
+    sacct_list = []
+    while(True):
+      sacct_list = subprocess.check_output(['sacct', '-j', str(self.job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
+      if len(sacct_list) > 1: break
+      time.time(0.5)
+    status_string = sacct_list[1].strip()
+    log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, status_string))
+    
+    return status_string
+    
