@@ -39,7 +39,6 @@ class JobHandlerConfig:
 class JobHandler:
   ## Generates Jobs according to configuration
   ## TODO: Extend dependencies between jobs and their parent jobs, e.g. use output names from parent in run_script (needs some rudimentary parsing)
-  ## TODO: Output functionality for job and jobhandler: Define output for a job of which it should keep track of
   ## TODO: add_parent(job, parent_job) which automatically makes the appropriate parent_tags and tags setting, work with str or job object for job in order to use already added job or new one. Also allow for list of parent jobs and list of child jobs. Maybe just additional argument to add_job.
   ## TODO: print_summary should take into account that jobs could be unsubmitted/still running
   ## TODO: Allow for copy construction in interactive slurmy, so that you can easily create another jobhandler instance with the same setup (including some easy modification utility)
