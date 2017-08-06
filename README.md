@@ -18,9 +18,9 @@ This will make python aware of the slurmy module and you'll be able to execute t
 
 ## General usage
 
-You can just write a piece of python code that imports the needed slurmy classes, like JobHandler and the backend class of your choice, defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scipts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.
+You can just write a piece of python code that imports the needed slurmy classes, like JobHandler and the backend class of your choice, defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scripts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.
 
-Example of simple slurm jobs definition: examples/example_slurm_simple.py
+*Example of simple slurm jobs definition:* examples/example_slurm_simple.py
 
 You can also make use of the interactive slurmy functionality to load a job configuration, more on that later.
 
