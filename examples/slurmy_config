@@ -1,7 +1,7 @@
 bookkeeping = ~/.slurmy_bookkeeping
 workdir = ./
-
-# Slurm backend
+backend = Slurm
+## Slurm backend options
 Slurm.partition = lsschaile
 #Slurm.clusters = 
 #Slurm.qos = 
