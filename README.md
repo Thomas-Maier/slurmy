@@ -61,14 +61,23 @@ By default, slurmy will make snapshots of your JobHandler session, which allows 
 Arguments that can be passed to the JobHandler construction:
 
 **name** (default: None): Name used for the session. This defines the name of the base folder, where logs, submission scripts, etc. are stored.
+
 **backend** (default: None): Default backend to be used.
+
 **work_dir** (default: ""): Path to the work directory where the base folder is to be placed.
+
 **local_max** (default: 0): Maximum number of concurrent local processes to be run. Setting this to a value greater than 0 will trigger the usage of local processes, otherwise only batch jobs will be submitted.
+
 **success_func** (default: None): Default success definition to be used.
+
 **max_retries** (default: 0): Maximum number of retries that will be attempted.
+
 **theme** (default: Lovecraft): Theme that is used by the name generator to name individual jobs and the base folder name. Priority is given to the "name" argument. Themes can be used as given by the Theme enums in tools/defs.py. If Boring is used, job names are simply the base folder name with an incrementing integer.
+
 **run_max** (default: None): Maximum number of jobs that are submitted concurrently. Sometimes needed to not overload batch systems.
+
 **do_snapshot** (default: True): Switch for snapshot deactivation.
+
 **description** (default: None): Description of the JobHandler. For bookkeeping purposes.
 
 ## Arguments for add_jobs
@@ -76,12 +85,19 @@ Arguments that can be passed to the JobHandler construction:
 Arguments that can be passed to the add_jobs function of JobHandler:
 
 **backend** (default: None): Backend to be used by the job.
+
 **run_script** (default: None): The shell script that defines the job execution. Can either be the script as one string block, or the name of a script on disk.
+
 **run_args** (default: None): Run arguments that should be passed to the shell script. Can be either a string or a list. It is recommended to simply pass a string that reflects the same sequence that you would also write in a shell line command.
+
 **success_func** (default: None): Success definition to be used by the job.
+
 **max_retries** (default: None): Maximum number of retries that will be attempted by the job.
+
 **output** (default: None): User defined output of the job. Can be anything, since it's not used by the job.
+
 **tags** (default: None): Tags that should be attached to the job. Can be a string or a list of strings.
+
 **parent_tags** (default: None): Parent tags that should be attached to the job. Can be a string or a list of strings.
 
 ## Interactive Slurmy
@@ -91,7 +107,9 @@ You can use the slurmy executable to start an interactive slurmy session, which 
 Arguments that can be passed to the executable:
 
 **-p PATH**: Path to the base folder of a JobHandler session. Directly loads the JobHandler as "jh".
+
 **-c CONFIG**: Path to a job definition file. More details, see below.
+
 **--debug**: Run in debugging mode.
 
 The job definition file passed with **-c** is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with.
@@ -101,5 +119,7 @@ The job definition file passed with **-c** is a convenient way to make job defin
 The interactive slurmy session also defines a couple of functions:
 
 **list_sessions()**: List all past JobHandler sessions with some information. Sessions are kept track of in a json file, which is defined in ~/.slurmy. They are either defined by the full path to the base folder on disk, or by the name as given in the list.
+
 **load(name)**: Load a JobHandler as given by the name in list_sessions().
+
 **load_path(path)**: Load a JobHandler as given by the path to the base folder (relative or absolute).
