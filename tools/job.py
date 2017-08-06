@@ -10,6 +10,7 @@ log = logging.getLogger('slurmy')
 
 class JobConfig:
   def __init__(self, backend, path, success_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
+    ## Static variables
     self.backend = backend
     self.name = self.backend.name
     self.path = path
@@ -21,6 +22,7 @@ class JobConfig:
     self.is_local = is_local
     self.max_retries = max_retries
     self.output = output
+    ## Dynamic variables
     self.status = Status.Configured
     self.job_id = None
     self.n_retries = 0
@@ -54,7 +56,7 @@ class Job:
     print_string += 'Status: {}\n'.format(self.config.status.name)
     if self.config.tags: print_string += 'Tags: {}\n'.format(self.config.tags)
     if self.config.parent_tags: print_string += 'Parent tags: {}\n'.format(self.config.parent_tags)
-    print_string.rstrip('\n')
+    if self.config.output: print_string += 'Output: {}'.format(self.config.output)
 
     return print_string
 
@@ -107,8 +109,6 @@ class Job:
       raise Exception
     if self.config.is_local:
       command = self._get_local_command()
-      ## preexec_fn option tells child process to ignore signal sent to main app (for KeyboardInterrupt ignore)
-      ## apparently more saver options available with python 3.2+, see "start_new_session = True"
       log.debug('({}) Submit local process with command {}'.format(self.config.name, command))
       # self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, preexec_fn = os.setpgrp)
       self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)

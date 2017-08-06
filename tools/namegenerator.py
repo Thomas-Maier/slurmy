@@ -21,10 +21,10 @@ class NameGenerator:
     name_list = None
     if theme == Theme.Lovecraft:
       name, name_list = NameGenerator._get_lovecraft_theme()
-    elif theme == Theme.Nordic:
-      name, name_list = NameGenerator._get_nordic_theme()
+    # elif theme == Theme.Nordic:
+    #   name, name_list = NameGenerator._get_nordic_theme()
     elif theme == Theme.Boring:
-      pass
+      name_list = [name_given]
     ## If a name was set in the constructor use this instead
     name = name_given or name
 
@@ -37,9 +37,9 @@ class NameGenerator:
 
     return name, name_list
     
-  @staticmethod
-  def _get_nordic_theme():
-    name = 'Odin'
-    name_list = []
+  # @staticmethod
+  # def _get_nordic_theme():
+  #   name = 'Odin'
+  #   name_list = []
 
-    return name, name_list
+  #   return name, name_list

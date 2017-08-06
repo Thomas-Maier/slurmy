@@ -72,13 +72,19 @@ class Options:
   def sync_bookkeeping(self):
     ## Make sure bookkeeping is already loaded from file
     self.get_bookkeeping()
+    pop_paths = set()
+    pop_keys = set()
     for path in self._bookkeeping[Options._bk_sessions_name].keys():
       ## If folder exists, assume that bookkeeping entry still exists on disk
       if os.path.isdir(path): continue
-      self._bookkeeping[Options._bk_sessions_name].pop(path)
+      pop_paths.add(path)
       for key, val in self._bookkeeping[Options._bk_keys_name].items():
         if val != path: continue
-        self._bookkeeping[Options._bk_keys_name].pop(key)
+        pop_keys.add(key)
+    for path in pop_paths:
+      self._bookkeeping[Options._bk_sessions_name].pop(path)
+    for key in pop_keys:
+      self._bookkeeping[Options._bk_keys_name].pop(key)
     self._update_bookkeeping()
 
   def _update_bookkeeping(self):

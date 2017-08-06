@@ -4,12 +4,11 @@ import argparse
 import os
 import logging
 from slurmy import JobHandler
+from slurmy.backends import Slurm
 from slurmy.tools.utils import _get_prompt, list_sessions, load, load_path
 
 _log = logging.getLogger('slurmy')
 
-## TODO: encapsulate utility in helper functions that just take jobhandler/job instances (instead of putting everything into the classes)
-## TODO: allow for passing a config file, which holds the full jobs conifguration
 
 if __name__ == '__main__':
   _parser = argparse.ArgumentParser(description = 'Slurmy interactive')
@@ -19,5 +18,9 @@ if __name__ == '__main__':
   _args = _parser.parse_args()
   if _args.debug: _log.setLevel(level = logging.DEBUG)
   if _args.path: jh = load_path(_args.path)
+  ## Load config file if one was provided
+  if _args.config:
+    with open(_args.config, 'r') as in_file:
+      exec(in_file.read())
   ## Load interactive session
   _get_prompt()()

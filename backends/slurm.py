@@ -8,7 +8,6 @@ from .base import Base
 from ..tools import options as ops
 
 log = logging.getLogger('slurmy')
-## TODO: add more sbatch options
 ## QUESTION: Can I ask slurm if currently there are free slots?
 ## TODO: Common stuff should be present in Base, like name/log/run_script/run_args and write_script (or make stuff more general)
 

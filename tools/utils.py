@@ -4,7 +4,7 @@ class SuccessOutputFile:
   def __call__(self, config):
     import os, time
     time.sleep(1)
-    
+
     return os.path.isfile(config.output)
 
 ## Functions for interactive slurmy
