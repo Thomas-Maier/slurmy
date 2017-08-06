@@ -50,11 +50,11 @@ By default, the exitcode of the job (either taken from the local process or from
 
 Due to technically reasons connected to the snapshot feature (see below), your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.
 
-The example uses SuccessOutputFile as defined in tools/utils.py. It also introduces a feature of slurmy, that allows to use the configuration of the jobhandler inside the shell script and some arguments of add_job (currently "output"). This is done by some simple string parsing and substitution routine of any variable of the JobHandlerConfig. For now have a look tools/JobHandler.py to see what can be used (all variables that don't start with "_").
+The example uses SuccessOutputFile as defined in tools/utils.py. It also introduces a feature of slurmy, that allows to use the configuration of the JobHandler inside the shell script and some arguments of add_job (currently only "output"). This is done by some simple string parsing and substitution routine of any variable of the JobHandlerConfig. For now have a look tools/JobHandler.py to see what can be used (all variables that don't start with "_").
 
 ## Snapshots
 
-By default, slurmy will make snapshots of your jobhandler session, which allows to load your job submission session at a later time (in interactive slurmy). You can deactivate this feature by passing "do_snaphot = False" to the JobHandler construction. If deactivated, the submission session can't be properly loaded in interactive slurmy anymore.
+By default, slurmy will make snapshots of your JobHandler session, which allows to load your job submission session at a later time (in interactive slurmy). You can deactivate this feature by passing "do_snaphot = False" to the JobHandler construction. If deactivated, the submission session can't be properly loaded in interactive slurmy anymore.
 
 ## JobHandler Options
 
