@@ -14,7 +14,7 @@ log = logging.getLogger('slurmy')
 class Slurm(Base):
   bid = 'Slurm'
   _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
-  def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None):
+  def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None, mem = None, time = None, export = None):
     ## Common backend options
     self.name = name
     self.log = log
@@ -22,9 +22,12 @@ class Slurm(Base):
     self.run_args = run_args
     ## Batch options
     self.partition = partition
-    self.exclude = exclude
     self.clusters = clusters
     self.qos = qos
+    self.exclude = exclude
+    self.mem = mem
+    self.time = time
+    self.export = export
     ## Internal variables
     self._job_id = None
     ## Get default options
@@ -37,7 +40,7 @@ class Slurm(Base):
     out_file_name = '{}/{}'.format(script_folder.rstrip('/'), self.name)
     with open(out_file_name, 'w') as out_file:
       ## Required for slurm submission script
-      if not self.run_script.startswith('#!'): out_file.write('#!/bin/bash \n')
+      if not self.run_script.startswith('#!'): out_file.write('#!/bin/bash\n')
       out_file.write(self.run_script)
     self.run_script = out_file_name
 
@@ -48,7 +51,10 @@ class Slurm(Base):
     if self.partition: submit_list += ['-p', self.partition]
     if self.exclude: submit_list += ['-x', self.exclude]
     if self.clusters: submit_list += ['-M', self.clusters]
-    if self.qos: submit_list += ['--qos', self.qos]
+    if self.qos: submit_list.append('--qos={}'.format(self.qos))
+    if self.mem: submit_list.append('--mem={}'.format(self.mem))
+    if self.time: submit_list.append('--time={}'.format(self.time))
+    if self.export: submit_list.append('--export={}'.format(self.export))
     submit_list.append(self.run_script)
     if self.run_args:
       ## shlex splits run_args in a Popen digestable way
