@@ -5,7 +5,8 @@ from slurmy.backends import Slurm
 from slurmy.tools.utils import SuccessOutputFile
 
 def main():
-  jobHandler = JobHandler()
+  ## Success function, which has to be an instance of a class with __call__ defined
+  jobHandler = JobHandler(success_func = SuccessOutputFile())
 
   ## Strings of the form @SLURMY.XYZ will be substituted with the respective definition in the JobHandler config, if XYZ is a variable of the config
   run_script = """
@@ -24,7 +25,7 @@ def main():
                        ## Set the output of the job
                        ## This can be anything (string, list, dict), since it's not used by the job itself
                        output = '@SLURMY.output_dir/out.{}'.format(run_arg),
-                       ## Success function, which has to be an instance of a class with __call__ defined
+                       ## Can overwrite default set for the JobHandler
                        success_func = SuccessOutputFile())
     
   jobHandler.run_jobs(interval = 2)

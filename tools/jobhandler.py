@@ -17,7 +17,7 @@ log = logging.getLogger('slurmy')
 
 
 class JobHandlerConfig:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True):
     ## Static variables
     self._name_gen = NameGenerator(name = name, theme = theme)
     self.name = self._name_gen.name
@@ -34,13 +34,14 @@ class JobHandlerConfig:
     self.max_retries = max_retries
     self.run_max = run_max
     self.backend = backend
+    self._do_snapshot = do_snapshot
     ## Dynamic variables
     self._jobs_configs = []
     self._job_states = {Status.Configured: set(), Status.Running: set(), Status.Finished: set(), Status.Success: set(), Status.Failed: set(), Status.Cancelled: set()}
     self._local_counter = 0
 
 class JobHandler:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, use_snapshot = False, description = None):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None):
     self._debug = False
     if log.level == 10: self._debug = True
     ## Variables that are not picklable
@@ -51,7 +52,7 @@ class JobHandler:
     if backend is None and ops.Main.backend is not None:
       backend = get_backend(ops.Main.backend)
     ## JobHandler config
-    self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme, run_max = run_max)
+    self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot)
     ## Variable parser
     self._parser = Parser(self.config)
     if use_snapshot and os.path.isfile(self.config.path):
@@ -79,6 +80,8 @@ class JobHandler:
     self._update_snapshot()
 
   def _update_snapshot(self, skip_jobs = False):
+    ## If snapshotting is deactivated, do nothing
+    if not self.config._do_snapshot: return
     if not skip_jobs:
       log.debug('Update job snapshots')
       for job in self._jobs.values():
@@ -109,7 +112,7 @@ class JobHandler:
         if tags not in self._tagged_jobs: self._tagged_jobs[tags] = []
         self._tagged_jobs[tags].append(job)
     ## Ensure that a first snapshot is made
-    job.update_snapshot()
+    if self.config._do_snapshot: job.update_snapshot()
 
     return job
 

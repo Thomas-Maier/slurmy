@@ -4,6 +4,8 @@ from .defs import Theme
 
 
 class NameGenerator:
+  ## Default to prevent problems
+  _name_default = 'Slurmy'
   def __init__(self, name = None, theme = Theme.Lovecraft):
     self.name, self._name_list = NameGenerator._get_theme(name, theme)
     self._name_counter = {}
@@ -27,6 +29,8 @@ class NameGenerator:
       name_list = [name_given]
     ## If a name was set in the constructor use this instead
     name = name_given or name
+    ## Make sure that at least the default is used
+    name = name or NameGenerator._name_default
 
     return name, name_list
 
