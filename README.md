@@ -44,7 +44,7 @@ Jobs can be connected by adding tags and parent tags to them. Jobs with parent t
 
 ## Custom Success Conditions and Variable Substitution
 
-By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with __call__ defined. The function has to have exactly one argument, which is the config instance of the job. During the evaluation whether the job was successful or not, if success_func was defined during add_job, the custom definition will be used instead of the default one.
+By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. During the evaluation whether the job was successful or not, if success_func was defined during add_job, the custom definition will be used instead of the default one.
 
 **Example of success_func usage:** examples/example_success_func.py
 
