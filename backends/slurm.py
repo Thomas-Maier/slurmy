@@ -52,7 +52,7 @@ class Slurm(Base):
       submit_list += self.run_args
     log.debug('({}) Submit job with command {}'.format(self.name, submit_list))
     submit_string = subprocess.check_output(submit_list, universal_newlines = True)
-    job_id = int(submit_string.split(' ')[-1].rstrip('\n'))
+    job_id = int(submit_string.split(' ')[3].rstrip('\n'))
     self._job_id = job_id
 
     return job_id
