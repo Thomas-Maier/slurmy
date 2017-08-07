@@ -48,7 +48,7 @@ class Options:
       return self._bookkeeping[Options._bk_keys_name], self._bookkeeping[Options._bk_sessions_name]
     if self.bookkeeping is None:
       log.error('No bookkeeping file defined')
-      return
+      return None, None
     self.bookkeeping = Options._parse_file_name(self.bookkeeping)
     ## Set empty dictionary as default
     self._bookkeeping = {Options._bk_keys_name: {}, Options._bk_sessions_name: {}}
@@ -71,7 +71,9 @@ class Options:
 
   def sync_bookkeeping(self):
     ## Make sure bookkeeping is already loaded from file
-    self.get_bookkeeping()
+    tmp = self.get_bookkeeping()
+    ## If no bookkeeping is present, do nothing
+    if tmp[0] is None: return
     pop_paths = set()
     pop_keys = set()
     for path in self._bookkeeping[Options._bk_sessions_name].keys():
