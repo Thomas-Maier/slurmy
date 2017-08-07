@@ -13,6 +13,7 @@ git clone https://github.com/TomVanNom/slurmy.git
 Make sure to add the directory in which you cloned slurmy to PYTHONPATH, and the slurmy folder to PATH:
 
 export PYTHONPATH=$PWD:$PYTHONPATH
+
 export PATH=$PWD/slurmy:$PATH
 
 This will make python aware of the slurmy module and you'll be able to execute the slurmy executable.
