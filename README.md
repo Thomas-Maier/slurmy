@@ -20,7 +20,7 @@ This will make python aware of the slurmy module and you'll be able to execute t
 
 You can just write a piece of python code that imports the needed slurmy classes, like JobHandler and the backend class of your choice, defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scripts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.
 
-**Example of simple slurm jobs definition:** examples/example_slurm_simple.py
+**Example of simple slurm jobs definition:** [examples/example_slurm_simple.py](examples/example_slurm_simple.py)
 
 You can also make use of the interactive slurmy functionality to load a job configuration, more on that later.
 
@@ -28,7 +28,7 @@ You can also make use of the interactive slurmy functionality to load a job conf
 
 Since you'll most likely have only one batch system with some required configurations, it's possible to set up a general configuration file which specifies the backend to be used and it's configuration. If you do so, no backend configuration has to be done when making the job definition. You can also define some general slurmy configurations in this file.
 
-**Template of slurmy config file:** examples/slurmy_config
+**Template of slurmy config file:** [examples/slurmy_config](examples/slurmy_config)
 
 Copy this file into your home directory (name must be ".slurmy") and set configurations according to your requirements:
 
@@ -40,13 +40,13 @@ NOTE: All further examples assume that ~/.slurmy exists, which properly defines 
 
 Jobs can be connected by adding tags and parent tags to them. Jobs with parent tags X,Y, and Z will only be executed if all jobs that have the tags X, Y, or Z have successfully finished.
 
-**Example of job chaining with tags:** examples/example_chain.py
+**Example of job chaining with tags:** [examples/example_chain.py](examples/example_chain.py)
 
 ## Custom Success Conditions and Variable Substitution
 
 By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. During the evaluation whether the job was successful or not, if success_func was defined during add_job, the custom definition will be used instead of the default one.
 
-**Example of success_func usage:** examples/example_success_func.py
+**Example of success_func usage:** [examples/example_success_func.py](examples/example_success_func.py)
 
 Due to technically reasons connected to the snapshot feature (see below), your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.
 
@@ -114,7 +114,7 @@ Arguments that can be passed to the executable:
 
 The job definition file passed with **-c** is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with.
 
-**Example of a job definition file which can be passed to slurmy:** examples/example_interactive_config.py
+**Example of a job definition file which can be passed to slurmy:** [examples/example_interactive_config.py](examples/example_interactive_config.py)
 
 The interactive slurmy session also defines a couple of functions:
 
