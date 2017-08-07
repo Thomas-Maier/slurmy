@@ -93,6 +93,8 @@ class Options:
 
   ## TODO: only checking if the backend_options are already set is not really robust
   def _read_options(self, force = False):
+    ## If no options file present, do nothing
+    if not os.path.isfile(Options._options_file): return
     ## If options were already filled, do nothing
     if self._backend_options and not force: return
     lines = None
