@@ -110,7 +110,6 @@ class Job:
     if self.config.is_local:
       command = self._get_local_command()
       log.debug('({}) Submit local process with command {}'.format(self.config.name, command))
-      # self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, preexec_fn = os.setpgrp)
       self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)
     else:
       self.config.job_id = self.config.backend.submit()
@@ -129,7 +128,6 @@ class Job:
     self.config.status = Status.Cancelled
     if clear_retry: self.config.max_retries = 0
 
-  ## TODO: try to encapsulate any retry logic inside the job config and set it here
   def retry(self, force = False, submit = True):
     if not self.do_retry(): return
     log.debug('({}) Retry job'.format(self.config.name))

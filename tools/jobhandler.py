@@ -144,15 +144,13 @@ class JobHandler:
       
     return self._add_job_with_config(job_config)
 
-  ## TODO: needs to be more robust, i.e. what happens if the parent_tag is not in the tagged jobs dict.
-  ## Put a check on this in submit_jobs?
   def _job_ready(self, job):
     parent_tags = job.get_parent_tags()
     if not parent_tags:
       return True
     for tag in parent_tags:
       if tag not in self._tagged_jobs:
-        log.warning('Parent tag is not registered in jobs list!')
+        log.error('Parent tag is not registered in jobs list!')
         continue
       for tagged_job in self._tagged_jobs[tag]:
         status = tagged_job.get_status()
@@ -163,7 +161,6 @@ class JobHandler:
     
     return True
 
-  ## TODO: think of better information printing
   def _get_print_string(self):
     print_string = 'Jobs '
     if self.config.is_verbose:
@@ -178,7 +175,6 @@ class JobHandler:
 
     return print_string
 
-  ## TODO: better print format
   def _get_summary_string(self, time_spent = None):
     summary_dict = OrderedDict()
     summary_dict['all'] = {'string': 'Jobs processed ', 'batch': len(self._jobs.values())-self.config._local_counter, 'local': self.config._local_counter}

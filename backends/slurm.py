@@ -8,8 +8,7 @@ from .base import Base
 from ..tools import options as ops
 
 log = logging.getLogger('slurmy')
-## QUESTION: Can I ask slurm if currently there are free slots?
-## TODO: Common stuff should be present in Base, like name/log/run_script/run_args and write_script (or make stuff more general)
+
 
 class Slurm(Base):
   bid = 'Slurm'
@@ -34,15 +33,6 @@ class Slurm(Base):
     ops.Main.get_backend_options(self)
     ## Check if necessary slurm commands are available on the system
     self._check_commands()
-
-  def write_script(self, script_folder):
-    if os.path.isfile(self.run_script): return
-    out_file_name = '{}/{}'.format(script_folder.rstrip('/'), self.name)
-    with open(out_file_name, 'w') as out_file:
-      ## Required for slurm submission script
-      if not self.run_script.startswith('#!'): out_file.write('#!/bin/bash\n')
-      out_file.write(self.run_script)
-    self.run_script = out_file_name
 
   def submit(self):
     submit_list = ['sbatch']
@@ -71,7 +61,6 @@ class Slurm(Base):
     log.debug('({}) Cancel job'.format(self.name))
     os.system('scancel {}'.format(self._job_id))
 
-  ## TODO: internally already set the exitcode here and just return it in exitcode(self)
   def status(self):
     status_string = self._get_sacct_entry('State')
     status = Status.Running
@@ -94,4 +83,3 @@ class Slurm(Base):
       log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_string))
     
     return sacct_string
-    

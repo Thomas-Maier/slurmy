@@ -2,6 +2,7 @@
 import subprocess
 import shlex
 import logging
+import os
 
 log = logging.getLogger('slurmy')
 
@@ -9,6 +10,11 @@ log = logging.getLogger('slurmy')
 class Base:
   bid = 'Base'
   _commands = []
+  name = None
+  log = None
+  run_script = None
+  run_args = None
+  
   def __getitem__(self, key):
     return self.__dict__[key]
     
@@ -36,6 +42,15 @@ class Base:
       log.debug('({})Synchronising option "{}"'.format(self.name, key))
       self[key] = self[key] or config[key]
 
+  def write_script(self, script_folder):
+    if os.path.isfile(self.run_script): return
+    out_file_name = '{}/{}'.format(script_folder.rstrip('/'), self.name)
+    with open(out_file_name, 'w') as out_file:
+      ## Required for slurm submission script, but probably fairly general
+      if not self.run_script.startswith('#!'): out_file.write('#!/bin/bash\n')
+      out_file.write(self.run_script)
+    self.run_script = out_file_name
+
   def _check_commands(self):
     for command in self._commands:
       if Base._check_command(command): continue
@@ -50,3 +65,16 @@ class Base:
       return False
 
     return True
+
+  ## Backend specific implementations
+  def submit(self):
+    return 0
+
+  def cancel(self):
+    return 0
+
+  def status(self):
+    return 0
+
+  def exitcode(self):
+    return 0
