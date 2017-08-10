@@ -23,8 +23,12 @@ class NameGenerator:
     name_list = None
     if theme == Theme.Lovecraft:
       name, name_list = NameGenerator._get_lovecraft_theme()
-    # elif theme == Theme.Nordic:
-    #   name, name_list = NameGenerator._get_nordic_theme()
+    elif theme == Theme.Nordic:
+      name, name_list = NameGenerator._get_nordic_theme()
+    elif theme == Theme.ImperiumOfMan:
+      name, name_list = NameGenerator._get_imperium_theme()
+    elif theme == Theme.Chaos:
+      name, name_list = NameGenerator._get_chaos_theme()
     elif theme == Theme.Boring:
       name_list = [name_given]
     ## If a name was set in the constructor use this instead
@@ -41,9 +45,23 @@ class NameGenerator:
 
     return name, name_list
     
-  # @staticmethod
-  # def _get_nordic_theme():
-  #   name = 'Odin'
-  #   name_list = []
+  @staticmethod
+  def _get_nordic_theme():
+    name = 'Odin'
+    name_list = ['Baldur', 'Borr', 'Bragi', 'Dagr', 'Dellingr', 'Eir', 'Elli', 'Forseti', 'Freyja', 'Freyr', 'Frigg', 'Fulla', 'Gefjun', 'Hel', 'Heimdall', 'Kvasir', 'Lofn', 'Loki', 'Magni', 'Nanna', 'Nerthus', 'Njord', 'Sif', 'Sjoefn', 'Skadi', 'Snotra', 'Thor', 'Thrud', 'Tyr', 'Ull', 'Vidar', 'Voer', 'Yggdrasil']
 
-  #   return name, name_list
+    return name, name_list
+
+  @staticmethod
+  def _get_imperium_theme():
+    name = 'God_Emperor_Of_Mankind'
+    name_list = ['Lion-ElJonson', 'Jaghatai-Khan', 'Leman-Russ', 'Rogal-Dorn', 'Sanguinius', 'Ferrus-Manus', 'Roboute-Guilliman', 'Vulkan', 'Corvus-Corax']
+
+    return name, name_list
+
+  @staticmethod
+  def _get_chaos_theme():
+    name = 'Chaos'
+    name_list = ['Khorne', 'Nurgle', 'Tzeentch', 'Slaanesh', 'Fulgrim', 'Perturabo', 'Konrad-Curze', 'Angron', 'Mortarion', 'Magnus-the-Red', 'Horus-Lupercal', 'Lorgar-Aurelian', 'Alpharius-Omegon']
+
+    return name, name_list
