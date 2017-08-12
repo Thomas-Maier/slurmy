@@ -20,7 +20,7 @@ This will make python aware of the slurmy module and you'll be able to execute t
 
 ## General Usage
 
-You can just write a piece of python code that imports the needed slurmy classes, like JobHandler and the backend class of your choice, defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scripts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.
+You can just write a piece of python code that imports the needed slurmy classes (e.g. JobHandler and the backend class of your choice), defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scripts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.
 
 **Example of simple slurm jobs definition:** [examples/example_slurm_simple.py](examples/example_slurm_simple.py)
 
@@ -46,13 +46,13 @@ Jobs can be connected by adding tags and parent tags to them. Jobs with parent t
 
 ## Custom Success Conditions and Variable Substitution
 
-By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. During the evaluation whether the job was successful or not, if success_func was defined during add_job, the custom definition will be used instead of the default one.
+By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. If success_func was defined during add_job, the custom definition will be used instead of the default one during the success evaluation.
 
 **Example of success_func usage:** [examples/example_success_func.py](examples/example_success_func.py)
 
 Due to technically reasons connected to the snapshot feature (see below), your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.
 
-The example uses SuccessOutputFile as defined in tools/utils.py. It also introduces a feature of slurmy, that allows to use the configuration of the JobHandler inside the shell script and some arguments of add_job (currently only "output"). This is done by some simple string parsing and substitution routine of any variable of the JobHandlerConfig. For now have a look tools/JobHandler.py to see what can be used (all variables that don't start with "_").
+The example uses SuccessOutputFile as defined in tools/utils.py. It also introduces a feature of slurmy, that allows to use the configuration of the JobHandler inside the shell script and some arguments of add_job (currently only "output"). This is done by some simple string parsing and substitution routine of any variable of the JobHandlerConfig. For now have a look at [tools/JobHandler.py](tools/JobHandler.py) to see what can be used (all variables that don't start with "_").
 
 ## Snapshots
 
@@ -90,7 +90,7 @@ Arguments that can be passed to the add_jobs function of JobHandler:
 
 **run_script** (default: None): The shell script that defines the job execution. Can either be the script as one string block, or the name of a script on disk.
 
-**run_args** (default: None): Run arguments that should be passed to the shell script. Can be either a string or a list. It is recommended to simply pass a string that reflects the same sequence that you would also write in a shell line command.
+**run_args** (default: None): Run arguments that should be passed to the shell script. Can be either a string or a list of strings. It is recommended to simply pass a string that reflects the same sequence that you would also write in a shell line command.
 
 **success_func** (default: None): Success definition to be used by the job.
 
