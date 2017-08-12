@@ -61,7 +61,7 @@ class Options:
     self.get_bookkeeping()
     timestamp = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
     path = '{}/{}'.format(work_dir.rstrip('/'), name)
-    self._bookkeeping[name] = {'timestamp': timestamp, 'path': path, 'description': description}
+    self._bookkeeping[name] = {'timestamp': timestamp, 'path': path, 'work_dir': work_dir, 'description': description}
     self._update_bookkeeping()
 
   def sync_bookkeeping(self):

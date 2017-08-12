@@ -21,13 +21,14 @@ class JobHandlerConfig:
     ## Static variables
     self._name_gen = NameGenerator(name = name, theme = theme)
     self.name = self._name_gen.name
-    self.base_dir = self.name+'/'
-    if work_dir: self.base_dir = work_dir.rstrip('/')+'/'+self.name+'/'
-    self.script_dir = self.base_dir+'scripts/'
-    self.log_dir = self.base_dir+'logs/'
-    self.output_dir = self.base_dir+'output/'
-    self.snapshot_dir = self.base_dir+'/snapshot/'
-    self.path = self.snapshot_dir+'JobHandlerConfig.pkl'
+    self.base_dir, self.script_dir, self.log_dir, self.output_dir, self.snapshot_dir, self.path = JobHandlerConfig.get_dirs(self.name, work_dir)
+    # self.base_dir = self.name+'/'
+    # if work_dir: self.base_dir = work_dir.rstrip('/')+'/'+self.name+'/'
+    # self.script_dir = self.base_dir+'scripts/'
+    # self.log_dir = self.base_dir+'logs/'
+    # self.output_dir = self.base_dir+'output/'
+    # self.snapshot_dir = self.base_dir+'/snapshot/'
+    # self.path = JobHandlerConfig.get_path(self.name, work_dir)
     self.success_func = success_func
     self.is_verbose = is_verbose
     self.local_max = local_max
@@ -40,6 +41,19 @@ class JobHandlerConfig:
     self._job_states = {Status.Configured: set(), Status.Running: set(), Status.Finished: set(), Status.Success: set(), Status.Failed: set(), Status.Cancelled: set()}
     self._local_counter = 0
 
+  @staticmethod
+  def get_dirs(name, work_dir, script = 'scripts', log = 'logs', output = 'output', snapshot = 'snapshot', snapshot_name = 'JobHandlerConfig.pkl'):
+    base_dir = '{}/'.format(name)
+    if work_dir: base_dir = '{}/{}'.format(work_dir.rstrip('/'), base_dir)
+    script_dir = '{}/{}/'.format(base_dir, script)
+    log_dir = '{}/{}/'.format(base_dir, log)
+    output_dir = '{}/{}/'.format(base_dir, output)
+    snapshot_dir = '{}/{}/'.format(base_dir, snapshot)
+    path = '{}{}'.format(snapshot_dir, snapshot_name)
+    
+    return base_dir, script_dir, log_dir, output_dir, snapshot_dir, path
+    
+
 class JobHandler:
   def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None):
     self._debug = False
@@ -51,20 +65,28 @@ class JobHandler:
     ## Backend setup
     if backend is None and ops.Main.backend is not None:
       backend = get_backend(ops.Main.backend)
-    ## JobHandler config
-    self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot)
-    ## Variable parser
-    self._parser = Parser(self.config)
-    if use_snapshot and os.path.isfile(self.config.path):
-      log.debug('Read snapshot from {}'.format(self.config.path))
-      with open(self.config.path, 'rb') as in_file:
+    ## Snapshot loading
+    if use_snapshot:
+      if not name:
+        log.error('Cannot use snapshot without a name')
+        raise Exception()
+      path = JobHandlerConfig.get_dirs(name, work_dir)[-1]
+      if not os.path.isfile(path):
+        log.error('Could not find path to snapshot')
+        raise Exception()
+      log.debug('Read snapshot from {}'.format(path))
+      with open(path, 'rb') as in_file:
         self.config = pickle.load(in_file)
       log.debug('Read job snapshots')
       for job_config in self.config._jobs_configs:
         self._add_job_with_config(job_config)
     else:
+      ## Make new JobHandler config
+      self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot)
       self._reset()
       JobHandler._add_bookkeeping(self.config.name, work_dir, description)
+    ## Variable parser
+    self._parser = Parser(self.config)
       
   def __getitem__(self, key):
     return self._jobs[key]
