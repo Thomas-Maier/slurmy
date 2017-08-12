@@ -83,13 +83,3 @@ class Slurm(Base):
       log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_return))
     
     return sacct_return
-
-  # def _get_sacct_entry(self, column):
-  #   sacct_list = []
-  #   sacct_list = subprocess.check_output(['sacct', '-j', '{}.batch'.format(self._job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
-  #   sacct_string = None
-  #   if len(sacct_list) > 1:
-  #     sacct_string = sacct_list[1].strip()
-  #     log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_string))
-    
-  #   return sacct_string
