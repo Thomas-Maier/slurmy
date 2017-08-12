@@ -29,6 +29,7 @@ class Slurm(Base):
     self.export = export
     ## Internal variables
     self._job_id = None
+    self._exitcode = None
     ## Get default options
     ops.Main.get_backend_options(self)
     ## Check if necessary slurm commands are available on the system
@@ -62,24 +63,33 @@ class Slurm(Base):
     os.system('scancel {}'.format(self._job_id))
 
   def status(self):
-    status_string = self._get_sacct_entry('State')
+    sacct_list = self._get_sacct_entry('State,ExitCode')
     status = Status.Running
-    # if not (status_string == 'CANCELLED' or status_string == 'COMPLETED' or status_string == 'FAILED' or status_string == 'NODE_FAIL' or status_string == 'BOOT_FAIL' or status == 'NODE_FAIL'): status = Status.Running
-    if status_string is not None: status = Status.Finished
+    if sacct_list is not None:
+      status = Status.Finished
+      self._exitcode = sacct_list[-1]
       
     return status
 
   def exitcode(self):
-    exitcode = self._get_sacct_entry('ExitCode')
-
-    return exitcode
+    return self._exitcode
 
   def _get_sacct_entry(self, column):
     sacct_list = []
     sacct_list = subprocess.check_output(['sacct', '-j', '{}.batch'.format(self._job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
-    sacct_string = None
+    sacct_return = None
     if len(sacct_list) > 1:
-      sacct_string = sacct_list[1].strip()
-      log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_string))
+      sacct_return = sacct_list[1].split('|')
+      log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_return))
     
-    return sacct_string
+    return sacct_return
+
+  # def _get_sacct_entry(self, column):
+  #   sacct_list = []
+  #   sacct_list = subprocess.check_output(['sacct', '-j', '{}.batch'.format(self._job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
+  #   sacct_string = None
+  #   if len(sacct_list) > 1:
+  #     sacct_string = sacct_list[1].strip()
+  #     log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_string))
+    
+  #   return sacct_string
