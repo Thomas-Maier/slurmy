@@ -22,13 +22,6 @@ class JobHandlerConfig:
     self._name_gen = NameGenerator(name = name, theme = theme)
     self.name = self._name_gen.name
     self.base_dir, self.script_dir, self.log_dir, self.output_dir, self.snapshot_dir, self.path = JobHandlerConfig.get_dirs(self.name, work_dir)
-    # self.base_dir = self.name+'/'
-    # if work_dir: self.base_dir = work_dir.rstrip('/')+'/'+self.name+'/'
-    # self.script_dir = self.base_dir+'scripts/'
-    # self.log_dir = self.base_dir+'logs/'
-    # self.output_dir = self.base_dir+'output/'
-    # self.snapshot_dir = self.base_dir+'/snapshot/'
-    # self.path = JobHandlerConfig.get_path(self.name, work_dir)
     self.success_func = success_func
     self.is_verbose = is_verbose
     self.local_max = local_max
