@@ -128,7 +128,7 @@ class JobHandler:
     ## Parse variables
     backend.run_script = self._parser.replace(backend.run_script)
     if output: output = self._parser.replace(output)
-    name = self.config._name_gen.get_name()
+    name = self.config._name_gen.next()
     backend.name = name
     backend.write_script(self.config.script_dir)
     backend.log = self.config.log_dir+name

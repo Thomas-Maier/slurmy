@@ -16,3 +16,6 @@ class Theme(Enum):
   Nordic = 2
   ImperiumOfMan = 3
   Chaos = 4
+
+def adjectives():
+  return ['Angry', 'Happy', 'Moist', 'Posh', 'Dainty', 'Peculiar', 'Stinky', 'Crazy', 'Handsome', 'Magnificent', 'Grumpy']

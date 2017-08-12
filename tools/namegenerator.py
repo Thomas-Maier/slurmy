@@ -1,24 +1,42 @@
 
 import random
-from .defs import Theme
+import time
+import calendar
+from .defs import Theme, adjectives
 
 
-class NameGenerator:
+class NameGenerator(object):
   ## Default to prevent problems
   _name_default = 'Slurmy'
-  def __init__(self, name = None, theme = Theme.Lovecraft):
-    self.name, self._name_list = NameGenerator._get_theme(name, theme)
-    self._name_counter = {}
-    
-  def get_name(self):
-    name = self._name_list[random.randint(0, len(self._name_list)-1)]
-    if name not in self._name_counter: self._name_counter[name] = 0
-    self._name_counter[name] += 1
+  def __init__(self, name = None, theme = Theme.Lovecraft, max_names = None, n_adjectives = None):
+    self._theme = theme
+    self._adjectives = adjectives()
+    if n_adjectives is not None:
+      while len(self._adjectives) > n_adjectives:
+        self._adjectives.pop(random.randint(0, len(self._adjectives)-1))
+    self.name, self._name_list = self._get_theme(name, self._theme)
+    self._counter = 0
+    self._cycle = 0
+    self._max = max_names
 
-    return '{}_{}'.format(name, self._name_counter[name])
+  def __iter__(self):
+    return self
 
-  @staticmethod
-  def _get_theme(name_given, theme):
+  def __next__(self):
+    return self.next()
+
+  def next(self):
+    if self._name_list:
+      name, self._counter = self._name_list.pop(random.randint(0, len(self._name_list)-1)), self._counter+1
+      return name
+    elif (self._max is not None) and (self._counter >= self._max):
+      raise StopIteration()
+    else:
+      self._cycle += 1
+      tmp, self._name_list = self._get_theme(self.name, self._theme, suffix = '_{}'.format(self._cycle))
+      return self.next()
+
+  def _get_theme(self, name_given, theme, suffix = ''):
     name = None
     name_list = None
     if theme == Theme.Lovecraft:
@@ -35,8 +53,15 @@ class NameGenerator:
     name = name_given or name
     ## Make sure that at least the default is used
     name = name or NameGenerator._name_default
+    ## Add current unix time as suffix to name
+    name = '{}_{}'.format(name, calendar.timegm(time.gmtime()))
+    ## Make the full list of name combinations
+    full_name_list = []
+    for adj in self._adjectives:
+      for entry in name_list:
+        full_name_list.append('{}_{}{}'.format(adj, entry, suffix))
 
-    return name, name_list
+    return name, full_name_list
 
   @staticmethod
   def _get_lovecraft_theme():
