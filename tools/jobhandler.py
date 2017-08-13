@@ -38,10 +38,10 @@ class JobHandlerConfig:
   def get_dirs(name, work_dir, script = 'scripts', log = 'logs', output = 'output', snapshot = 'snapshot', snapshot_name = 'JobHandlerConfig.pkl'):
     base_dir = '{}/'.format(name)
     if work_dir: base_dir = '{}/{}'.format(work_dir.rstrip('/'), base_dir)
-    script_dir = '{}/{}/'.format(base_dir, script)
-    log_dir = '{}/{}/'.format(base_dir, log)
-    output_dir = '{}/{}/'.format(base_dir, output)
-    snapshot_dir = '{}/{}/'.format(base_dir, snapshot)
+    script_dir = '{}{}/'.format(base_dir, script)
+    log_dir = '{}{}/'.format(base_dir, log)
+    output_dir = '{}{}/'.format(base_dir, output)
+    snapshot_dir = '{}{}/'.format(base_dir, snapshot)
     path = '{}{}'.format(snapshot_dir, snapshot_name)
     
     return base_dir, script_dir, log_dir, output_dir, snapshot_dir, path
