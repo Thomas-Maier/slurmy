@@ -38,6 +38,12 @@ class JobHandlerConfig:
   def get_dirs(name, work_dir, script = 'scripts', log = 'logs', output = 'output', snapshot = 'snapshot', snapshot_name = 'JobHandlerConfig.pkl'):
     base_dir = '{}/'.format(name)
     if work_dir: base_dir = '{}/{}'.format(work_dir.rstrip('/'), base_dir)
+    ## If base directory begins with "/", assume that it's an absolute path, otherwise prepend $PWD
+    if not base_dir.startswith('/'): base_dir = '{}/{}'.format(os.environ['PWD'], base_dir)
+    ## Sanity check
+    if base_dir == '/':
+      log.error('Base dir is "/", something went wrong!')
+      raise Exception()
     script_dir = '{}{}/'.format(base_dir, script)
     log_dir = '{}{}/'.format(base_dir, log)
     output_dir = '{}{}/'.format(base_dir, output)
