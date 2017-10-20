@@ -128,11 +128,11 @@ class Job:
     self.config.status = Status.Cancelled
     if clear_retry: self.config.max_retries = 0
 
-  def retry(self, force = False, submit = True):
-    if not self.do_retry(): return
+  def retry(self, force = False, submit = True, ignore_max_retries = False):
+    if not ignore_max_retries and not self.do_retry(): return
     log.debug('({}) Retry job'.format(self.config.name))
     if self.config.status == Status.Running:
-      if enforce:
+      if force:
         self.cancel()
       else:
         print ("Job is still running, use force=True to force re-submit")

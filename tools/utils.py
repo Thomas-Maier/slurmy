@@ -28,7 +28,7 @@ def list_sessions():
   if bk is None:
     log.error('No bookeeping found')
     return
-  for name, vals in bk.items():
+  for name, vals in sorted(bk.items(), key = lambda val: val[0].rsplit('_', 1)[-1]):
     path = vals['path']
     timestamp = vals['timestamp']
     description = vals['description']

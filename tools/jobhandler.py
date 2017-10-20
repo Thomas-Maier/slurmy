@@ -259,13 +259,13 @@ class JobHandler:
 
   ## TODO: add retry option for interactive functionality (probably just incorporate in submit_jobs)
   ## TODO: also rerun option which just adds force = True to retry
-  def run_jobs(self, interval = 5):
+  def run_jobs(self, interval = 5, force_retry = False):
     time_now = time.time()
     try:
       n_all = len(self._jobs.values())
       running = True
       while running:
-        self.submit_jobs(make_snapshot = False, wait = False)
+        self.submit_jobs(make_snapshot = False, wait = False, force_retry = force_retry)
         print_string = self._get_print_string()
         if not self._debug:
           stdout.write('\r'+print_string)
@@ -297,7 +297,7 @@ class JobHandler:
       time_now = time.time() - time_now
       if not self._debug: self.print_summary(time_now)
 
-  def submit_jobs(self, tags = None, make_snapshot = True, wait = True):
+  def submit_jobs(self, tags = None, make_snapshot = True, wait = True, force_retry = False):
     try:
       ## Get current job states
       self._update_job_states()
@@ -309,7 +309,9 @@ class JobHandler:
           log.debug('Maximum number of running jobs reached, skip job submission')
           break
         status = job.get_status()
-        if (status == Status.Failed or status == Status.Cancelled): job.retry(submit = False)
+        if (status == Status.Failed or status == Status.Cancelled):
+          job.retry(submit = False, ignore_max_retries = force_retry)
+          status = job.get_status()
         ## If job is not in Configured state there is nothing to do
         if status != Status.Configured: continue
         ## Check if job is ready to be submitted
