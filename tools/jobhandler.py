@@ -164,9 +164,9 @@ class JobHandler:
     label_finished_func = None
     label_success_func = None
     if job_label[Status.FINISHED] is not None:
-      label_finished_func = FinishedTrigger
+      label_finished_func = FinishedTrigger()
     if (job_label[Status.SUCCESS] is not None) and (job_label[Status.FAILURE] is not None):
-      label_success_func = SuccessTrigger
+      label_success_func = SuccessTrigger()
     job_finished_func = finished_func or label_finished_func or self.config.finished_func
     job_success_func = success_func or label_success_func or self.config.success_func
     ## Parse variables

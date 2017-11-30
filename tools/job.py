@@ -59,6 +59,7 @@ class Job:
     if self.config.tags: print_string += 'Tags: {}\n'.format(self.config.tags)
     if self.config.parent_tags: print_string += 'Parent tags: {}\n'.format(self.config.parent_tags)
     if self.config.output: print_string += 'Output: {}'.format(self.config.output)
+    if self.config.label: print_string += 'Label: {}'.format(self.config.label)
 
     return print_string
 
