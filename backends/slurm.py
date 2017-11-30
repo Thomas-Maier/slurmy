@@ -33,7 +33,7 @@ class Slurm(Base):
     ## Get default options
     ops.Main.get_backend_options(self)
     ## Check if necessary slurm commands are available on the system
-    # self._check_commands()
+    self._check_commands()
 
   def submit(self):
     submit_list = ['sbatch']
