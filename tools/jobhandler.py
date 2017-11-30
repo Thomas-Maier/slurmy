@@ -18,7 +18,7 @@ log = logging.getLogger('slurmy')
 
 
 class JobHandlerConfig:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, singularity_image = None):
     ## Static variables
     self._name_gen = NameGenerator(name = name, theme = theme)
     self.name = self._name_gen.name
@@ -31,6 +31,7 @@ class JobHandlerConfig:
     self.run_max = run_max
     self.backend = backend
     self._do_snapshot = do_snapshot
+    self._singularity_image = singularity_image
     ## Dynamic variables
     self._jobs_configs = []
     self._job_states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILURE: set(), Status.CANCELLED: set()}
@@ -60,7 +61,7 @@ class JobHandlerConfig:
     
 
 class JobHandler:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, singularity_image = None):
     self._debug = False
     if log.level == 10: self._debug = True
     ## Variables that are not picklable
@@ -87,7 +88,7 @@ class JobHandler:
         self._add_job_with_config(job_config)
     else:
       ## Make new JobHandler config
-      self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot)
+      self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, singularity_image = singularity_image)
       self._reset()
       JobHandler._add_bookkeeping(self.config.name, work_dir, description)
     ## Variable parser
@@ -171,7 +172,7 @@ class JobHandler:
     ## Parse variables
     backend.run_script = self._parser.replace(backend.run_script)
     if output: output = self._parser.replace(output)
-    backend.write_script(self.config.script_dir)
+    backend.write_script(self.config.script_dir, singularity_image = self.config._singularity_image)
     backend.log = self.config.log_dir+name
     backend.sync(self.config.backend)
     job_max_retries = max_retries or self.config.max_retries
