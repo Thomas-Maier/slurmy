@@ -12,17 +12,19 @@ from .namegenerator import NameGenerator
 from . import options as ops
 from ..backends import get_backend
 from .parser import Parser
+from .utils import SuccessTrigger, FinishedTrigger
 
 log = logging.getLogger('slurmy')
 
 
 class JobHandlerConfig:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True):
     ## Static variables
     self._name_gen = NameGenerator(name = name, theme = theme)
     self.name = self._name_gen.name
-    self.base_dir, self.script_dir, self.log_dir, self.output_dir, self.snapshot_dir, self.path = JobHandlerConfig.get_dirs(self.name, work_dir)
+    self.base_dir, self.script_dir, self.log_dir, self.output_dir, self.snapshot_dir, self.tmp_dir, self.path = JobHandlerConfig.get_dirs(self.name, work_dir)
     self.success_func = success_func
+    self.finished_func = finished_func
     self.is_verbose = is_verbose
     self.local_max = local_max
     self.max_retries = max_retries
@@ -31,11 +33,14 @@ class JobHandlerConfig:
     self._do_snapshot = do_snapshot
     ## Dynamic variables
     self._jobs_configs = []
-    self._job_states = {Status.Configured: set(), Status.Running: set(), Status.Finished: set(), Status.Success: set(), Status.Failed: set(), Status.Cancelled: set()}
+    self._job_states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILURE: set(), Status.CANCELLED: set()}
     self._local_counter = 0
 
+  def __getitem__(self, key):
+    return self.__dict__[key]
+
   @staticmethod
-  def get_dirs(name, work_dir, script = 'scripts', log = 'logs', output = 'output', snapshot = 'snapshot', snapshot_name = 'JobHandlerConfig.pkl'):
+  def get_dirs(name, work_dir, script = 'scripts', log = 'logs', output = 'output', snapshot = 'snapshot', tmp = 'tmp', snapshot_name = 'JobHandlerConfig.pkl'):
     base_dir = '{}/'.format(name)
     if work_dir: base_dir = '{}/{}'.format(work_dir.rstrip('/'), base_dir)
     ## If base directory begins with "/", assume that it's an absolute path, otherwise prepend $PWD
@@ -48,13 +53,14 @@ class JobHandlerConfig:
     log_dir = '{}{}/'.format(base_dir, log)
     output_dir = '{}{}/'.format(base_dir, output)
     snapshot_dir = '{}{}/'.format(base_dir, snapshot)
+    tmp_dir = '{}{}/'.format(base_dir, tmp)
     path = '{}{}'.format(snapshot_dir, snapshot_name)
     
-    return base_dir, script_dir, log_dir, output_dir, snapshot_dir, path
+    return base_dir, script_dir, log_dir, output_dir, snapshot_dir, tmp_dir, path
     
 
 class JobHandler:
-  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None):
+  def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None):
     self._debug = False
     if log.level == 10: self._debug = True
     ## Variables that are not picklable
@@ -81,7 +87,7 @@ class JobHandler:
         self._add_job_with_config(job_config)
     else:
       ## Make new JobHandler config
-      self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot)
+      self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot)
       self._reset()
       JobHandler._add_bookkeeping(self.config.name, work_dir, description)
     ## Variable parser
@@ -92,12 +98,13 @@ class JobHandler:
 
   def _reset(self):
     log.debug('Reset JobHandler')
-    if os.path.isdir(self.config.base_dir): os.system('rm -r '+self.config.base_dir)
+    if os.path.isdir(self.config.base_dir): os.system('rm -r {}'.format(self.config.base_dir))
     os.makedirs(self.config.script_dir)
     os.makedirs(self.config.log_dir)
     os.makedirs(self.config.output_dir)
-    if os.path.isdir(self.config.snapshot_dir): os.system('rm -r '+self.config.snapshot_dir)
+    if os.path.isdir(self.config.snapshot_dir): os.system('rm -r {}'.format(self.config.snapshot_dir))
     os.makedirs(self.config.snapshot_dir)
+    os.makedirs(self.config.tmp_dir)
     self._update_snapshot()
 
   def _update_snapshot(self, skip_jobs = False):
@@ -137,7 +144,7 @@ class JobHandler:
 
     return job
 
-  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, max_retries = None, output = None, tags = None, parent_tags = None):
+  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, max_retries = None, output = None, tags = None, parent_tags = None):
     if backend is None and ops.Main.backend is not None:
       backend = get_backend(ops.Main.backend)
     if backend is None:
@@ -146,19 +153,31 @@ class JobHandler:
     ## Set run_script and run_args if not already done
     backend.run_script = backend.run_script or run_script
     backend.run_args = backend.run_args or run_args
+    ## Get job name
+    name = self.config._name_gen.next()
+    backend.name = name
+    ## Set and evaluate job label
+    job_label = {Status.FINISHED: None, Status.SUCCESS: None, Status.FAILURE: None}
+    for status in job_label:
+      backend.run_script, job_label[status] = self._parser.set_status_label(backend.run_script, name, status)
+    label_finished_func = None
+    label_success_func = None
+    if job_label[Status.FINISHED] is not None:
+      label_finished_func = FinishedTrigger
+    if (job_label[Status.SUCCESS] is not None) and (job_label[Status.FAILURE] is not None):
+      label_success_func = SuccessTrigger
+    job_finished_func = finished_func or label_finished_func or self.config.finished_func
+    job_success_func = success_func or label_success_func or self.config.success_func
     ## Parse variables
     backend.run_script = self._parser.replace(backend.run_script)
     if output: output = self._parser.replace(output)
-    name = self.config._name_gen.next()
-    backend.name = name
     backend.write_script(self.config.script_dir)
     backend.log = self.config.log_dir+name
     backend.sync(self.config.backend)
-    job_success_func = success_func or self.config.success_func
     job_max_retries = max_retries or self.config.max_retries
     config_path = self.config.snapshot_dir+name+'.pkl'
 
-    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
+    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags, label = job_label)
     self.config._jobs_configs.append(job_config)
     ## Update snapshot to make sure job configs list is properly updated
     self._update_snapshot(skip_jobs = True)
@@ -175,9 +194,9 @@ class JobHandler:
         continue
       for tagged_job in self._tagged_jobs[tag]:
         status = tagged_job.get_status()
-        if status == Status.Success: continue
+        if status == Status.SUCCESS: continue
         ## If a parent job is uncoverably failed/cancelled, cancel this job as well
-        if (status == Status.Failed or status == Status.Cancelled) and not tagged_job.do_retry(): job.cancel(clear_retry = True)
+        if (status == Status.FAILURE or status == Status.CANCELLED) and not tagged_job.do_retry(): job.cancel(clear_retry = True)
         return False
     
     return True
@@ -185,12 +204,12 @@ class JobHandler:
   def _get_print_string(self):
     print_string = 'Jobs '
     if self.config.is_verbose:
-      n_running = len(self.config._job_states[Status.Running])
+      n_running = len(self.config._job_states[Status.RUNNING])
       n_local = len(self._local_jobs)
       n_batch = n_running - n_local
       print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
-    n_success = len(self.config._job_states[Status.Success])
-    n_failed = len(self.config._job_states[Status.Failed])
+    n_success = len(self.config._job_states[Status.SUCCESS])
+    n_failed = len(self.config._job_states[Status.FAILURE])
     n_all = len(self._jobs.values())
     print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
@@ -204,12 +223,12 @@ class JobHandler:
     jobs_failed = ''
     for job in self._jobs.values():
       status = job.get_status()
-      if status == Status.Success:
+      if status == Status.SUCCESS:
         if job.is_local():
           summary_dict['success']['local'] += 1
         else:
           summary_dict['success']['batch'] += 1
-      elif status == Status.Failed or status == Status.Cancelled:
+      elif status == Status.FAILURE or status == Status.CANCELLED:
         jobs_failed += '{} '.format(job.get_name())
         if job.is_local():
           summary_dict['fail']['local'] += 1
@@ -272,9 +291,9 @@ class JobHandler:
           stdout.flush()
         else:
           log.debug(print_string)
-        n_success = len(self.config._job_states[Status.Success])
-        n_failed = len(self.config._job_states[Status.Failed])
-        n_cancelled = len(self.config._job_states[Status.Cancelled])
+        n_success = len(self.config._job_states[Status.SUCCESS])
+        n_failed = len(self.config._job_states[Status.FAILURE])
+        n_cancelled = len(self.config._job_states[Status.CANCELLED])
         if (n_success+n_failed+n_cancelled) == n_all: running = False
         time.sleep(interval)
     except KeyboardInterrupt:
@@ -305,15 +324,15 @@ class JobHandler:
       self._check_local_jobs()
       for job in self.get_jobs(tags):
         ## Submit new jobs only if current number of running jobs is below maximum, if set
-        if self.config.run_max and not (len(self.config._job_states[Status.Running]) < self.config.run_max):
+        if self.config.run_max and not (len(self.config._job_states[Status.RUNNING]) < self.config.run_max):
           log.debug('Maximum number of running jobs reached, skip job submission')
           break
         status = job.get_status()
-        if (status == Status.Failed or status == Status.Cancelled):
+        if (status == Status.FAILURE or status == Status.CANCELLED):
           job.retry(submit = False, ignore_max_retries = force_retry)
           status = job.get_status()
         ## If job is not in Configured state there is nothing to do
-        if status != Status.Configured: continue
+        if status != Status.CONFIGURED: continue
         ## Check if job is ready to be submitted
         if not self._job_ready(job): continue
         if len(self._local_jobs) < self.config.local_max:
@@ -333,7 +352,7 @@ class JobHandler:
   def cancel_jobs(self, tags = None, only_local = False, only_batch = False, make_snapshot = True):
     for job in self.get_jobs(tags):
       ## Nothing to do when job is not in Running state
-      if job.get_status() != Status.Running: continue
+      if job.get_status() != Status.RUNNING: continue
       if only_local and not job.is_local(): continue
       if only_batch and job.is_local(): continue
       job.cancel()
@@ -343,7 +362,7 @@ class JobHandler:
     try:
       for job in self.get_jobs(tags):
         ## Retry only if job is failed or cancelled
-        if job.get_status() != Status.Failed and job.get_status() != Status.Cancelled: continue
+        if job.get_status() != Status.FAILURE and job.get_status() != Status.CANCELLED: continue
         job.retry()
       if make_snapshot: self._update_snapshot()
     except:
@@ -358,7 +377,7 @@ class JobHandler:
 
   def _check_local_jobs(self):
     for i, job in enumerate(self._local_jobs):
-      if job.get_status() == Status.Running: continue
+      if job.get_status() == Status.RUNNING: continue
       self._local_jobs.pop(i)
 
   def jobs(self, tag = None):

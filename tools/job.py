@@ -9,7 +9,7 @@ log = logging.getLogger('slurmy')
 
 
 class JobConfig:
-  def __init__(self, backend, path, success_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
+  def __init__(self, backend, path, success_func = None, finished_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None, label = None):
     ## Static variables
     self.backend = backend
     self.name = self.backend.name
@@ -19,11 +19,13 @@ class JobConfig:
     self.parent_tags = set()
     if parent_tags is not None: self.add_tags(parent_tags, True)
     self.success_func = success_func
+    self.finished_func = finished_func
     self.is_local = is_local
     self.max_retries = max_retries
     self.output = output
+    self.label = label
     ## Dynamic variables
-    self.status = Status.Configured
+    self.status = Status.CONFIGURED
     self.job_id = None
     self.n_retries = 0
     self.exitcode = None
@@ -62,7 +64,7 @@ class Job:
 
   def _reset(self):
     log.debug('({}) Reset job'.format(self.config.name))
-    self.config.status = Status.Configured
+    self.config.status = Status.CONFIGURED
     self.config.job_id = None
     self._local_process = None
     if os.path.isfile(self.config.backend.log): os.remove(self.config.backend.log)
@@ -89,7 +91,7 @@ class Job:
       pickle.dump(self.config, out_file)
 
   def set_local(self, is_local = True):
-    if self.config.status != Status.Configured:
+    if self.config.status != Status.CONFIGURED:
       log.warning('({}) Not in Configured state, cannot set to local'.format(self.config.name))
       raise Exception
     self.config.is_local = is_local
@@ -104,7 +106,7 @@ class Job:
     self.config.add_tags(tags, is_parent)
 
   def submit(self):
-    if self.config.status != Status.Configured:
+    if self.config.status != Status.CONFIGURED:
       log.warning('({}) Not in Configured state, cannot submit'.format(self.config.name))
       raise Exception
     if self.config.is_local:
@@ -113,25 +115,25 @@ class Job:
       self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)
     else:
       self.config.job_id = self.config.backend.submit()
-    self.config.status = Status.Running
+    self.config.status = Status.RUNNING
 
   def cancel(self, clear_retry = False):
     ## Do nothing if job is already in failed state
-    if self.config.status == Status.Failed: return
+    if self.config.status == Status.FAILURE: return
     log.debug('({}) Cancel job'.format(self.config.name))
     ## Stop job if it's in running state
-    if self.config.status == Status.Running:
+    if self.config.status == Status.RUNNING:
       if self.config.is_local:
         self._local_process.terminate()
       else:
         self.config.backend.cancel()
-    self.config.status = Status.Cancelled
+    self.config.status = Status.CANCELLED
     if clear_retry: self.config.max_retries = 0
 
   def retry(self, force = False, submit = True, ignore_max_retries = False):
     if not ignore_max_retries and not self.do_retry(): return
     log.debug('({}) Retry job'.format(self.config.name))
-    if self.config.status == Status.Running:
+    if self.config.status == Status.RUNNING:
       if force:
         self.cancel()
       else:
@@ -145,25 +147,31 @@ class Job:
     return (self.config.max_retries > 0 and (self.config.n_retries < self.config.max_retries))
 
   def get_status(self):
-    if self.config.status == Status.Running:
+    if self.config.status == Status.RUNNING:
       if self.config.is_local:
         self._get_local_status()
       else:
-        self.config.status = self.config.backend.status()
-    if self.config.status == Status.Finished:
+        if self.config.finished_func is not None:
+          if self.config.finished_func(self.config):
+            self.config.status = Status.FINISHED
+          else:
+            self.config.status = Status.RUNNING
+        else:
+          self.config.status = self.config.backend.status()
+    if self.config.status == Status.FINISHED:
       if self._is_success():
-        self.config.status = Status.Success
+        self.config.status = Status.SUCCESS
       else:
-        self.config.status = Status.Failed
+        self.config.status = Status.FAILURE
         
     return self.config.status
 
   def _get_local_status(self):
     self.config.exitcode = self._local_process.poll()
     if self.config.exitcode is None:
-      self.config.status = Status.Running
+      self.config.status = Status.RUNNING
     else:
-      self.config.status = Status.Finished
+      self.config.status = Status.FINISHED
       self._write_log()
 
   def _is_success(self):

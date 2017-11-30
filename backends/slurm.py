@@ -33,7 +33,7 @@ class Slurm(Base):
     ## Get default options
     ops.Main.get_backend_options(self)
     ## Check if necessary slurm commands are available on the system
-    self._check_commands()
+    # self._check_commands()
 
   def submit(self):
     submit_list = ['sbatch']
@@ -64,9 +64,9 @@ class Slurm(Base):
 
   def status(self):
     sacct_list = self._get_sacct_entry('State,ExitCode')
-    status = Status.Running
+    status = Status.RUNNING
     if sacct_list is not None:
-      status = Status.Finished
+      status = Status.FINISHED
       self._exitcode = sacct_list[-1]
       
     return status

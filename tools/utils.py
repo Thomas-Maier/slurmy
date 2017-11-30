@@ -7,6 +7,34 @@ class SuccessOutputFile:
 
     return os.path.isfile(config.output)
 
+class SuccessTrigger:
+  def __call__(self, config):
+    import os, time
+    from .defs import Status
+    success_file = config.label[Status.SUCCESS]
+    failure_file = config.label[Status.FAILURE]
+    while True:
+      if not (os.path.isfile(success_file) or os.path.isfile(failure_file)):
+        time.sleep(0.1)
+        continue
+      if os.path.isfile(success_file):
+        os.remove(success_file)
+        return True
+      else:
+        os.remove(failure_file)
+        return False
+
+## Finished classes
+class FinishedTrigger:
+  def __call__(self, config):
+    import os
+    from .defs import Status
+    finished_file = config.label[Status.FINISHED]
+    finished = os.path.isfile(finished_file)
+    if finished: os.remove(finished_file)
+
+    return finished
+
 ## Functions for interactive slurmy
 def _get_prompt():
   try:
