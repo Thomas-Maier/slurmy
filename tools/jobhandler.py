@@ -145,7 +145,7 @@ class JobHandler:
 
     return job
 
-  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, max_retries = None, output = None, tags = None, parent_tags = None):
+  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None):
     if backend is None and ops.Main.backend is not None:
       backend = get_backend(ops.Main.backend)
     if backend is None:
@@ -155,7 +155,7 @@ class JobHandler:
     backend.run_script = backend.run_script or run_script
     backend.run_args = backend.run_args or run_args
     ## Get job name
-    name = self.config._name_gen.next()
+    name = self.config._name_gen.next(name)
     backend.name = name
     ## Set and evaluate job label
     job_label = {Status.FINISHED: None, Status.SUCCESS: None, Status.FAILURE: None}

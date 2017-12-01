@@ -18,6 +18,7 @@ class NameGenerator(object):
     self._counter = 0
     self._cycle = 0
     self._max = max_names
+    self._custom_names = {}
 
   def __iter__(self):
     return self
@@ -25,8 +26,11 @@ class NameGenerator(object):
   def __next__(self):
     return self.next()
 
-  def next(self):
-    if self._name_list:
+  def next(self, custom_name = None):
+    if custom_name is not None:
+      name, self._counter = self._get_custom_name(custom_name), self._counter+1
+      return name
+    elif self._name_list:
       name, self._counter = self._name_list.pop(random.randint(0, len(self._name_list)-1)), self._counter+1
       return name
     elif (self._max is not None) and (self._counter >= self._max):
@@ -35,6 +39,15 @@ class NameGenerator(object):
       self._cycle += 1
       tmp, self._name_list = self._get_theme(self.name, self._theme, suffix = '_{}'.format(self._cycle))
       return self.next()
+
+  def _get_custom_name(self, name):
+    if name in self._custom_names:
+      n_name = self._custom_names[name]
+      self._custom_names[name] += 1
+      return '{}_{}'.format(name, n_name)
+    else:
+      self._custom_names[name] = 1
+      return name
 
   def _get_theme(self, name_given, theme, suffix = ''):
     name = None
