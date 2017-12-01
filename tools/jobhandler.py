@@ -97,6 +97,11 @@ class JobHandler:
   def __getitem__(self, key):
     return self._jobs[key]
 
+  # def __repr__(self):
+  #   self.jobs()
+    
+  #   return self.config.name
+
   def _reset(self):
     log.debug('Reset JobHandler')
     if os.path.isdir(self.config.base_dir): os.system('rm -r {}'.format(self.config.base_dir))
@@ -164,9 +169,9 @@ class JobHandler:
     label_finished_func = None
     label_success_func = None
     if job_label[Status.FINISHED] is not None:
-      label_finished_func = FinishedTrigger()
+      label_finished_func = FinishedTrigger(job_label[Status.FINISHED])
     if (job_label[Status.SUCCESS] is not None) and (job_label[Status.FAILURE] is not None):
-      label_success_func = SuccessTrigger()
+      label_success_func = SuccessTrigger(job_label[Status.SUCCESS], job_label[Status.FAILURE])
     job_finished_func = finished_func or label_finished_func or self.config.finished_func
     job_success_func = success_func or label_success_func or self.config.success_func
     ## Parse variables
@@ -178,7 +183,7 @@ class JobHandler:
     job_max_retries = max_retries or self.config.max_retries
     config_path = self.config.snapshot_dir+name+'.pkl'
 
-    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags, label = job_label)
+    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
     self.config._jobs_configs.append(job_config)
     ## Update snapshot to make sure job configs list is properly updated
     self._update_snapshot(skip_jobs = True)

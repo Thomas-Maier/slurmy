@@ -8,30 +8,32 @@ class SuccessOutputFile:
     return os.path.isfile(config.output)
 
 class SuccessTrigger:
+  def __init__(self, success_file, failure_file):
+    self._success_file = success_file
+    self._failure_file = failure_file
+    
   def __call__(self, config):
     import os, time
-    from .defs import Status
-    success_file = config.label[Status.SUCCESS]
-    failure_file = config.label[Status.FAILURE]
     while True:
-      if not (os.path.isfile(success_file) or os.path.isfile(failure_file)):
-        time.sleep(0.1)
+      if not (os.path.isfile(self._success_file) or os.path.isfile(self._failure_file)):
+        time.sleep(0.5)
         continue
-      if os.path.isfile(success_file):
-        os.remove(success_file)
+      if os.path.isfile(self._success_file):
+        os.remove(self._success_file)
         return True
       else:
-        os.remove(failure_file)
+        os.remove(self._failure_file)
         return False
 
 ## Finished classes
 class FinishedTrigger:
+  def __init__(self, finished_file):
+    self._finished_file = finished_file
+    
   def __call__(self, config):
     import os
-    from .defs import Status
-    finished_file = config.label[Status.FINISHED]
-    finished = os.path.isfile(finished_file)
-    if finished: os.remove(finished_file)
+    finished = os.path.isfile(self._finished_file)
+    if finished: os.remove(self._finished_file)
 
     return finished
 

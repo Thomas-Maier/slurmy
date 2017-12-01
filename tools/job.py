@@ -9,7 +9,7 @@ log = logging.getLogger('slurmy')
 
 
 class JobConfig:
-  def __init__(self, backend, path, success_func = None, finished_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None, label = None):
+  def __init__(self, backend, path, success_func = None, finished_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
     ## Static variables
     self.backend = backend
     self.name = self.backend.name
@@ -23,7 +23,6 @@ class JobConfig:
     self.is_local = is_local
     self.max_retries = max_retries
     self.output = output
-    self.label = label
     ## Dynamic variables
     self.status = Status.CONFIGURED
     self.job_id = None
@@ -59,7 +58,6 @@ class Job:
     if self.config.tags: print_string += 'Tags: {}\n'.format(self.config.tags)
     if self.config.parent_tags: print_string += 'Parent tags: {}\n'.format(self.config.parent_tags)
     if self.config.output: print_string += 'Output: {}'.format(self.config.output)
-    if self.config.label: print_string += 'Label: {}'.format(self.config.label)
 
     return print_string
 
