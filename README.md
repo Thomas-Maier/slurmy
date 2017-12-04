@@ -46,13 +46,15 @@ Jobs can be connected by adding tags and parent tags to them. Jobs with parent t
 
 **Example of job chaining with tags:** [examples/example_chain.py](examples/example_chain.py)
 
-## Custom Success Conditions and Variable Substitution
+## Custom Success or Finished Conditions and Variable Substitution
 
-By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. If success_func was defined during add_job, the custom definition will be used instead of the default one during the success evaluation.
+By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. If `success_func` was defined during add_job, the custom definition will be used instead of the default one during the success evaluation.
 
 **Example of success_func usage:** [examples/example_success_func.py](examples/example_success_func.py)
 
 Due to technically reasons connected to the snapshot feature (see below), your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.
+
+In the same way as the custom success condition, a custom finished condition can be provided with the `finished_func` argument.
 
 The example uses SuccessOutputFile as defined in tools/utils.py. It also introduces a feature of slurmy, that allows to use the configuration of the JobHandler inside the shell script and some arguments of add_job (currently only "output"). This is done by some simple string parsing and substitution routine of any variable of the JobHandlerConfig. For now have a look at [tools/JobHandler.py](tools/JobHandler.py) to see what can be used (all variables that don't start with "_").
 
@@ -74,6 +76,8 @@ Arguments that can be passed to the JobHandler construction:
 
 **success_func** (default: None): Default success definition to be used.
 
+**finished_func** (default: None): Default finished definition to be used.
+
 **max_retries** (default: 0): Maximum number of retries that will be attempted.
 
 **theme** (default: Lovecraft): Theme that is used by the name generator to name individual jobs and the base folder name. Priority is given to the "name" argument. Themes can be used as given by the Theme enums in tools/defs.py. If Boring is used, job names are simply the base folder name with an incrementing integer.
@@ -83,6 +87,8 @@ Arguments that can be passed to the JobHandler construction:
 **do_snapshot** (default: True): Switch for snapshot deactivation.
 
 **description** (default: None): Description of the JobHandler. For bookkeeping purposes.
+
+**singularity_image** (default: None): Path to a singularity image with which the job run script should be executed with on the worker.
 
 ## Arguments for add_jobs
 
@@ -95,6 +101,8 @@ Arguments that can be passed to the add_jobs function of JobHandler:
 **run_args** (default: None): Run arguments that should be passed to the shell script. Can be either a string or a list of strings. It is recommended to simply pass a string that reflects the same sequence that you would also write in a shell line command.
 
 **success_func** (default: None): Success definition to be used by the job.
+
+**success_func** (default: None): Finished definition to be used by the job.
 
 **max_retries** (default: None): Maximum number of retries that will be attempted by the job.
 
@@ -120,6 +128,8 @@ The job definition file passed with **-c** is a convenient way to make job defin
 
 **Example of a job definition file which can be passed to slurmy:** [examples/example_interactive_config.py](examples/example_interactive_config.py)
 
+If no argument is passed to the slurmy executable, it tries to load the latest session according to the bookkeeping.
+
 The interactive slurmy session also defines a couple of functions:
 
 **list_sessions()**: List all past JobHandler sessions with some information. Sessions are kept track of in a json file, which is defined in ~/.slurmy. They are either defined by the full path to the base folder on disk, or by the name as given in the list.
@@ -127,3 +137,5 @@ The interactive slurmy session also defines a couple of functions:
 **load(name)**: Load a JobHandler as given by the name in list_sessions().
 
 **load_path(path)**: Load a JobHandler as given by the path to the base folder (relative or absolute).
+
+**load_latest()**: Load the latest session according to the bookkeeping.
