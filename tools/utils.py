@@ -48,7 +48,7 @@ def _get_prompt():
     shell = code.InteractiveConsole(globals())
     return shell.interact
 
-def list_sessions():
+def get_sessions():
   from slurmy.tools import options as ops
   import logging
   log = logging.getLogger('slurmy')
@@ -56,9 +56,14 @@ def list_sessions():
   ops.Main.sync_bookkeeping()
   bk = ops.Main.get_bookkeeping()
   if bk is None:
-    log.error('No bookeeping found')
-    return
-  for name, vals in sorted(bk.items(), key = lambda val: val[0].rsplit('_', 1)[-1]):
+    log.debug('No bookeeping found')
+    return []
+
+  return sorted(bk.items(), key = lambda val: val[0].rsplit('_', 1)[-1])
+
+def list_sessions():
+  sessions = get_sessions()
+  for name, vals in sessions:
     path = vals['path']
     timestamp = vals['timestamp']
     description = vals['description']
@@ -100,3 +105,12 @@ def load_path(path):
   #   raise
 
   return jh
+
+def load_latest():
+  sessions = get_sessions()
+  if not sessions:
+    logging.getLogger('slurmy').debug('No recorded sessions found')
+    return None
+  latest_session_name = sessions[-1][0]
+
+  return load(latest_session_name)
