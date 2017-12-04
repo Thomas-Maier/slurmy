@@ -102,7 +102,7 @@ Arguments that can be passed to the add_jobs function of JobHandler:
 
 **success_func** (default: None): Success definition to be used by the job.
 
-**success_func** (default: None): Finished definition to be used by the job.
+**finished_func** (default: None): Finished definition to be used by the job.
 
 **max_retries** (default: None): Maximum number of retries that will be attempted by the job.
 
@@ -111,6 +111,8 @@ Arguments that can be passed to the add_jobs function of JobHandler:
 **tags** (default: None): Tags that should be attached to the job. Can be a string or a list of strings.
 
 **parent_tags** (default: None): Parent tags that should be attached to the job. Can be a string or a list of strings.
+
+**name** (default: None): Name to identify the job with. Slurmy makes sure that each job has a unique name and adds an incrementing integer as suffix, if needed.
 
 ## Interactive Slurmy
 
