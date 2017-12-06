@@ -12,6 +12,7 @@ log = logging.getLogger('slurmy')
 
 class Slurm(Base):
   bid = 'Slurm'
+  _script_options_identifier = 'SBATCH'
   _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
   def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None, mem = None, time = None, export = None):
     ## Common backend options

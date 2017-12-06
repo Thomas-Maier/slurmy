@@ -10,6 +10,7 @@ log = logging.getLogger('slurmy')
 
 class Base:
   bid = 'Base'
+  _script_options_identifier = ''
   _commands = []
   name = None
   log = None
@@ -73,10 +74,21 @@ class Base:
   def _add_singularity_command(self, image_path):
     ## Define command with provided singularity image
     command = 'if [[ -z "$SINGULARITY_IMAGE" ]]\nthen\n  singularity exec {} $0 $@\n  exit $?\nfi\n'.format(image_path)
-    ## Insert the singularity command
-    shebang, script = self.run_script.split('\n', 1)
-    script = '{}\n'.format(shebang) + command + script
-    self.run_script = script
+    ## Recursive function to scan script and find proper position for the command
+    def add_command(tail, head = ''):
+      line, tail = tail.split('\n', 1)
+      line = line.strip()
+      ## When line is not empty and is not commented out, command must be inserted before here in any case
+      if line and not line.startswith('#'):
+        return head + command + '{}\n'.format(line) + tail
+      ## If tail doesn't contain the backend options identifier, command can be inserted here
+      elif self._script_options_identifier and '#{}'.format(self._script_options_identifier) not in tail:
+        return head + '{}\n'.format(line) + command + tail
+      else:
+        head += '{}\n'.format(line)
+        return add_command(tail, head)
+    ## Add the command
+    self.run_script = add_command(self.run_script)
 
   @staticmethod
   def _check_command(command):
