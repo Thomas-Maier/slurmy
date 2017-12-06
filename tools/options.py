@@ -16,6 +16,8 @@ class Options:
     self.bookkeeping = None
     self.workdir = None
     self.backend = None
+    ## Additional options
+    self.test_mode = False
     ## Backend options
     self._backend_options = {}
     ## Internal vars

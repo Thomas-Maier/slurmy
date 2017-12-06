@@ -3,6 +3,7 @@ import subprocess
 import shlex
 import logging
 import os
+from ..tools import options
 
 log = logging.getLogger('slurmy')
 
@@ -61,6 +62,9 @@ class Base:
     self.run_script = out_file_name
 
   def _check_commands(self):
+    ## If we are in test mode, skip this sanity check
+    if options.Main.test_mode:
+      return
     for command in self._commands:
       if Base._check_command(command): continue
       log.error('{} command not found: "{}"'.format(self.bid, command))

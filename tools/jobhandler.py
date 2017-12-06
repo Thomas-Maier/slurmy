@@ -97,10 +97,10 @@ class JobHandler:
   def __getitem__(self, key):
     return self._jobs[key]
 
-  # def __repr__(self):
-  #   self.jobs()
+  def __repr__(self):
+    # self.jobs()
     
-  #   return self.config.name
+    return self.config.name
 
   def _reset(self):
     log.debug('Reset JobHandler')
