@@ -4,6 +4,7 @@ import shlex
 import logging
 import os
 from ..tools import options
+from ..tools.utils import _prompt_decision
 
 log = logging.getLogger('slurmy')
 
@@ -69,6 +70,9 @@ class Base:
     for command in self._commands:
       if Base._check_command(command): continue
       log.error('{} command not found: "{}"'.format(self.bid, command))
+      if _prompt_decision('Switch to test mode (batch submission will not work)'):
+        options.Main.test_mode = True
+        break
       raise Exception
 
   def _add_singularity_command(self, image_path):

@@ -114,3 +114,14 @@ def load_latest():
   latest_session_name = sessions[-1][0]
 
   return load(latest_session_name)
+
+## Prompt utils
+def _prompt_decision(message):
+  while True:
+    string = input('{} (y/n): '.format(message))
+    if string == 'y':
+      return True
+    elif string == 'n':
+      return False
+    else:
+      print ('Please answer with "y" or "n"')
