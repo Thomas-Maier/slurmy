@@ -109,6 +109,8 @@ def load_path(path):
 def load_latest():
   sessions = get_sessions()
   if not sessions:
+    import logging
+    log = logging.getLogger('slurmy')
     logging.getLogger('slurmy').debug('No recorded sessions found')
     return None
   latest_session_name = sessions[-1][0]
