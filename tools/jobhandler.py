@@ -292,16 +292,22 @@ class JobHandler:
       while running:
         self.submit_jobs(make_snapshot = False, wait = False, force_retry = force_retry)
         print_string = self._get_print_string()
-        if not self._debug:
-          stdout.write('\r'+print_string)
-          stdout.flush()
-        else:
-          log.debug(print_string)
+        if interval == -1: print_string += ' - press enter to update status'
         n_success = len(self.config._job_states[Status.SUCCESS])
         n_failed = len(self.config._job_states[Status.FAILURE])
         n_cancelled = len(self.config._job_states[Status.CANCELLED])
-        if (n_success+n_failed+n_cancelled) == n_all: running = False
-        time.sleep(interval)
+        if (n_success+n_failed+n_cancelled) == n_all:
+          running = False
+        else:
+          if not self._debug:
+            stdout.write('\r'+print_string)
+            stdout.flush()
+          else:
+            log.debug(print_string)
+          if interval == -1:
+            input()
+          else:
+            time.sleep(interval)
     except KeyboardInterrupt:
       if not self._debug: stdout.write('\n')
       log.warning('Quitting gracefully...')
