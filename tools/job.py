@@ -9,7 +9,7 @@ log = logging.getLogger('slurmy')
 
 
 class JobConfig:
-  def __init__(self, backend, path, success_func = None, finished_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
+  def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
     ## Static variables
     self.backend = backend
     self.name = self.backend.name
@@ -20,6 +20,7 @@ class JobConfig:
     if parent_tags is not None: self.add_tags(parent_tags, True)
     self.success_func = success_func
     self.finished_func = finished_func
+    self.post_func = post_func
     self.is_local = is_local
     self.max_retries = max_retries
     self.output = output
@@ -116,6 +117,8 @@ class Job:
       self.config.job_id = self.config.backend.submit()
     self.config.status = Status.RUNNING
 
+    return self.config.status
+
   def cancel(self, clear_retry = False):
     ## Do nothing if job is already in failed state
     if self.config.status == Status.FAILURE: return
@@ -128,6 +131,8 @@ class Job:
         self.config.backend.cancel()
     self.config.status = Status.CANCELLED
     if clear_retry: self.config.max_retries = 0
+
+    return self.config.status
 
   def retry(self, force = False, submit = True, ignore_max_retries = False):
     if not ignore_max_retries and not self.do_retry(): return
@@ -142,10 +147,16 @@ class Job:
     self.config.n_retries += 1
     if submit: self.submit()
 
+    return self.config.status
+
   def do_retry(self):
     return (self.config.max_retries > 0 and (self.config.n_retries < self.config.max_retries))
 
-  def get_status(self):
+  def get_status(self, skip_eval = False):
+    ## Just return current status and skip status evaluation
+    if skip_eval:
+      return self.config.status
+    ## Evaluate if job is finished
     if self.config.status == Status.RUNNING:
       if self.config.is_local:
         self._get_local_status()
@@ -157,11 +168,14 @@ class Job:
             self.config.status = Status.RUNNING
         else:
           self.config.status = self.config.backend.status()
+    ## Evaluate if job was successful
     if self.config.status == Status.FINISHED:
       if self._is_success():
         self.config.status = Status.SUCCESS
       else:
         self.config.status = Status.FAILURE
+      ## Finish the job, TODO: maybe let the jobhandler trigger this instead?
+      self._finish()
         
     return self.config.status
 
@@ -186,6 +200,10 @@ class Job:
 
     return success
 
+  def _finish(self):
+    if self.config.post_func is not None:
+      self.config.post_func(self.config)
+
   def get_tags(self):
     return self.config.tags
 
@@ -196,10 +214,10 @@ class Job:
     return self.config.name
 
   def log(self):
-    os.system('less {}'.format(self.config.backend.log))
+    os.system('less -R {}'.format(self.config.backend.log))
 
   def script(self):
-    os.system('less {}'.format(self.config.backend.run_script))
+    os.system('less -R {}'.format(self.config.backend.run_script))
 
   def _get_local_command(self):
     command = ['/bin/bash']

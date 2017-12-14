@@ -37,6 +37,15 @@ class FinishedTrigger:
 
     return finished
 
+## Post-function classes
+class LogMover:
+  def __init__(self, target_path):
+    self._target_path = target_path
+
+  def __call__(self, config):
+    import os
+    os.system('cp {} {}'.format(config.backend.log, self._target_path))
+
 ## Functions for interactive slurmy
 def _get_prompt():
   try:

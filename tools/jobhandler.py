@@ -150,7 +150,7 @@ class JobHandler:
 
     return job
 
-  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None):
+  def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None):
     if backend is None and ops.Main.backend is not None:
       backend = get_backend(ops.Main.backend)
     if backend is None:
@@ -183,7 +183,7 @@ class JobHandler:
     job_max_retries = max_retries or self.config.max_retries
     config_path = self.config.snapshot_dir+name+'.pkl'
 
-    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
+    job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
     self.config._jobs_configs.append(job_config)
     ## Update snapshot to make sure job configs list is properly updated
     self._update_snapshot(skip_jobs = True)
@@ -261,9 +261,9 @@ class JobHandler:
       log.debug('Wait for job {}'.format(job.get_name()))
       job.wait()
 
-  def _update_job_status(self, job):
+  def _update_job_status(self, job, skip_eval = False):
     name = job.get_name()
-    new_status = job.get_status()
+    new_status = job.get_status(skip_eval = skip_eval)
     ## If old and new status are the same, do nothing
     if name in self.config._job_states[new_status]: return
     ## Remove current status entry for job
@@ -332,17 +332,17 @@ class JobHandler:
     try:
       ## Get current job states
       self._update_job_states()
-      ## Check local jobs progression
-      self._check_local_jobs()
+      ## Check local jobs progression, skip status evaluation since this was already done
+      self._check_local_jobs(skip_eval = True)
       for job in self.get_jobs(tags):
         ## Submit new jobs only if current number of running jobs is below maximum, if set
         if self.config.run_max and not (len(self.config._job_states[Status.RUNNING]) < self.config.run_max):
           log.debug('Maximum number of running jobs reached, skip job submission')
           break
-        status = job.get_status()
+        ## Get job status, skip status evaluation since this was already done
+        status = job.get_status(skip_eval = True)
         if (status == Status.FAILURE or status == Status.CANCELLED):
-          job.retry(submit = False, ignore_max_retries = force_retry)
-          status = job.get_status()
+          status = job.retry(submit = False, ignore_max_retries = force_retry)
         ## If job is not in Configured state there is nothing to do
         if status != Status.CONFIGURED: continue
         ## Check if job is ready to be submitted
@@ -351,13 +351,16 @@ class JobHandler:
           job.set_local()
           self._local_jobs.append(job)
           self.config._local_counter += 1
-        job.submit()
+        status = job.submit()
         ## Update job status
-        self._update_job_status(job)
+        self._update_job_status(job, skip_eval = True)
       if wait: self._wait_for_jobs(tags)
       if make_snapshot: self._update_snapshot()
+    ## In case of a keyboard interrupt we just want to stop slurmy processing but keep current batch jobs running
+    except KeyboardInterrupt:
+      raise KeyboardInterrupt
+    ## If anything else happens, cancel all running jobs
     except:
-      ## If something explodes, cancel all running jobs
       self.cancel_jobs(make_snapshot = False)
       raise
       
@@ -373,8 +376,9 @@ class JobHandler:
   def retry_jobs(self, tags = None, make_snapshot = True):
     try:
       for job in self.get_jobs(tags):
+        status = job.get_status()
         ## Retry only if job is failed or cancelled
-        if job.get_status() != Status.FAILURE and job.get_status() != Status.CANCELLED: continue
+        if status != Status.FAILURE and status != Status.CANCELLED: continue
         job.retry()
       if make_snapshot: self._update_snapshot()
     except:
@@ -387,9 +391,10 @@ class JobHandler:
     print_string = self._get_print_string()
     print (print_string)
 
-  def _check_local_jobs(self):
+  def _check_local_jobs(self, skip_eval = False):
     for i, job in enumerate(self._local_jobs):
-      if job.get_status() == Status.RUNNING: continue
+      status = job.get_status(skip_eval = skip_eval)
+      if status == Status.RUNNING: continue
       self._local_jobs.pop(i)
 
   def jobs(self, tag = None):
