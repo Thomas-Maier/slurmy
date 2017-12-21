@@ -130,7 +130,7 @@ def load_latest():
 def get_input_func():
   from sys import version_info
   input_func = None
-  if version_info == 3:
+  if version_info.major == 3:
     input_func = input
   else:
     input_func = raw_input

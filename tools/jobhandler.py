@@ -85,10 +85,10 @@ class JobHandler:
       if not os.path.isfile(path):
         log.error('Could not find path to snapshot')
         raise Exception()
-      log.debug('Read snapshot from {}'.format(path))
+      log.debug('Load JobHandler snapshot from {}'.format(path))
       with open(path, 'rb') as in_file:
         self.config = pickle.load(in_file)
-      log.debug('Read job snapshots')
+      log.debug('Load job snapshots')
       for job_config in self.config._jobs_configs:
         self._add_job_with_config(job_config)
     else:

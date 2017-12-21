@@ -4,7 +4,7 @@ import argparse
 import os
 import logging
 from slurmy import JobHandler, test_mode
-from slurmy.backends import Slurm
+from slurmy.backends.slurm import Slurm
 from slurmy.tools.utils import _get_prompt, list_sessions, load, load_path, load_latest
 
 _log = logging.getLogger('slurmy')
