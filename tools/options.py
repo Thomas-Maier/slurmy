@@ -3,7 +3,7 @@ import json
 import os
 import datetime
 import logging
-from ..backends import backend_list
+from ..backends.utils import backend_list
 
 log = logging.getLogger('slurmy')
 

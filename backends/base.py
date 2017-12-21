@@ -5,12 +5,13 @@ import logging
 import os
 from ..tools import options
 from ..tools.utils import _prompt_decision
+from .defs import bids
 
 log = logging.getLogger('slurmy')
 
 
 class Base:
-  bid = 'Base'
+  bid = bids['BASE']
   _script_options_identifier = ''
   _commands = []
   name = None

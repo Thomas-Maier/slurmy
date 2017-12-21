@@ -127,9 +127,19 @@ def load_latest():
   return load(latest_session_name)
 
 ## Prompt utils
+def get_input_func():
+  from sys import version_info
+  input_func = None
+  if version_info == 3:
+    input_func = input
+  else:
+    input_func = raw_input
+
+  return input_func
+
 def _prompt_decision(message):
   while True:
-    string = input('{} (y/n): '.format(message))
+    string = get_input_func()('{} (y/n): '.format(message))
     if string == 'y':
       return True
     elif string == 'n':

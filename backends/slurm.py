@@ -6,12 +6,13 @@ import logging
 from ..tools.defs import Status
 from .base import Base
 from ..tools import options as ops
+from .defs import bids
 
 log = logging.getLogger('slurmy')
 
 
 class Slurm(Base):
-  bid = 'Slurm'
+  bid = bids['SLURM']
   _script_options_identifier = 'SBATCH'
   _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
   def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None, mem = None, time = None, export = None):

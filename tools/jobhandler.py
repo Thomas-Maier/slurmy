@@ -2,7 +2,7 @@
 from __future__ import print_function
 import os
 import time
-from sys import stdout
+from sys import stdout, version_info
 from collections import OrderedDict
 import pickle
 import logging
@@ -10,9 +10,9 @@ from .defs import Status, Theme
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
 from . import options as ops
-from ..backends import get_backend
+from ..backends.utils import get_backend
 from .parser import Parser
-from .utils import SuccessTrigger, FinishedTrigger
+from .utils import SuccessTrigger, FinishedTrigger, get_input_func
 
 log = logging.getLogger('slurmy')
 
@@ -62,8 +62,13 @@ class JobHandlerConfig:
 
 class JobHandler:
   def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, singularity_image = None):
+    ## Set debug mode
     self._debug = False
     if log.level == 10: self._debug = True
+    ## Local jobs not supported in python 2
+    if local_max > 0 and version_info.major == 2:
+      log.warning('Local job processing not supported in python 2, switched off')
+      local_max = 0
     ## Variables that are not picklable
     self._jobs = {}
     self._tagged_jobs = {}
@@ -305,7 +310,7 @@ class JobHandler:
           else:
             log.debug(print_string)
           if interval == -1:
-            input()
+            get_input_func()()
           else:
             time.sleep(interval)
     except KeyboardInterrupt:
