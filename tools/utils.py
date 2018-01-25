@@ -83,13 +83,17 @@ def list_sessions():
 def load(name):
   from slurmy.tools import options as ops
   from slurmy import JobHandler
-  import logging
+  import logging, sys
   log = logging.getLogger('slurmy')
   ## Synchronise bookkeeping with entries on disk
   ops.Main.sync_bookkeeping()
   bk = ops.Main.get_bookkeeping()
   if bk is None:
     log.error('No bookeeping found')
+    return None
+  python_version = sys.version_info.major
+  if bk[name]['python_version'] != python_version:
+    log.error('Python version "{}" of the snapshot not compatible with current version "{}"'.format(bk[name]['python_version'], python_version))
     return None
   work_dir = bk[name]['work_dir']
   jh = JobHandler(name = name, work_dir = work_dir, use_snapshot = True)
