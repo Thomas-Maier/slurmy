@@ -10,7 +10,7 @@ NOTE: This readme temporarily will contain some instruction on how to use slurmy
 
 Clone the latest stable tag or master branch locally:
 
-git clone https://github.com/TomVanNom/slurmy.git
+git clone https://github.com/Thomas-Maier/slurmy.git
 
 Make sure to add the directory in which you cloned slurmy to PYTHONPATH, and the slurmy folder to PATH:
 
