@@ -78,7 +78,7 @@ class Base:
 
   def _add_singularity_command(self, image_path):
     ## Define command with provided singularity image
-    command = 'if [[ -z "$SINGULARITY_IMAGE" ]]\nthen\n  singularity exec {} $0 $@\n  exit $?\nfi\n'.format(image_path)
+    command = 'if [[ -z "$SINGULARITY_INIT" ]]\nthen\n  singularity exec {} $0 $@\n  exit $?\nfi\n'.format(image_path)
     ## Recursive function to scan script and find proper position for the command
     def add_command(tail, head = ''):
       line, tail = tail.split('\n', 1)
