@@ -15,6 +15,7 @@ class NameGenerator(object):
       while len(self._adjectives) > n_adjectives:
         self._adjectives.pop(random.randint(0, len(self._adjectives)-1))
     self.name, self._name_list = self._get_theme(name, self._theme)
+    print self.name, self._name_list
     self._counter = 0
     self._cycle = 0
     self._max = max_names
@@ -70,9 +71,13 @@ class NameGenerator(object):
     name = '{}_{}'.format(name, calendar.timegm(time.gmtime()))
     ## Make the full list of name combinations
     full_name_list = []
-    for adj in self._adjectives:
+    if self._adjectives:
+      for adj in self._adjectives:
+        for entry in name_list:
+          full_name_list.append('{}_{}{}'.format(adj, entry, suffix))
+    else:
       for entry in name_list:
-        full_name_list.append('{}_{}{}'.format(adj, entry, suffix))
+        full_name_list.append('{}{}'.format(entry, suffix))
 
     return name, full_name_list
 
