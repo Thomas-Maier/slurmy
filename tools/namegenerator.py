@@ -15,7 +15,6 @@ class NameGenerator(object):
       while len(self._adjectives) > n_adjectives:
         self._adjectives.pop(random.randint(0, len(self._adjectives)-1))
     self.name, self._name_list = self._get_theme(name, self._theme)
-    print self.name, self._name_list
     self._counter = 0
     self._cycle = 0
     self._max = max_names
