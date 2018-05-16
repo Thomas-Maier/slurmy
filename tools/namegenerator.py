@@ -55,8 +55,8 @@ class NameGenerator(object):
             return name
 
     def _check_name(self, name):
-        if '.' in name or '-' in name:
-            log.error('Found "." or "-" in job name, please treat as if it was a python variable')
+        if '.' in name or '-' in name or ' ' in name:
+            log.error('Found ".", "-" or whitespace in job name, please treat as if it was a python variable')
             raise Exception
 
     def _get_theme(self, name_given, theme, suffix = ''):
