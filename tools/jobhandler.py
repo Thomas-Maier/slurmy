@@ -17,6 +17,26 @@ from .utils import SuccessTrigger, FinishedTrigger, get_input_func
 log = logging.getLogger('slurmy')
 
 
+class JobContainer(dict):
+    def __call__(self, tag = None):
+        self._print_jobs(tag)
+
+    def _print_jobs(self, tag = None):
+        for job_name, job in self.items():
+            if tag and tag not in job.get_tags(): continue
+            print ('Job "{}": {}'.format(job.get_name(), job.get_status().name))
+
+    def __repr__(self):
+        self._print_jobs()
+
+        return ''
+
+    def __setitem__(self, key, val):
+        super(JobContainer, self).__setitem__(key, val)
+        self.__dict__[key] = val
+        
+
+
 class JobHandlerConfig:
     def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, singularity_image = None):
         ## Static variables
@@ -70,7 +90,7 @@ class JobHandler:
             log.warning('Local job processing not supported in python 2, switched off')
             local_max = 0
         ## Variables that are not picklable
-        self._jobs = {}
+        self.jobs = JobContainer()
         self._tagged_jobs = {}
         self._local_jobs = []
         ## Backend setup
@@ -100,11 +120,9 @@ class JobHandler:
         self._parser = Parser(self.config)
 
     def __getitem__(self, key):
-        return self._jobs[key]
+        return self.jobs[key]
 
     def __repr__(self):
-        # self.jobs()
-
         return self.config.name
 
     def _reset(self):
@@ -123,7 +141,7 @@ class JobHandler:
         if not self.config._do_snapshot: return
         if not skip_jobs:
             log.debug('Update job snapshots')
-            for job in self._jobs.values():
+            for job in self.jobs.values():
                 job.update_snapshot()
         log.debug('Update JobHandler snapshot')
         with open(self.config.path, 'wb') as out_file:
@@ -131,7 +149,7 @@ class JobHandler:
 
     def get_jobs(self, tags = None):
         job_list = []
-        for job in self._jobs.values():
+        for job in self.jobs.values():
             if tags is not None and not JobHandler._has_tags(job, tags): continue
             job_list.append(job)
 
@@ -140,9 +158,7 @@ class JobHandler:
     def _add_job_with_config(self, job_config):
         log.debug('Add job {}'.format(job_config.name))
         job = Job(config = job_config)
-        self._jobs[job.get_name()] = job
-        ## Add job as JobHandler property as well
-        self.__dict__['_j_{}'.format(job.get_name())] = job
+        self.jobs[job.get_name()] = job
         tags = job_config.tags
         if tags is not None:
             if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
@@ -223,18 +239,18 @@ class JobHandler:
             print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
         n_success = len(self.config._job_states[Status.SUCCESS])
         n_failed = len(self.config._job_states[Status.FAILURE])
-        n_all = len(self._jobs.values())
+        n_all = len(self.jobs)
         print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
         return print_string
 
     def _get_summary_string(self, time_spent = None):
         summary_dict = OrderedDict()
-        summary_dict['all'] = {'string': 'Jobs processed ', 'batch': len(self._jobs.values())-self.config._local_counter, 'local': self.config._local_counter}
+        summary_dict['all'] = {'string': 'Jobs processed ', 'batch': len(self.jobs)-self.config._local_counter, 'local': self.config._local_counter}
         summary_dict['success'] = {'string': '     successful ', 'batch': 0, 'local': 0}
         summary_dict['fail'] = {'string': '     failed ', 'batch': 0, 'local': 0}
         jobs_failed = ''
-        for job in self._jobs.values():
+        for job in self.jobs.values():
             status = job.get_status()
             if status == Status.SUCCESS:
                 if job.is_local():
@@ -281,7 +297,7 @@ class JobHandler:
         self.config._job_states[new_status].add(name)
 
     def _update_job_states(self):
-        for job in self._jobs.values():
+        for job in self.jobs.values():
             self._update_job_status(job)
 
     def print_summary(self, time_spent = None):
@@ -294,7 +310,7 @@ class JobHandler:
     def run_jobs(self, interval = 5, force_retry = False):
         time_now = time.time()
         try:
-            n_all = len(self._jobs.values())
+            n_all = len(self.jobs)
             running = True
             while running:
                 self.submit_jobs(make_snapshot = False, wait = False, force_retry = force_retry)
@@ -404,10 +420,10 @@ class JobHandler:
             if status == Status.RUNNING: continue
             self._local_jobs.pop(i)
 
-    def jobs(self, tag = None):
-        for job_name, job in self._jobs.items():
-            if tag and tag not in job.get_tags(): continue
-            print ('Job "{}": {}'.format(job.get_name(), job.get_status().name))
+    # def jobs(self, tag = None):
+    #     for job_name, job in self._jobs.items():
+    #         if tag and tag not in job.get_tags(): continue
+    #         print ('Job "{}": {}'.format(job.get_name(), job.get_status().name))
 
     @staticmethod
     def _has_tag(job, tag):

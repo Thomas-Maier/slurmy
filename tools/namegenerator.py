@@ -32,20 +32,20 @@ class NameGenerator(object):
     def next(self, custom_name = None):
         if custom_name is not None:
             name, self._counter = self._get_custom_name(custom_name), self._counter+1
-            return name
         elif self._name_list:
             name, self._counter = self._name_list.pop(random.randint(0, len(self._name_list)-1)), self._counter+1
-            return name
         elif (self._max is not None) and (self._counter >= self._max):
             raise StopIteration()
         else:
             self._cycle += 1
             tmp, self._name_list = self._get_theme(self.name, self._theme, suffix = '_{}'.format(self._cycle))
-            return self.next()
+            name = self.next()
+        ## Check if name works as class property
+        self._check_name(name)
+
+        return name
 
     def _get_custom_name(self, name):
-        ## Check if name works as JobHandler property
-        self._check_name(name)
         if name in self._custom_names:
             n_name = self._custom_names[name]
             self._custom_names[name] += 1
@@ -55,8 +55,8 @@ class NameGenerator(object):
             return name
 
     def _check_name(self, name):
-        if '.' in name or '-' in name or ' ' in name:
-            log.error('Found ".", "-" or whitespace in job name, please treat as if it was a python variable')
+        if '.' in name or '-' in name or ' ' in name or '/' in name:
+            log.error('Found ".", "-", "/" or whitespace in job name, please treat as if it was a python variable')
             raise Exception
 
     def _get_theme(self, name_given, theme, suffix = ''):
