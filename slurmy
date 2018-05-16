@@ -11,25 +11,25 @@ _log = logging.getLogger('slurmy')
 
 
 if __name__ == '__main__':
-  _parser = argparse.ArgumentParser(description = 'Slurmy interactive')
-  _parser.add_argument('-p', '--path', dest = 'path', type = str, default = None, help = 'Path to existing session')
-  _parser.add_argument('-c', '--config', dest = 'config', type = str, default = None, help = 'Job configuration file')
-  _parser.add_argument('-t', dest = 'test_mode', action = 'store_true', default = False, help = 'Switch to start in test mode')
-  _parser.add_argument('--debug', dest = 'debug', action = 'store_true', default = False, help = 'Debug mode')
-  _args = _parser.parse_args()
+    _parser = argparse.ArgumentParser(description = 'Slurmy interactive')
+    _parser.add_argument('-p', '--path', dest = 'path', type = str, default = None, help = 'Path to existing session')
+    _parser.add_argument('-c', '--config', dest = 'config', type = str, default = None, help = 'Job configuration file')
+    _parser.add_argument('-t', dest = 'test_mode', action = 'store_true', default = False, help = 'Switch to start in test mode')
+    _parser.add_argument('--debug', dest = 'debug', action = 'store_true', default = False, help = 'Debug mode')
+    _args = _parser.parse_args()
 
-  ## Modes to start slurmy in
-  if _args.test_mode: test_mode()
-  if _args.debug: _log.setLevel(level = logging.DEBUG)
-  ## Load config file if one was provided
-  if _args.config:
-    with open(_args.config, 'r') as in_file:
-      exec(in_file.read())
-  ## Load jobhandler according to provided path
-  elif _args.path:
-    jh = load_path(_args.path)
-  ## Check if we have sessions in bookkeeping and load the latest one
-  else:
-    jh = load_latest()
-  ## Load interactive session
-  _get_prompt()()
+    ## Modes to start slurmy in
+    if _args.test_mode: test_mode()
+    if _args.debug: _log.setLevel(level = logging.DEBUG)
+    ## Load config file if one was provided
+    if _args.config:
+        with open(_args.config, 'r') as in_file:
+            exec(in_file.read())
+    ## Load jobhandler according to provided path
+    elif _args.path:
+        jh = load_path(_args.path)
+    ## Check if we have sessions in bookkeeping and load the latest one
+    else:
+        jh = load_latest()
+    ## Load interactive session
+    _get_prompt()()
