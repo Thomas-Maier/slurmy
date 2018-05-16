@@ -2,7 +2,10 @@
 import random
 import time
 import calendar
+import logging
 from .defs import Theme, adjectives
+
+log = logging.getLogger('slurmy')
 
 
 class NameGenerator(object):
@@ -41,6 +44,8 @@ class NameGenerator(object):
             return self.next()
 
     def _get_custom_name(self, name):
+        ## Check if name works as JobHandler property
+        self._check_name(name)
         if name in self._custom_names:
             n_name = self._custom_names[name]
             self._custom_names[name] += 1
@@ -48,6 +53,11 @@ class NameGenerator(object):
         else:
             self._custom_names[name] = 1
             return name
+
+    def _check_name(self, name):
+        if '.' in name or '-' in name:
+            log.error('Found "." or "-" in job name, please treat as if it was a python variable')
+            raise Exception
 
     def _get_theme(self, name_given, theme, suffix = ''):
         name = None
@@ -83,7 +93,7 @@ class NameGenerator(object):
     @staticmethod
     def _get_lovecraft_theme():
         name = 'Azathoth'
-        name_list = ['Cthulhu', 'Ghatanothoa', 'Hastur', 'Nyarlathotep', 'Rhan-Tegoth', 'Shub-Niggurath', 'Tsathoggua', 'Yig', 'Yog-Sothoth', 'Shoggoth', 'Yith']
+        name_list = ['Cthulhu', 'Ghatanothoa', 'Hastur', 'Nyarlathotep', 'Rhan_Tegoth', 'Shub_Niggurath', 'Tsathoggua', 'Yig', 'Yog_Sothoth', 'Shoggoth', 'Yith']
 
         return name, name_list
 
@@ -97,13 +107,13 @@ class NameGenerator(object):
     @staticmethod
     def _get_imperium_theme():
         name = 'God_Emperor_Of_Mankind'
-        name_list = ['Lion-ElJonson', 'Jaghatai-Khan', 'Leman-Russ', 'Rogal-Dorn', 'Sanguinius', 'Ferrus-Manus', 'Roboute-Guilliman', 'Vulkan', 'Corvus-Corax']
+        name_list = ['Lion_ElJonson', 'Jaghatai_Khan', 'Leman_Russ', 'Rogal_Dorn', 'Sanguinius', 'Ferrus_Manus', 'Roboute_Guilliman', 'Vulkan', 'Corvus_Corax']
 
         return name, name_list
 
     @staticmethod
     def _get_chaos_theme():
         name = 'Chaos'
-        name_list = ['Khorne', 'Nurgle', 'Tzeentch', 'Slaanesh', 'Fulgrim', 'Perturabo', 'Konrad-Curze', 'Angron', 'Mortarion', 'Magnus-the-Red', 'Horus-Lupercal', 'Lorgar-Aurelian', 'Alpharius-Omegon']
+        name_list = ['Khorne', 'Nurgle', 'Tzeentch', 'Slaanesh', 'Fulgrim', 'Perturabo', 'Konrad_Curze', 'Angron', 'Mortarion', 'Magnus_the_Red', 'Horus_Lupercal', 'Lorgar_Aurelian', 'Alpharius_Omegon']
 
         return name, name_list

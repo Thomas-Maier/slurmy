@@ -141,6 +141,8 @@ class JobHandler:
         log.debug('Add job {}'.format(job_config.name))
         job = Job(config = job_config)
         self._jobs[job.get_name()] = job
+        ## Add job as JobHandler property as well
+        self.__dict__['_j_{}'.format(job.get_name())] = job
         tags = job_config.tags
         if tags is not None:
             if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
