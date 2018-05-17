@@ -19,23 +19,23 @@ log = logging.getLogger('slurmy')
 
 class JobContainer(dict):
     def __call__(self, tag = None):
-        self._print_jobs(tag)
+        print(self._jobs_printlist(tag))
 
-    def _print_jobs(self, tag = None):
+    def _jobs_printlist(self, tag = None):
+        printlist = []
         for job_name, job in self.items():
             if tag and tag not in job.get_tags(): continue
-            print ('Job "{}": {}'.format(job.get_name(), job.get_status().name))
+            printlist.append('Job "{}": {}'.format(job.get_name(), job.get_status().name))
+
+        return '\n'.join(printlist)
 
     def __repr__(self):
-        self._print_jobs()
-
-        return ''
+        return self._jobs_printlist()
 
     def __setitem__(self, key, val):
         super(JobContainer, self).__setitem__(key, val)
         self.__dict__[key] = val
         
-
 
 class JobHandlerConfig:
     def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, singularity_image = None):
