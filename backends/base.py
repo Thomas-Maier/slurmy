@@ -47,7 +47,7 @@ class Base:
             self[key] = self[key] or config[key]
 
     def write_script(self, script_folder, singularity_image = None):
-        out_file_name = '{}/{}'.format(script_folder.rstrip('/'), self.name)
+        out_file_name = os.path.join(script_folder, self.name)
         ## If the provided run script is already existing, just copy it
         if os.path.isfile(self.run_script):
             os.system('cp {} {}'.format(self.run_script, out_file_name))

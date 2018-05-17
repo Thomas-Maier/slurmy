@@ -63,7 +63,7 @@ class Options:
         ## Make sure bookkeeping is already loaded from file
         self.get_bookkeeping()
         timestamp = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        path = '{}/{}'.format(work_dir.rstrip('/'), name)
+        path = os.path.join(work_dir, name)
         self._bookkeeping[name] = {'timestamp': timestamp, 'path': path, 'work_dir': work_dir, 'description': description, 'python_version': sys.version_info.major}
         self._update_bookkeeping()
 

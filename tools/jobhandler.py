@@ -62,20 +62,20 @@ class JobHandlerConfig:
 
     @staticmethod
     def get_dirs(name, work_dir, script = 'scripts', log = 'logs', output = 'output', snapshot = 'snapshot', tmp = 'tmp', snapshot_name = 'JobHandlerConfig.pkl'):
-        base_dir = '{}/'.format(name)
-        if work_dir: base_dir = '{}/{}'.format(work_dir.rstrip('/'), base_dir)
-        ## If base directory begins with "/", assume that it's an absolute path, otherwise prepend $PWD
-        if not base_dir.startswith('/'): base_dir = '{}/{}'.format(os.environ['PWD'], base_dir)
+        base_dir = name
+        if work_dir: base_dir = os.path.join(work_dir, base_dir)
+        ## Convert to absolute path, if it not already the case
+        base_dir = os.path.abspath(base_dir)
         ## Sanity check
         if base_dir == '/':
             log.error('Base dir is "/", something went wrong!')
             raise Exception()
-        script_dir = '{}{}/'.format(base_dir, script)
-        log_dir = '{}{}/'.format(base_dir, log)
-        output_dir = '{}{}/'.format(base_dir, output)
-        snapshot_dir = '{}{}/'.format(base_dir, snapshot)
-        tmp_dir = '{}{}/'.format(base_dir, tmp)
-        path = '{}{}'.format(snapshot_dir, snapshot_name)
+        script_dir = os.path.join(base_dir, script)
+        log_dir = os.path.join(base_dir, log)
+        output_dir = os.path.join(base_dir, output)
+        snapshot_dir = os.path.join(base_dir, snapshot)
+        tmp_dir = os.path.join(base_dir, tmp)
+        path = os.path.join(snapshot_dir, snapshot_name)
 
         return base_dir, script_dir, log_dir, output_dir, snapshot_dir, tmp_dir, path
 
