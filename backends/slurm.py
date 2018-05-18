@@ -77,8 +77,13 @@ class Slurm(Base):
         return self._exitcode
 
     def _get_sacct_entry(self, column):
-        sacct_list = []
-        sacct_list = subprocess.check_output(['sacct', '-j', '{}.batch'.format(self._job_id), '-P', '-o', column], universal_newlines = True).rstrip('\n').split('\n')
+        sacct_list = ['sacct']
+        if self.partition:
+            sacct_list.extend(['-r', self.partition])
+        if self.clusters:
+            sacct_list.extend(['-M', self.clusters])
+        sacct_list.extend(['-j', '{}.batch'.format(self._job_id), '-P', '-o', column])
+        sacct_list = subprocess.check_output(sacct_list, universal_newlines = True).rstrip('\n').split('\n')
         sacct_return = None
         if len(sacct_list) > 1:
             sacct_return = sacct_list[1].split('|')
