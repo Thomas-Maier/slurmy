@@ -205,10 +205,10 @@ class JobHandler:
         backend.run_script = self._parser.replace(backend.run_script)
         if output: output = self._parser.replace(output)
         backend.write_script(self.config.script_dir, singularity_image = self.config._singularity_image)
-        backend.log = self.config.log_dir+name
+        backend.log = os.path.join(self.config.log_dir, name)
         backend.sync(self.config.backend)
         job_max_retries = max_retries or self.config.max_retries
-        config_path = self.config.snapshot_dir+name+'.pkl'
+        config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
         job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
         self.config._jobs_configs.append(job_config)
