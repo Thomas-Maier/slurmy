@@ -48,7 +48,11 @@ class Slurm(Base):
         if self.mem: submit_list.append('--mem={}'.format(self.mem))
         if self.time: submit_list.append('--time={}'.format(self.time))
         if self.export: submit_list.append('--export={}'.format(self.export))
-        submit_list.append(self.run_script)
+        ## Get run_script setup through wrapper
+        run_script = self.wrapper.get(self.run_script)
+        ## shlex splits run_script in a Popen digestable way
+        run_script = shlex.split(run_script)
+        submit_list += run_script
         if self.run_args:
             ## shlex splits run_args in a Popen digestable way
             if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
