@@ -3,6 +3,7 @@ import subprocess
 import shlex
 import logging
 import os
+import stat
 from ..tools import options
 from ..tools.utils import _prompt_decision
 from .defs import bids
@@ -65,6 +66,8 @@ class Base:
             out_file.write(self.run_script)
         ## Set run script path
         self.run_script = out_file_name
+        ## Set executable permissions
+        os.chmod(self.run_script, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
 
     def _check_commands(self):
         ## If we are in test mode, skip this sanity check
