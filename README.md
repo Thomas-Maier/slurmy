@@ -88,7 +88,7 @@ Arguments that can be passed to the JobHandler construction:
 
 **description** (default: None): Description of the JobHandler. For bookkeeping purposes.
 
-**singularity_image** (default: None): Path to a singularity image with which the job run script should be executed with on the worker.
+**wrapper** (default: None): Wrapper that defines how the run_script is executed on the worker. Currently only SingularityWrapper available (see [examples/example_wrapper.py](examples/example_wrapper.py) for more information).
 
 ## Arguments for add_jobs
 

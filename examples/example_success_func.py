@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from slurmy import JobHandler
-from slurmy.backends import Slurm
-from slurmy.tools.utils import SuccessOutputFile
+from slurmy import Slurm
+from slurmy import SuccessOutputFile
 
 def main():
     ## Success function, which has to be an instance of a class with __call__ defined

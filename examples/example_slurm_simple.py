@@ -1,7 +1,7 @@
 
 import slurmy
 from slurmy import JobHandler
-from slurmy.backends import Slurm
+from slurmy import Slurm
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
                        run_args = 'bla blub')
 
     ## This will execute a continuous job submission which continues until all jobs are done
-    ## The "interval" argument defines the frequency at which the job submission is executed (in seconds)
+    ## The "interval" argument defines the frequency at which the job submission is executed (in seconds), or can be set to -1 to switch to manual update
     jobHandler.run_jobs(interval = 2)
 
 if __name__ == '__main__':
