@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from slurmy import JobHandler
-from slurmy import Slurm
 
 
 def main():

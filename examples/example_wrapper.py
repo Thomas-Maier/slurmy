@@ -1,7 +1,5 @@
 
-import slurmy
 from slurmy import JobHandler
-from slurmy import Slurm
 from slurmy import SingularityWrapper
 
 
