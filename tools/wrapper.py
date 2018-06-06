@@ -4,9 +4,9 @@ class Wrapper(object):
     _command = '{args}'
     _condition = '{command}'
     
-    def __init__(self, script_wrap = False):
-        self._script_wrap = script_wrap
-        if self._script_wrap:
+    def __init__(self, insitu = True):
+        self._insitu = insitu
+        if not self._insitu:
             self._create_wrap_script()
 
     def _wrap(self, run_script, script_options_identifier):
@@ -39,13 +39,13 @@ class Wrapper(object):
 
     def setup(self, run_script, script_options_identifier):
         ## Include preamble to run_script if wrapping with additional script is not active
-        if not self._script_wrap:
+        if self._insitu:
             run_script = self._wrap(run_script, script_options_identifier)
 
         return run_script
 
     def get(self, run_script_path):
-        if self._script_wrap:
+        if not self._insitu:
             return '{} {}'.format(self._dummy_script, run_script_path)
         
         return run_script_path
