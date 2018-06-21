@@ -313,14 +313,13 @@ class JobHandler:
         stdout.write('\n')
 
     ## TODO: add retry option for interactive functionality (probably just incorporate in submit_jobs)
-    ## TODO: also rerun option which just adds force = True to retry
-    def run_jobs(self, interval = 5, force_retry = False):
+    def run_jobs(self, interval = 5, retry = False, rerun = False):
         time_now = time.time()
         try:
             n_all = len(self.jobs)
             running = True
             while running:
-                self.submit_jobs(make_snapshot = False, wait = False, force_retry = force_retry)
+                self.submit_jobs(make_snapshot = False, wait = False, retry = retry, rerun = rerun)
                 print_string = self._get_print_string()
                 if interval == -1: print_string += ' - press enter to update status'
                 n_success = len(self.config._job_states[Status.SUCCESS])
@@ -358,7 +357,7 @@ class JobHandler:
             time_now = time.time() - time_now
             if not self._debug: self.print_summary(time_now)
 
-    def submit_jobs(self, tags = None, make_snapshot = True, wait = True, force_retry = False):
+    def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False, rerun = False):
         try:
             ## Get current job states
             self._update_job_states()
@@ -372,7 +371,7 @@ class JobHandler:
                 ## Get job status, skip status evaluation since this was already done
                 status = job.get_status(skip_eval = True)
                 if (status == Status.FAILURE or status == Status.CANCELLED):
-                    status = job.retry(submit = False, ignore_max_retries = force_retry)
+                    status = job.retry(force = rerun, submit = False, ignore_max_retries = retry)
                 ## If job is not in Configured state there is nothing to do
                 if status != Status.CONFIGURED: continue
                 ## Check if job is ready to be submitted
@@ -403,13 +402,13 @@ class JobHandler:
             job.cancel()
         if make_snapshot: self._update_snapshot()
 
-    def retry_jobs(self, tags = None, make_snapshot = True):
+    def retry_jobs(self, tags = None, make_snapshot = True, ignore_max_retries = True):
         try:
             for job in self.get_jobs(tags):
                 status = job.get_status()
                 ## Retry only if job is failed or cancelled
                 if status != Status.FAILURE and status != Status.CANCELLED: continue
-                job.retry()
+                job.retry(ignore_max_retries = ignore_max_retries)
             if make_snapshot: self._update_snapshot()
         except:
             ## If something explodes, cancel all running jobs
