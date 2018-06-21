@@ -402,18 +402,18 @@ class JobHandler:
             job.cancel()
         if make_snapshot: self._update_snapshot()
 
-    def retry_jobs(self, tags = None, make_snapshot = True, ignore_max_retries = True):
-        try:
-            for job in self.get_jobs(tags):
-                status = job.get_status()
-                ## Retry only if job is failed or cancelled
-                if status != Status.FAILURE and status != Status.CANCELLED: continue
-                job.retry(ignore_max_retries = ignore_max_retries)
-            if make_snapshot: self._update_snapshot()
-        except:
-            ## If something explodes, cancel all running jobs
-            self.cancel_jobs(make_snapshot = False)
-            raise
+    # def retry_jobs(self, tags = None, make_snapshot = True, ignore_max_retries = True):
+    #     try:
+    #         for job in self.get_jobs(tags):
+    #             status = job.get_status()
+    #             ## Retry only if job is failed or cancelled
+    #             if status != Status.FAILURE and status != Status.CANCELLED: continue
+    #             job.retry(ignore_max_retries = ignore_max_retries)
+    #         if make_snapshot: self._update_snapshot()
+    #     except:
+    #         ## If something explodes, cancel all running jobs
+    #         self.cancel_jobs(make_snapshot = False)
+    #         raise
 
     def check_status(self, force_success_check = False):
         self._update_job_states(force_success_check = force_success_check)
