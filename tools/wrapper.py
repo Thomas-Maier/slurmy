@@ -1,6 +1,8 @@
 
 class Wrapper(object):
     _dummy_script = '.wrapper.sh'
+    _wrap_args = ''
+    _dummy_wrap_args = '$@'
     _command = '{args}'
     _condition = '{command}'
     
@@ -11,7 +13,7 @@ class Wrapper(object):
 
     def _wrap(self, run_script, script_options_identifier):
         ## Define command
-        command = self._command.format(args = '$0 $@')
+        command = self._command.format(args = self._wrap_args)
         command = self._condition.format(command = command)
         ## Recursive function to scan script and find proper position for the command
         def add_command(tail, head = ''):
@@ -33,7 +35,7 @@ class Wrapper(object):
 
     def _create_wrap_script(self):
         wrap_script = '#!/bin/bash\n'
-        wrap_script += self._command.format(args = '$@')
+        wrap_script += self._command.format(args = self._dummy_wrap_args)
         with open(self._dummy_script, 'w') as out_file:
             out_file.write(wrap_script)
 
@@ -52,6 +54,7 @@ class Wrapper(object):
 
 class SingularityWrapper(Wrapper):
     def __init__(self, image, **kwargs):
+        self._wrap_args = '$0 $@'
         self._command = 'singularity exec {image} {{args}}'.format(image = image)
         self._condition = 'if [[ -z "$SINGULARITY_INIT" ]]\nthen\n  {command}\n  exit $?\nfi\n'
         super(SingularityWrapper, self).__init__(**kwargs)
