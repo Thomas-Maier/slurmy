@@ -1,9 +1,12 @@
 
 ## Success classes
 class SuccessOutputFile:
+    def __init__(self, delay = 1):
+        self._delay = delay
+        
     def __call__(self, config):
         import os, time
-        time.sleep(1)
+        time.sleep(self._delay)
 
         return os.path.isfile(config.output)
 
