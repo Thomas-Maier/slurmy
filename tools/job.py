@@ -152,7 +152,7 @@ class Job:
     def do_retry(self):
         return (self.config.max_retries > 0 and (self.config.n_retries < self.config.max_retries))
 
-    def get_status(self, skip_eval = False):
+    def get_status(self, skip_eval = False, force_success_check = False):
         ## Just return current status and skip status evaluation
         if skip_eval:
             return self.config.status
@@ -169,7 +169,7 @@ class Job:
                 else:
                     self.config.status = self.config.backend.status()
         ## Evaluate if job was successful
-        if self.config.status == Status.FINISHED:
+        if self.config.status == Status.FINISHED or force_success_check:
             if self._is_success():
                 self.config.status = Status.SUCCESS
             else:

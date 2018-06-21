@@ -291,9 +291,9 @@ class JobHandler:
             log.debug('Wait for job {}'.format(job.get_name()))
             job.wait()
 
-    def _update_job_status(self, job, skip_eval = False):
+    def _update_job_status(self, job, skip_eval = False, force_success_check = False):
         name = job.get_name()
-        new_status = job.get_status(skip_eval = skip_eval)
+        new_status = job.get_status(skip_eval = skip_eval, force_success_check = force_success_check)
         ## If old and new status are the same, do nothing
         if name in self.config._job_states[new_status]: return
         ## Remove current status entry for job
@@ -303,9 +303,9 @@ class JobHandler:
         ## Add new one
         self.config._job_states[new_status].add(name)
 
-    def _update_job_states(self):
+    def _update_job_states(self, **kwargs):
         for job in self.jobs.values():
-            self._update_job_status(job)
+            self._update_job_status(job, **kwargs)
 
     def print_summary(self, time_spent = None):
         print_string = self._get_summary_string(time_spent)
@@ -416,8 +416,8 @@ class JobHandler:
             self.cancel_jobs(make_snapshot = False)
             raise
 
-    def check_status(self):
-        self._update_job_states()
+    def check_status(self, force_success_check = False):
+        self._update_job_states(force_success_check = force_success_check)
         print_string = self._get_print_string()
         print (print_string)
 
