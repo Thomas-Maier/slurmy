@@ -149,6 +149,7 @@ class Job:
 
         return self.config.status
 
+    ## TODO: need some quality of life functions --> rerun, rerun_local
     def retry(self, force = False, submit = True, ignore_max_retries = False):
         if not ignore_max_retries and not self.do_retry(): return
         log.debug('({}) Retry job'.format(self.config.name))
