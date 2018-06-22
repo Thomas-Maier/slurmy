@@ -13,33 +13,10 @@ from . import options as ops
 from ..backends.utils import get_backend
 from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties
+from .jobcontainer import JobContainer
 from .updater import UpdateSet, UpdateList
 
 log = logging.getLogger('slurmy')
-
-
-class JobContainer(dict, object):
-    def __call__(self, tag = None):
-        print(self._jobs_printlist(tag))
-
-    def _jobs_printlist(self, tag = None):
-        printlist = []
-        for job_name, job in self.items():
-            if tag and tag not in job.get_tags(): continue
-            printlist.append('Job "{}": {}'.format(job.get_name(), job.get_status().name))
-
-        return '\n'.join(printlist)
-
-    def __repr__(self):
-        return self._jobs_printlist()
-
-    def __setitem__(self, key, val):
-        super(JobContainer, self).__setitem__(key, val)
-        ## Check if a property with name key already exists, in this case we would overwrite functionality of the dictionary class
-        if getattr(self, key, None) is not None:
-            log.error('Take a look at the properties list of the dict class and please do not choose a name that matches any of them')
-            raise Exception
-        self.__dict__[key] = val
         
 
 class JobHandlerConfig:
