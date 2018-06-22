@@ -6,14 +6,21 @@ class JobContainer(dict, object):
     def __call__(self, tag = None):
         print(self._jobs_printlist(tag))
 
-    def _jobs_printlist(self, tag = None, status = None):
+    def _jobs_printlist(self, tag = None, status = None, print_summary = True):
         printlist = []
+        summary = {}
         for job_name, job in self.items():
             job_status = job.get_status()
             if tag and tag not in job.get_tags(): continue
             if status and job_status != status: continue
             printlist.append('Job "{}": {}'.format(job.get_name(), job_status.name))
-
+            if job_status not in summary:
+                summary[job_status.name] = 0
+            summary[job_status.name] += 1
+        if print_summary:
+            printlist.append('------------')
+            printlist.append(' - '.join(['{}({})'.format(s, c) for s, c in summary.items()]))
+            
         return '\n'.join(printlist)
 
     def __repr__(self):
@@ -29,7 +36,7 @@ class JobContainer(dict, object):
 ## Property for status printing
 def _get_status_property(status):
     def getter(self):
-        print(self._jobs_printlist(status = status))
+        print(self._jobs_printlist(status = status, print_summary = False))
 
     return property(fget = getter)
 ## Setting status printing properties for JobContainer class
