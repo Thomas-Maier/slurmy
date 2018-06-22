@@ -13,6 +13,7 @@ from . import options as ops
 from ..backends.utils import get_backend
 from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties
+from .updater import UpdateSet, UpdateList
 
 log = logging.getLogger('slurmy')
 
@@ -42,6 +43,7 @@ class JobContainer(dict, object):
         
 
 class JobHandlerConfig:
+    ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_base_dir', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
                    '_success_func', '_finished_func', '_is_verbose', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
                    '_wrapper', '_jobs_configs', '_job_states', '_local_counter']
@@ -61,8 +63,8 @@ class JobHandlerConfig:
         self._do_snapshot = do_snapshot
         self._wrapper = wrapper
         ## Dynamic variables
-        self._jobs_configs = []
-        self._job_states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILURE: set(), Status.CANCELLED: set()}
+        self._jobs_configs = UpdateList(self)
+        self._job_states = {Status.CONFIGURED: UpdateSet(self), Status.RUNNING: UpdateSet(self), Status.FINISHED: UpdateSet(self), Status.SUCCESS: UpdateSet(self), Status.FAILURE: UpdateSet(self), Status.CANCELLED: UpdateSet(self)}
         self._local_counter = 0
 
     def __getitem__(self, key):

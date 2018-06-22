@@ -5,11 +5,13 @@ import pickle
 import logging
 from .defs import Status
 from .utils import set_update_properties
+from .updater import UpdateSet
 
 log = logging.getLogger('slurmy')
 
 
 class JobConfig:
+    ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_backend', '_name', '_path', '_tags', '_parent_tags', '_success_func', '_finished_func', '_post_func',
                    '_is_local', '_max_retries', '_output', '_status', '_job_id', '_n_retries', '_exitcode']
     
@@ -18,9 +20,9 @@ class JobConfig:
         self._backend = backend
         self._name = self.backend.name
         self._path = path
-        self._tags = set()
+        self._tags = UpdateSet(self)
         if tags is not None: self.add_tags(tags)
-        self._parent_tags = set()
+        self._parent_tags = UpdateSet(self)
         if parent_tags is not None: self.add_tags(parent_tags, True)
         self._success_func = success_func
         self._finished_func = finished_func
