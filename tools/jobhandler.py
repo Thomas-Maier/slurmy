@@ -12,7 +12,7 @@ from .namegenerator import NameGenerator
 from . import options as ops
 from ..backends.utils import get_backend
 from .parser import Parser
-from .utils import SuccessTrigger, FinishedTrigger, get_input_func
+from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties
 
 log = logging.getLogger('slurmy')
 
@@ -42,18 +42,22 @@ class JobContainer(dict, object):
         
 
 class JobHandlerConfig:
+    _properties = ['_name_gen', '_name', '_base_dir', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
+                   '_success_func', '_finished_func', '_is_verbose', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
+                   '_wrapper', '_jobs_configs', '_job_states', '_local_counter']
+    
     def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
-        self.name = self._name_gen.name
-        self.base_dir, self.script_dir, self.log_dir, self.output_dir, self.snapshot_dir, self.tmp_dir, self.path = JobHandlerConfig.get_dirs(self.name, work_dir)
-        self.success_func = success_func
-        self.finished_func = finished_func
-        self.is_verbose = is_verbose
-        self.local_max = local_max
-        self.max_retries = max_retries
-        self.run_max = run_max
-        self.backend = backend
+        self._name = self._name_gen.name
+        self._base_dir, self._script_dir, self._log_dir, self._output_dir, self._snapshot_dir, self._tmp_dir, self._path = JobHandlerConfig.get_dirs(self._name, work_dir)
+        self._success_func = success_func
+        self._finished_func = finished_func
+        self._is_verbose = is_verbose
+        self._local_max = local_max
+        self._max_retries = max_retries
+        self._run_max = run_max
+        self._backend = backend
         self._do_snapshot = do_snapshot
         self._wrapper = wrapper
         ## Dynamic variables
@@ -82,6 +86,8 @@ class JobHandlerConfig:
         path = os.path.join(snapshot_dir, snapshot_name)
 
         return base_dir, script_dir, log_dir, output_dir, snapshot_dir, tmp_dir, path
+## Set properties to incorporate update tagging
+set_update_properties(JobHandlerConfig)
 
 
 class JobHandler:
@@ -113,7 +119,7 @@ class JobHandler:
             with open(path, 'rb') as in_file:
                 self.config = pickle.load(in_file)
             log.debug('Load job snapshots')
-            for job_config in self.config._jobs_configs:
+            for job_config in self.config.jobs_configs:
                 self._add_job_with_config(job_config)
         else:
             ## Make new JobHandler config
@@ -142,14 +148,20 @@ class JobHandler:
 
     def _update_snapshot(self, skip_jobs = False):
         ## If snapshotting is deactivated, do nothing
-        if not self.config._do_snapshot: return
+        if not self.config.do_snapshot: return
         if not skip_jobs:
             log.debug('Update job snapshots')
             for job in self.jobs.values():
                 job.update_snapshot()
+        ## If JobHandler config is not tagged for an update, do nothing
+        if not self.config.update:
+            log.debug('No changes made, skip JobHandler snapshot update'.format(self.config.name))
+            return
         log.debug('Update JobHandler snapshot')
         with open(self.config.path, 'wb') as out_file:
             pickle.dump(self.config, out_file)
+        ## Reset update flag
+        self.config.update = False
 
     def get_jobs(self, tags = None):
         job_list = []
@@ -173,7 +185,7 @@ class JobHandler:
                 if tags not in self._tagged_jobs: self._tagged_jobs[tags] = []
                 self._tagged_jobs[tags].append(job)
         ## Ensure that a first snapshot is made
-        if self.config._do_snapshot: job.update_snapshot()
+        if self.config.do_snapshot: job.update_snapshot()
 
         return job
 
@@ -187,10 +199,10 @@ class JobHandler:
         backend.run_script = backend.run_script or run_script
         backend.run_args = backend.run_args or run_args
         ## Set wrapper if defined
-        if self.config._wrapper:
-            backend.wrapper = self.config._wrapper
+        if self.config.wrapper:
+            backend.wrapper = self.config.wrapper
         ## Get job name
-        name = self.config._name_gen.next(name)
+        name = self.config.name_gen.next(name)
         backend.name = name
         ## Set and evaluate job label
         job_label = {Status.FINISHED: None, Status.SUCCESS: None, Status.FAILURE: None}
@@ -214,7 +226,7 @@ class JobHandler:
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
         job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
-        self.config._jobs_configs.append(job_config)
+        self.config.jobs_configs.append(job_config)
         ## Update snapshot to make sure job configs list is properly updated
         self._update_snapshot(skip_jobs = True)
 
@@ -240,12 +252,12 @@ class JobHandler:
     def _get_print_string(self):
         print_string = 'Jobs '
         if self.config.is_verbose:
-            n_running = len(self.config._job_states[Status.RUNNING])
+            n_running = len(self.config.job_states[Status.RUNNING])
             n_local = len(self._local_jobs)
             n_batch = n_running - n_local
             print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
-        n_success = len(self.config._job_states[Status.SUCCESS])
-        n_failed = len(self.config._job_states[Status.FAILURE])
+        n_success = len(self.config.job_states[Status.SUCCESS])
+        n_failed = len(self.config.job_states[Status.FAILURE])
         n_all = len(self.jobs)
         print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
@@ -253,7 +265,7 @@ class JobHandler:
 
     def _get_summary_string(self, time_spent = None):
         summary_dict = OrderedDict()
-        summary_dict['all'] = {'string': 'Jobs processed ', 'batch': len(self.jobs)-self.config._local_counter, 'local': self.config._local_counter}
+        summary_dict['all'] = {'string': 'Jobs processed ', 'batch': len(self.jobs)-self.config.local_counter, 'local': self.config.local_counter}
         summary_dict['success'] = {'string': '     successful ', 'batch': 0, 'local': 0}
         summary_dict['fail'] = {'string': '     failed ', 'batch': 0, 'local': 0}
         jobs_failed = ''
@@ -295,13 +307,13 @@ class JobHandler:
         name = job.get_name()
         new_status = job.get_status(skip_eval = skip_eval, force_success_check = force_success_check)
         ## If old and new status are the same, do nothing
-        if name in self.config._job_states[new_status]: return
+        if name in self.config.job_states[new_status]: return
         ## Remove current status entry for job
-        for status in self.config._job_states.keys():
-            if name not in self.config._job_states[status]: continue
-            self.config._job_states[status].remove(name)
+        for status in self.config.job_states.keys():
+            if name not in self.config.job_states[status]: continue
+            self.config.job_states[status].remove(name)
         ## Add new one
-        self.config._job_states[new_status].add(name)
+        self.config.job_states[new_status].add(name)
 
     def _update_job_states(self, **kwargs):
         for job in self.jobs.values():
@@ -312,19 +324,18 @@ class JobHandler:
         stdout.write('\r'+print_string)
         stdout.write('\n')
 
-    ## TODO: add retry option for interactive functionality (probably just incorporate in submit_jobs)
     def run_jobs(self, interval = 5, retry = False, rerun = False):
         time_now = time.time()
         try:
             n_all = len(self.jobs)
             running = True
             while running:
-                self.submit_jobs(make_snapshot = False, wait = False, retry = retry, rerun = rerun)
+                self.submit_jobs(wait = False, retry = retry, rerun = rerun)
                 print_string = self._get_print_string()
                 if interval == -1: print_string += ' - press enter to update status'
-                n_success = len(self.config._job_states[Status.SUCCESS])
-                n_failed = len(self.config._job_states[Status.FAILURE])
-                n_cancelled = len(self.config._job_states[Status.CANCELLED])
+                n_success = len(self.config.job_states[Status.SUCCESS])
+                n_failed = len(self.config.job_states[Status.FAILURE])
+                n_cancelled = len(self.config.job_states[Status.CANCELLED])
                 if (n_success+n_failed+n_cancelled) == n_all:
                     running = False
                 else:
@@ -365,7 +376,7 @@ class JobHandler:
             self._check_local_jobs(skip_eval = True)
             for job in self.get_jobs(tags):
                 ## Submit new jobs only if current number of running jobs is below maximum, if set
-                if self.config.run_max and not (len(self.config._job_states[Status.RUNNING]) < self.config.run_max):
+                if self.config.run_max and not (len(self.config.job_states[Status.RUNNING]) < self.config.run_max):
                     log.debug('Maximum number of running jobs reached, skip job submission')
                     break
                 ## Get job status, skip status evaluation since this was already done
@@ -379,7 +390,7 @@ class JobHandler:
                 if len(self._local_jobs) < self.config.local_max:
                     job.set_local()
                     self._local_jobs.append(job)
-                    self.config._local_counter += 1
+                    self.config.local_counter += 1
                 status = job.submit()
                 ## Update job status
                 self._update_job_status(job, skip_eval = True)

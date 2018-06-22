@@ -4,31 +4,35 @@ import os
 import pickle
 import logging
 from .defs import Status
+from .utils import set_update_properties
 
 log = logging.getLogger('slurmy')
 
 
 class JobConfig:
+    _properties = ['_backend', '_name', '_path', '_tags', '_parent_tags', '_success_func', '_finished_func', '_post_func',
+                   '_is_local', '_max_retries', '_output', '_status', '_job_id', '_n_retries', '_exitcode']
+    
     def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
         ## Static variables
-        self.backend = backend
-        self.name = self.backend.name
-        self.path = path
-        self.tags = set()
+        self._backend = backend
+        self._name = self.backend.name
+        self._path = path
+        self._tags = set()
         if tags is not None: self.add_tags(tags)
-        self.parent_tags = set()
+        self._parent_tags = set()
         if parent_tags is not None: self.add_tags(parent_tags, True)
-        self.success_func = success_func
-        self.finished_func = finished_func
-        self.post_func = post_func
-        self.is_local = is_local
-        self.max_retries = max_retries
-        self.output = output
+        self._success_func = success_func
+        self._finished_func = finished_func
+        self._post_func = post_func
+        self._is_local = is_local
+        self._max_retries = max_retries
+        self._output = output
         ## Dynamic variables
-        self.status = Status.CONFIGURED
-        self.job_id = None
-        self.n_retries = 0
-        self.exitcode = None
+        self._status = Status.CONFIGURED
+        self._job_id = None
+        self._n_retries = 0
+        self._exitcode = None
 
     def add_tag(self, tag, is_parent = False):
         if is_parent:
@@ -42,6 +46,9 @@ class JobConfig:
                 self.add_tag(tag, is_parent)
         else:
             self.add_tag(tags, is_parent)
+## Set properties to incorporate update tagging
+set_update_properties(JobConfig)
+
 
 class Job:
     def __init__(self, config):
@@ -84,11 +91,17 @@ class Job:
     def update_snapshot(self):
         ## If no snapshot file is defined, do nothing
         if not self.config.path: return
+        ## If config is not tagged for an update, do nothing
+        if not self.config.update:
+            log.debug('({}) No changes made, skip snapshot update'.format(self.config.name))
+            return
         log.debug('({}) Update snapshot'.format(self.config.name))
         ## Check status again
         self.get_status()
         with open(self.config.path, 'wb') as out_file:
             pickle.dump(self.config, out_file)
+        ## Reset update flag
+        self.config.update = False
 
     def set_local(self, is_local = True):
         if self.config.status != Status.CONFIGURED:

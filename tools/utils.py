@@ -1,4 +1,8 @@
 
+import logging
+log = logging.getLogger('slurmy')
+
+
 ## Success classes
 class SuccessOutputFile:
     def __init__(self, delay = 1):
@@ -62,8 +66,6 @@ def _get_prompt():
 
 def get_sessions():
     from slurmy.tools import options as ops
-    import logging
-    log = logging.getLogger('slurmy')
     ## Synchronise bookkeeping with entries on disk
     ops.Main.sync_bookkeeping()
     bk = ops.Main.get_bookkeeping()
@@ -86,8 +88,7 @@ def list_sessions():
 def load(name):
     from slurmy.tools import options as ops
     from slurmy import JobHandler
-    import logging, sys
-    log = logging.getLogger('slurmy')
+    import sys
     ## Synchronise bookkeeping with entries on disk
     ops.Main.sync_bookkeeping()
     bk = ops.Main.get_bookkeeping()
@@ -125,9 +126,7 @@ def load_path(path):
 def load_latest():
     sessions = get_sessions()
     if not sessions:
-        import logging
-        log = logging.getLogger('slurmy')
-        logging.getLogger('slurmy').debug('No recorded sessions found')
+        log.debug('No recorded sessions found')
         return None
     latest_session_name = sessions[-1][0]
 
@@ -153,3 +152,22 @@ def _prompt_decision(message):
             return False
         else:
             print ('Please answer with "y" or "n"')
+
+## Properties utils
+def _get_update_property(name):
+    def getter(self):
+        return getattr(self, name)
+    
+    def setter(self, val):
+        log.debug('Set attribute "{}" of class "{}" to value "{}"'.format(name, self, val))
+        if getattr(self, name) != val:
+            log.debug('Value changed, tag for update')
+            self.update = True
+        setattr(self, name, val)
+        
+    return property(fget = getter, fset = setter)
+
+def set_update_properties(class_obj):
+    for prop_name in class_obj._properties:
+        setattr(class_obj, prop_name.strip('_'), _get_update_property(prop_name))
+    setattr(class_obj, 'update', True)
