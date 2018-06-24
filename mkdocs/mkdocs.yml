@@ -1,6 +1,13 @@
 site_name: Slurmy
 
 pages:
-        - Home: index.md
+- Slurmy: index.md
+- Interactive Slurmy: interactive_slurmy.md
+- Classes:
+  - JobHandler: classes/JobHandler.md
+  - JobHandlerConfig: classes/JobHandlerConfig.md
+  - JobContainer: classes/JobContainer.md
+  - Job: classes/Job.md
+  - JobConfig: classes/JobConfig.md
         
-theme: readthedocs
+theme: rtd-dropdown

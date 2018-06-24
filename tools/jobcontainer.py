@@ -2,7 +2,14 @@
 from .defs import Status
 
 
-class JobContainer(dict, object):        
+class JobContainer(dict, object):
+    """@SLURMY
+    Container class which holds the jobs associated to a JobHandler session. Jobs are attached as properties to allow for easy access in interactive slurmy.
+    """
+
+    def __init__(self):
+        return
+    
     def __call__(self, tag = None):
         print(self._jobs_printlist(tag))
 
@@ -34,11 +41,14 @@ class JobContainer(dict, object):
             raise Exception
         self.__dict__[key] = val
 ## Property for status printing
-def _get_status_property(status):
+def _get_status_property(status, docstring):
     def getter(self):
         print(self._jobs_printlist(status = status, print_summary = False))
 
-    return property(fget = getter)
+    return property(fget = getter, doc = docstring)
 ## Setting status printing properties for JobContainer class
 for status in Status:
-    setattr(JobContainer, 'status_{}'.format(status.name), _get_status_property(status))
+    docstring = """@SLURMY
+    List jobs in status {}.
+    """.format(status.name)
+    setattr(JobContainer, 'status_{}'.format(status.name), _get_status_property(status, docstring))

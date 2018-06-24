@@ -1,2 +1,3 @@
 *.pyc
 site/
+mkdocs/docs/classes/
