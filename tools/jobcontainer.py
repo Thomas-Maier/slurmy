@@ -6,21 +6,50 @@ class JobContainer(dict, object):
     """@SLURMY
     Container class which holds the jobs associated to a JobHandler session. Jobs are attached as properties to allow for easy access in interactive slurmy.
     """
-
     def __init__(self):
         return
-    
-    def __call__(self, tag = None):
-        print(self._jobs_printlist(tag))
 
-    def _jobs_printlist(self, tag = None, status = None, print_summary = True):
+    ## TODO: probably should be a generator
+    def get(self, tags = None):
+        """@SLURMY
+        Get the list of jobs.
+
+        * `tags` Tags that jobs are filtered on.
+        """
+        job_list = []
+        for job in self.values():
+            if tags is not None and not job.has_tags(tags): continue
+            job_list.append(job)
+
+        return job_list
+
+    def print(self, tags = None, states = None, print_summary = True):
+        """@SLURMY
+        Print the list of jobs and their current status.
+
+        * `tags` Tags that jobs should match with (single string or list of strings). If a job has any of the provided tags it will be printed.
+        * `states` States that jobs should match with (single string or list of strings). If a job is in any of the provided states it will be printed.
+        * `print_summary` Print overall summary as well.
+        """
+        if tags is not None:
+            if not (isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set)):
+                tags = [tags]
+            tags = set(tags)
+        if states is not None:
+            if not (isinstance(states, list) or isinstance(states, tuple) or isinstance(states, set)):
+                states = [states]
+            states = set(states)
+
+        print(self._jobs_printlist(tags = tags, states = states, print_summary = print_summary))
+
+    def _jobs_printlist(self, tags = None, states = None, print_summary = True):
         printlist = []
         summary = {}
         for job_name, job in self.items():
             job_status = job.get_status()
-            if tag and tag not in job.get_tags(): continue
-            if status and job_status != status: continue
-            printlist.append('Job "{}": {}'.format(job.get_name(), job_status.name))
+            if tags and job.has_tags(tags): continue
+            if states and job_status not in states: continue
+            printlist.append('Job "{}": {}'.format(job.name, job_status.name))
             if job_status not in summary:
                 summary[job_status.name] = 0
             summary[job_status.name] += 1
@@ -43,7 +72,7 @@ class JobContainer(dict, object):
 ## Property for status printing
 def _get_status_property(status, docstring):
     def getter(self):
-        print(self._jobs_printlist(status = status, print_summary = False))
+        self.print(states = status, print_summary = False)
 
     return property(fget = getter, doc = docstring)
 ## Setting status printing properties for JobContainer class

@@ -81,7 +81,7 @@ class Job:
 
     def __repr__(self):
         print_string = 'Job "{}"\n'.format(self.config.name)
-        print_string += 'Local: {}\n'.format(self.is_local())
+        print_string += 'Local: {}\n'.format(self.is_local)
         print_string += 'Backend: {}\n'.format(self.config.backend.bid)
         print_string += 'Script: {}\n'.format(self.config.backend.run_script)
         if self.config.backend.run_args: print_string += 'Args: {}\n'.format(self.config.backend.run_args)
@@ -163,6 +163,24 @@ class Job:
         * `is_parent` Mark tags as parent.
         """
         self.config.add_tags(tags, is_parent)
+        
+    def has_tag(self, tag):
+        """@SLURMY
+        Check if the job has a given tag.
+        """
+        if tag in self.tags:
+            return True
+        else:
+            return False
+
+    def has_tags(self, tags):
+        """@SLURMY
+        Check if the job has any tag of a given list of tags.
+
+        * `tags` Set of tags.
+        """
+
+        return bool(self.tags & tags)
 
     def submit(self):
         """@SLURMY

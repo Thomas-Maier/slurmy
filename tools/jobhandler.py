@@ -155,7 +155,7 @@ class JobHandler:
 
     def update_snapshot(self, skip_jobs = False):
         """@SLURMY
-        Update snapshots of the JobHandler and the associated Jobs on disk.
+        Update snapshots of the JobHandler and the associated Jobs on disk. Snaphots are only updated if something changed in the respective JobHandlerConfig or JobConfig.
 
         * `skip_jobs` Skip the job snapshot update.
         """
@@ -167,27 +167,13 @@ class JobHandler:
                 job.update_snapshot()
         ## If JobHandler config is not tagged for an update, do nothing
         if not self.config.update:
-            log.debug('No changes made, skip JobHandler snapshot update'.format(self.config.name))
+            log.debug('No changes made, skip JobHandler snapshot update')
             return
         log.debug('Update JobHandler snapshot')
         with open(self.config.path, 'wb') as out_file:
             pickle.dump(self.config, out_file)
         ## Reset update flag
         self.config.update = False
-
-    ## TODO: incorporate this into JobContainer
-    def get_jobs(self, tags = None):
-        """@SLURMY
-        Get the list of jobs.
-
-        * `tags` Tags that jobs are filtered on.
-        """
-        job_list = []
-        for job in self.jobs.values():
-            if tags is not None and not JobHandler._has_tags(job, tags): continue
-            job_list.append(job)
-
-        return job_list
 
     def _add_job_with_config(self, job_config):
         log.debug('Add job {}'.format(job_config.name))
@@ -305,13 +291,13 @@ class JobHandler:
         for job in self.jobs.values():
             status = job.get_status()
             if status == Status.SUCCESS:
-                if job.is_local():
+                if job.is_local:
                     summary_dict['success']['local'] += 1
                 else:
                     summary_dict['success']['batch'] += 1
             elif status == Status.FAILURE or status == Status.CANCELLED:
                 jobs_failed += '{} '.format(job.name)
-                if job.is_local():
+                if job.is_local:
                     summary_dict['fail']['local'] += 1
                 else:
                     summary_dict['fail']['batch'] += 1
@@ -331,8 +317,8 @@ class JobHandler:
         return print_string
 
     def _wait_for_jobs(self, tags = None):
-        for job in self.get_jobs(tags):
-            if not job.is_local(): continue
+        for job in self.jobs.get(tags):
+            if not job.is_local: continue
             log.debug('Wait for job {}'.format(job.name))
             job.wait()
 
@@ -426,7 +412,7 @@ class JobHandler:
             self._update_job_states()
             ## Check local jobs progression, skip status evaluation since this was already done
             self._check_local_jobs(skip_eval = True)
-            for job in self.get_jobs(tags):
+            for job in self.jobs.get(tags):
                 ## Submit new jobs only if current number of running jobs is below maximum, if set
                 if self.config.run_max and not (len(self.config.job_states[Status.RUNNING]) < self.config.run_max):
                     log.debug('Maximum number of running jobs reached, skip job submission')
@@ -469,11 +455,11 @@ class JobHandler:
         * `only_batch` Cancel only batch jobs.
         * `make_snapshot` Make a snapshot after cancelling jobs.
         """
-        for job in self.get_jobs(tags):
+        for job in self.jobs.get(tags):
             ## Nothing to do when job is not in Running state
             if job.get_status() != Status.RUNNING: continue
-            if only_local and not job.is_local(): continue
-            if only_batch and job.is_local(): continue
+            if only_local and not job.is_local: continue
+            if only_batch and job.is_local: continue
             job.cancel()
         if make_snapshot: self.update_snapshot()
 
@@ -492,26 +478,6 @@ class JobHandler:
             status = job.get_status(skip_eval = skip_eval)
             if status == Status.RUNNING: continue
             self._local_jobs.pop(i)
-
-    ## TODO: incorporate these into job functions rather?
-    @staticmethod
-    def _has_tag(job, tag):
-        if tag in job.tags:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def _has_tags(job, tags):
-        ret_val = False
-        if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
-            for tag in tags:
-                ret_val = JobHander._has_tag(job, tag)
-                if ret_val: break
-        else:
-            ret_val = JobHander._has_tag(job, tags)
-
-        return ret_val
 
     @staticmethod
     def _add_bookkeeping(name, folder, description = None):
