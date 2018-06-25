@@ -14,8 +14,6 @@ class JobConfig:
     """@SLURMY
     Config class for the Job class. Stores all necessary information to load the Job at a later time. All properties are assigned with a custom getter function, which keeps track of updates to the respective property (tracked with the "update" variable).
 
-    Arguments:
-
     * `backend` Backend instance used for the job setup.
     * `path` Path of the job's snapshot file.
     * `success_func` Success function used for the job setup.
@@ -24,7 +22,7 @@ class JobConfig:
     * `max_retries` Maximum number of retries that are attempted when job is failing.
     * `tags` List of tags attached to the job.
     * `parent_tags` List of parent tags attached to the job.
-    * `is_local` Switch to define job as local.
+    * `is_local` Define job as local.
     * `output` Output file of the job.
     """
     
@@ -73,8 +71,6 @@ class Job:
     """@SLURMY
     Job class that holds the job configuration and status information. Internally stores most information in the JobConfig class, which is stored on disk as a snapshot of the Job. Jobs are not meant to be set up directly but rather via JobHandler.add_job().
 
-    Arguments:
-
     * `config` The JobConfig instance that defines the initial job setup.
     """
     
@@ -97,6 +93,9 @@ class Job:
         return print_string
 
     def reset(self):
+        """@SLURMY
+        Reset the job.
+        """
         log.debug('({}) Reset job'.format(self.config.name))
         self.config.status = Status.CONFIGURED
         self.config.job_id = None
@@ -111,6 +110,7 @@ class Job:
 
     def wait(self):
         """@SLURMY
+        If job is locally processing, wait for the process to finish.
         """
         if self._local_process is None:
             log.warning('({}) No local process present to wait for...'.format(self.config.name))
@@ -119,6 +119,7 @@ class Job:
 
     def update_snapshot(self):
         """@SLURMY
+        Update the job snapshot on disk. Snaphot is only updated if something changed in the JobConfig.
         """
         ## If no snapshot file is defined, do nothing
         if not self.config.path: return
@@ -136,37 +137,36 @@ class Job:
 
     def set_local(self, is_local = True):
         """@SLURMY
+        Set the job to be local/not local. Job needs to be in CONFIGURED state.
+
+        * `is_local` Turn on/off local processing for the job.
         """
         if self.config.status != Status.CONFIGURED:
             log.warning('({}) Not in Configured state, cannot set to local'.format(self.config.name))
             raise Exception
         self.config.is_local = is_local
 
-    def is_local(self):
-        """@SLURMY
-        """
-        return self.config.is_local
-
     def add_tag(self, tag, is_parent = False):
         """@SLURMY
-        Arguments:
+        Add tag to be associated to the job.
 
         * `tag` Tag to add to the job.
-        * `is_parent` Switch to mark tag as parent.
+        * `is_parent` Mark tag as parent.
         """
         self.config.add_tag(tag, is_parent)
 
     def add_tags(self, tags, is_parent = False):
         """@SLURMY
-        Arguments:
+        Add a list of tags to be associated to the job.
 
         * `tags` List of tags to add to the job.
-        * `is_parent` Switch to mark tags as parent.
+        * `is_parent` Mark tags as parent.
         """
         self.config.add_tags(tags, is_parent)
 
     def submit(self):
         """@SLURMY
+        Submit the job.
         """
         if self.config.status != Status.CONFIGURED:
             log.warning('({}) Not in Configured state, cannot submit'.format(self.config.name))
@@ -183,9 +183,9 @@ class Job:
 
     def cancel(self, clear_retry = False):
         """@SLURMY
-        Arguments:
-
-        * `clear_retry` Switch to deactivate automatic retry mechanism
+        Cancel the job.
+        
+        * `clear_retry` Deactivate automatic retry mechanism
         """
         ## Do nothing if job is already in failed state
         if self.config.status == Status.FAILURE: return
@@ -204,11 +204,11 @@ class Job:
     ## TODO: need some quality of life functions and make this one only internal --> rerun, rerun_local
     def _retry(self, force = False, submit = True, ignore_max_retries = False, local = False):
         """@SLURMY
-        Arguments:
+        Retry job according to configuration.
 
-        * `force` Switch to force a running job to resubmit.
-        * `submit` Switch to directly submit the job again.
-        * `ignore_max_retries` Switch to ignore maximum number of retries.
+        * `force` Force a running job to resubmit.
+        * `submit` Directly submit the job again.
+        * `ignore_max_retries` Ignore maximum number of retries.
         """
         if not ignore_max_retries and not self._do_retry(): return
         log.debug('({}) Retry job'.format(self.config.name))
@@ -232,24 +232,16 @@ class Job:
         """@SLURMY
         Resets the job and submits it again.
 
-        Arguments:
-
-        * `local` Switch to submit as a local job.
+        * `local` Submit as a local job.
         """
-        self._retry(ignore_max_retries = True, local = local)
-
-    def rerun_local(self):
-        """@SLURMY
-        Resets the job and submits it again.
-        """
-        self._retry(ignore_max_retries = True)
+        self._retry(force = True, ignore_max_retries = True, local = local)
 
     def get_status(self, skip_eval = False, force_success_check = False):
         """@SLURMY
-        Arguments:
+        Get the status of the job.
 
-        * `skip_eval` Switch to skip the status evaluation and just return the stored value.
-        * `force_success_check` Switch to enforce the success check, even if the job is already in a post-finished state.
+        * `skip_eval` Skip the status evaluation and just return the stored value.
+        * `force_success_check` Force the success routine to be run, even if the job is already in a post-finished state.
         """
         ## Just return current status and skip status evaluation
         if skip_eval:
@@ -340,6 +332,13 @@ class Job:
         os.system('less -R {}'.format(self.config.backend.run_script))
 
         return self.config.backend.run_script
+
+    @property
+    def is_local(self):
+        """@SLURMY
+        Returns if the job is set to local processing or not.
+        """
+        return self.config.is_local
 
     def _get_local_command(self):
         command = ['/bin/bash']

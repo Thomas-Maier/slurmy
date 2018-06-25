@@ -7,6 +7,11 @@ from slurmy.tools.jobcontainer import JobContainer
 from slurmy.tools.job import Job, JobConfig
 
 
+sub_dict = {}
+for class_name in ['JobHandler', 'JobHandlerConfig', 'JobContainer', 'Job', 'JobConfig']:
+    sub_dict['{}.'.format(class_name)] = '[{0}]({0}.md#{0}).'.format(class_name)
+    sub_dict['{} '.format(class_name)] = '[{0}]({0}.md#{0}) '.format(class_name)
+
 def parse_classes():
     classes = [
         [JobHandler, 'docs/classes'],
@@ -36,6 +41,10 @@ def get_md(class_obj):
     ## If doc string doesn't start with @SLURMY, skip
     if not docstring.startswith('@SLURMY'):
         return
+    ## Insert page linking
+    for key, val in sub_dict.items():
+        if key in docstring:
+            docstring = docstring.replace(key, val)
     md_list = []
     md_list.append(title)
     md_list.append('```python\n{}\n```'.format(sig))
@@ -56,6 +65,10 @@ def get_md(class_obj):
         if not member_doc: continue
         ## If doc string doesn't start with @SLURMY, skip
         if not member_doc.startswith('@SLURMY'): continue
+        ## Insert page linking
+        for key, val in sub_dict.items():
+            if key in member_doc:
+                member_doc = member_doc.replace(key, val)
         ## Set list to which entry is added
         this_list = callables if callable(member_obj) else non_callables
         this_list.append('##{}'.format(member))
