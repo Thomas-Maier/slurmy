@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="./img/favicon.ico">
+  <title>Slurmy - Slurmy</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="./css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Slurmy";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = "/";
+  </script>
+  
+  <script src="./js/jquery-2.1.1.min.js"></script>
+  <script src="./js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Slurmy</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+      
+
+
+  
+    
+
+
+<ul class="current" href="/">
+  
+    
+    
+      <li class="current toctree-l1">
+        <a class="current" href="/">Slurmy</a>
+        
+  
+  
+  <ul class="current subnav">
+    
+      
+
+  
+  
+  
+
+
+  <li class="current toctree-l2">
+    
+    <ul class="current subnav">
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#recommended-setup" title="Slurmy">Recommended Setup</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#general-usage" title="Slurmy">General Usage</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#slurmy-configuration-file" title="Slurmy">Slurmy Configuration File</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#chaining-jobs-with-tags" title="Slurmy">Chaining Jobs with Tags</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#custom-success-or-finished-conditions-and-variable-substitution" title="Slurmy">Custom Success or Finished Conditions and Variable Substitution</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#snapshots" title="Slurmy">Snapshots</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#jobhandler-options" title="Slurmy">JobHandler Options</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#arguments-for-add_jobs" title="Slurmy">Arguments for add_jobs</a>
+  </li>
+
+      
+    </ul>
+  </li>
+
+    
+  </ul>
+
+      </li>
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+
+
+<ul class="" href="/interactive_slurmy/">
+  
+    
+    
+      <li class=" toctree-l1">
+        <a class="" href="/interactive_slurmy/">Interactive Slurmy</a>
+      </li>
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+    
+    
+    
+    
+    
+
+  <p class="caption">Classes</p>
+
+
+<ul class="" href="classes/JobHandler">
+  
+    
+      
+<li class=" toctree-l1">
+  <a href="classes/JobHandler/" title="JobHandler"
+      class="">
+    JobHandler
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="classes/JobHandlerConfig/" title="JobHandlerConfig"
+      class="">
+    JobHandlerConfig
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="classes/JobContainer/" title="JobContainer"
+      class="">
+    JobContainer
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="classes/Job/" title="Job"
+      class="">
+    Job
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="classes/JobConfig/" title="JobConfig"
+      class="">
+    JobConfig
+  </a>
+
+  
+  
+</li>
+    
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Slurmy</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Slurmy</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="slurmy-special-handler-for-universal-running-of-multiple-jobs-yes">SLURMY - Special handLer for Universal Running of Multiple jobs, Yes!</h1>
+<p>Slurmy is a general batch submission module, which allows to define very general jobs to be run on batch system setups on linux computing clusters. Currently, only slurm is supported as backend, but further backends can easily be added. The definition of the job execution is done with a general shell execution script, as is used by most batch systems. In addition to the batch definition, jobs can also be dynamically executed locally, which allows for an arbitrary combination of batch and local jobs.</p>
+<p>Currently, slurmy is only compatible with python 3. This is due to the highly more robust subprocess handling and other smaller features. In the future, I'll make in attempt to work with python 2 as well but that would be to the detriment of some of said feature (when used in python 2).</p>
+<p>NOTE: This readme temporarily will contain some instruction on how to use slurmy. In the future a proper documentation will be added.</p>
+<h2 id="recommended-setup">Recommended Setup</h2>
+<p>Clone the latest stable tag or master branch locally:</p>
+<p>git clone https://github.com/Thomas-Maier/slurmy.git</p>
+<p>Make sure to add the directory in which you cloned slurmy to PYTHONPATH, and the slurmy folder to PATH:</p>
+<p>export PYTHONPATH=$PWD:$PYTHONPATH</p>
+<p>export PATH=$PWD/slurmy:$PATH</p>
+<p>This will make python aware of the slurmy module and you'll be able to execute the slurmy executable.</p>
+<h2 id="general-usage">General Usage</h2>
+<p>You can just write a piece of python code that imports the needed slurmy classes (e.g. JobHandler and the backend class of your choice), defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scripts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.</p>
+<p><strong>Example of simple slurm jobs definition:</strong> <a href="./examples/example_slurm_simple.py">examples/example_slurm_simple.py</a></p>
+<p>You can also make use of the interactive slurmy functionality to load a job configuration, more on that later.</p>
+<h2 id="slurmy-configuration-file">Slurmy Configuration File</h2>
+<p>Since you'll most likely have only one batch system with some required configurations, it's possible to set up a general configuration file which specifies the backend to be used and it's configuration. If you do so, no backend configuration has to be done when making the job definition. You can also define some general slurmy configurations in this file.</p>
+<p><strong>Template of slurmy config file:</strong> <a href="./examples/slurmy_config">examples/slurmy_config</a></p>
+<p>Copy this file into your home directory (name must be ".slurmy") and set configurations according to your requirements:</p>
+<p>cp examples/slurmy_config ~/.slurmy</p>
+<p>NOTE: All further examples assume that ~/.slurmy exists, which properly defines the backend and backend configurations.</p>
+<h2 id="chaining-jobs-with-tags">Chaining Jobs with Tags</h2>
+<p>Jobs can be connected by adding tags and parent tags to them. Jobs with parent tags X,Y, and Z will only be executed if all jobs that have the tags X, Y, or Z have successfully finished.</p>
+<p><strong>Example of job chaining with tags:</strong> <a href="./examples/example_chain.py">examples/example_chain.py</a></p>
+<h2 id="custom-success-or-finished-conditions-and-variable-substitution">Custom Success or Finished Conditions and Variable Substitution</h2>
+<p>By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with __call__ defined. The function has to have exactly one argument, which is the config instance of the job. If <code>success_func</code> was defined during add_job, the custom definition will be used instead of the default one during the success evaluation.</p>
+<p><strong>Example of success_func usage:</strong> <a href="./examples/example_success_func.py">examples/example_success_func.py</a></p>
+<p>Due to technically reasons connected to the snapshot feature (see below), your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.</p>
+<p>In the same way as the custom success condition, a custom finished condition can be provided with the <code>finished_func</code> argument.</p>
+<p>The example uses SuccessOutputFile as defined in tools/utils.py. It also introduces a feature of slurmy, that allows to use the configuration of the JobHandler inside the shell script and some arguments of add_job (currently only "output"). This is done by some simple string parsing and substitution routine of any variable of the JobHandlerConfig. For now have a look at <a href="./tools/JobHandler.py">tools/JobHandler.py</a> to see what can be used (all variables that don't start with "_").</p>
+<h2 id="snapshots">Snapshots</h2>
+<p>By default, slurmy will make snapshots of your JobHandler session, which allows to load your job submission session at a later time (in interactive slurmy). You can deactivate this feature by passing "do_snaphot = False" to the JobHandler construction. If deactivated, the submission session can't be properly loaded in interactive slurmy anymore.</p>
+<h2 id="jobhandler-options">JobHandler Options</h2>
+<p>Arguments that can be passed to the JobHandler construction:</p>
+<p><strong>name</strong> (default: None): Name used for the session. This defines the name of the base folder, where logs, submission scripts, etc. are stored.</p>
+<p><strong>backend</strong> (default: None): Default backend to be used.</p>
+<p><strong>work_dir</strong> (default: ""): Path to the work directory where the base folder is to be placed.</p>
+<p><strong>local_max</strong> (default: 0): Maximum number of concurrent local processes to be run. Setting this to a value greater than 0 will trigger the usage of local processes, otherwise only batch jobs will be submitted.</p>
+<p><strong>success_func</strong> (default: None): Default success definition to be used.</p>
+<p><strong>finished_func</strong> (default: None): Default finished definition to be used.</p>
+<p><strong>max_retries</strong> (default: 0): Maximum number of retries that will be attempted.</p>
+<p><strong>theme</strong> (default: Lovecraft): Theme that is used by the name generator to name individual jobs and the base folder name. Priority is given to the "name" argument. Themes can be used as given by the Theme enums in tools/defs.py. If Boring is used, job names are simply the base folder name with an incrementing integer.</p>
+<p><strong>run_max</strong> (default: None): Maximum number of jobs that are submitted concurrently. Sometimes needed to not overload batch systems.</p>
+<p><strong>do_snapshot</strong> (default: True): Switch for snapshot deactivation.</p>
+<p><strong>description</strong> (default: None): Description of the JobHandler. For bookkeeping purposes.</p>
+<p><strong>wrapper</strong> (default: None): Wrapper that defines how the run_script is executed on the worker. Currently only SingularityWrapper available (see <a href="./examples/example_wrapper.py">examples/example_wrapper.py</a> for more information).</p>
+<h2 id="arguments-for-add_jobs">Arguments for add_jobs</h2>
+<p>Arguments that can be passed to the add_jobs function of JobHandler:</p>
+<p><strong>backend</strong> (default: None): Backend to be used by the job.</p>
+<p><strong>run_script</strong> (default: None): The shell script that defines the job execution. Can either be the script as one string block, or the name of a script on disk.</p>
+<p><strong>run_args</strong> (default: None): Run arguments that should be passed to the shell script. Can be either a string or a list of strings. It is recommended to simply pass a string that reflects the same sequence that you would also write in a shell line command.</p>
+<p><strong>success_func</strong> (default: None): Success definition to be used by the job.</p>
+<p><strong>finished_func</strong> (default: None): Finished definition to be used by the job.</p>
+<p><strong>max_retries</strong> (default: None): Maximum number of retries that will be attempted by the job.</p>
+<p><strong>output</strong> (default: None): User defined output of the job. Can be anything, since it's not used by the job.</p>
+<p><strong>tags</strong> (default: None): Tags that should be attached to the job. Can be a string or a list of strings.</p>
+<p><strong>parent_tags</strong> (default: None): Parent tags that should be attached to the job. Can be a string or a list of strings.</p>
+<p><strong>name</strong> (default: None): Name to identify the job with. Slurmy makes sure that each job has a unique name and adds an incrementing integer as suffix, if needed.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="interactive_slurmy/" class="btn btn-neutral float-right" title="Interactive Slurmy">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+        <span style="margin-left: 15px"><a href="interactive_slurmy/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="./js/theme.js"></script>
+      <script src="./search/require.js"></script>
+      <script src="./search/search.js"></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 0.17.4
+Build Date UTC : 2018-06-25 09:39:39
+-->

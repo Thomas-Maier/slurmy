@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Job - Slurmy</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Job";
+    var mkdocs_page_input_path = "classes/Job.md";
+    var mkdocs_page_url = "/classes/Job/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Slurmy</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+      
+
+
+  
+    
+
+
+<ul class="" href="/">
+  
+    
+    
+      <li class=" toctree-l1">
+        <a class="" href="/">Slurmy</a>
+      </li>
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+
+
+<ul class="" href="/interactive_slurmy/">
+  
+    
+    
+      <li class=" toctree-l1">
+        <a class="" href="/interactive_slurmy/">Interactive Slurmy</a>
+      </li>
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+    
+    
+    
+    
+    
+
+  <p class="caption">Classes</p>
+
+
+<ul class="current" href="classes/JobHandler">
+  
+    
+      
+<li class=" toctree-l1">
+  <a href="../JobHandler/" title="JobHandler"
+      class="">
+    JobHandler
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../JobHandlerConfig/" title="JobHandlerConfig"
+      class="">
+    JobHandlerConfig
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../JobContainer/" title="JobContainer"
+      class="">
+    JobContainer
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class="current toctree-l1">
+  <a href="./" title="Job"
+      class="current">
+    Job
+  </a>
+
+  
+  
+    
+    
+      
+  
+  
+  
+  
+  <ul class="current subnav">
+    
+      
+
+  
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#job" title="Job">Job</a>
+  </li>
+
+    
+      
+
+  
+  
+
+
+  <li class=" toctree-l2">
+    
+      <a href="#properties" title="Job"
+          class="">
+        Properties
+      </a>
+    
+    <ul class=" subnav">
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#is_local" title="Job">is_local</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#log" title="Job">log</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#name" title="Job">name</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#parent_tags" title="Job">parent_tags</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#script" title="Job">script</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#tags" title="Job">tags</a>
+  </li>
+
+      
+    </ul>
+  </li>
+
+    
+      
+
+  
+  
+
+
+  <li class=" toctree-l2">
+    
+      <a href="#member-functions" title="Job"
+          class="">
+        Member functions
+      </a>
+    
+    <ul class=" subnav">
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#add_tag" title="Job">add_tag</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#add_tags" title="Job">add_tags</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#cancel" title="Job">cancel</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#get_status" title="Job">get_status</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#rerun" title="Job">rerun</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#reset" title="Job">reset</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#set_local" title="Job">set_local</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#submit" title="Job">submit</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#update_snapshot" title="Job">update_snapshot</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#wait" title="Job">wait</a>
+  </li>
+
+      
+    </ul>
+  </li>
+
+    
+  </ul>
+
+    
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../JobConfig/" title="JobConfig"
+      class="">
+    JobConfig
+  </a>
+
+  
+  
+</li>
+    
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Slurmy</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Classes &raquo;</li>
+        
+      
+    
+    <li>Job</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="job">Job</h1>
+<pre><code class="python">Job(config)
+</code></pre>
+
+<p><a href="./#Job">Job</a> class that holds the job configuration and status information. Internally stores most information in the <a href="../JobConfig/#JobConfig">JobConfig</a> class, which is stored on disk as a snapshot of the <a href="./#Job">Job</a>. Jobs are not meant to be set up directly but rather via <a href="../JobHandler/#JobHandler">JobHandler</a>.add_job().</p>
+<ul>
+<li><code>config</code> The <a href="../JobConfig/#JobConfig">JobConfig</a> instance that defines the initial job setup.</li>
+</ul>
+<h1 id="properties">Properties</h1>
+<h2 id="is_local">is_local</h2>
+<p>Returns if the job is set to local processing or not.</p>
+<h2 id="log">log</h2>
+<p>Open the job log file with less.</p>
+<h2 id="name">name</h2>
+<p>Return the name of the job.</p>
+<h2 id="parent_tags">parent_tags</h2>
+<p>Return the list of parent tags associated to this job.</p>
+<h2 id="script">script</h2>
+<p>Open the job script file with less.</p>
+<h2 id="tags">tags</h2>
+<p>Return the list of tags associated to this job.</p>
+<h1 id="member-functions">Member functions</h1>
+<h2 id="add_tag">add_tag</h2>
+<pre><code class="python">Job.add_tag(self, tag, is_parent=False)
+</code></pre>
+
+<p>Add tag to be associated to the job.</p>
+<ul>
+<li><code>tag</code> Tag to add to the job.</li>
+<li><code>is_parent</code> Mark tag as parent.</li>
+</ul>
+<h2 id="add_tags">add_tags</h2>
+<pre><code class="python">Job.add_tags(self, tags, is_parent=False)
+</code></pre>
+
+<p>Add a list of tags to be associated to the job.</p>
+<ul>
+<li><code>tags</code> List of tags to add to the job.</li>
+<li><code>is_parent</code> Mark tags as parent.</li>
+</ul>
+<h2 id="cancel">cancel</h2>
+<pre><code class="python">Job.cancel(self, clear_retry=False)
+</code></pre>
+
+<p>Cancel the job.</p>
+<ul>
+<li><code>clear_retry</code> Deactivate automatic retry mechanism</li>
+</ul>
+<h2 id="get_status">get_status</h2>
+<pre><code class="python">Job.get_status(self, skip_eval=False, force_success_check=False)
+</code></pre>
+
+<p>Get the status of the job.</p>
+<ul>
+<li><code>skip_eval</code> Skip the status evaluation and just return the stored value.</li>
+<li><code>force_success_check</code> Force the success routine to be run, even if the job is already in a post-finished state.</li>
+</ul>
+<h2 id="rerun">rerun</h2>
+<pre><code class="python">Job.rerun(self, local=False)
+</code></pre>
+
+<p>Resets the job and submits it again.</p>
+<ul>
+<li><code>local</code> Submit as a local job.</li>
+</ul>
+<h2 id="reset">reset</h2>
+<pre><code class="python">Job.reset(self)
+</code></pre>
+
+<p>Reset the job.</p>
+<h2 id="set_local">set_local</h2>
+<pre><code class="python">Job.set_local(self, is_local=True)
+</code></pre>
+
+<p>Set the job to be local/not local. <a href="./#Job">Job</a> needs to be in CONFIGURED state.</p>
+<ul>
+<li><code>is_local</code> Turn on/off local processing for the job.</li>
+</ul>
+<h2 id="submit">submit</h2>
+<pre><code class="python">Job.submit(self)
+</code></pre>
+
+<p>Submit the job.</p>
+<h2 id="update_snapshot">update_snapshot</h2>
+<pre><code class="python">Job.update_snapshot(self)
+</code></pre>
+
+<p>Update the job snapshot on disk. Snaphot is only updated if something changed in the <a href="../JobConfig/#JobConfig">JobConfig</a>.</p>
+<h2 id="wait">wait</h2>
+<pre><code class="python">Job.wait(self)
+</code></pre>
+
+<p>If job is locally processing, wait for the process to finish.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../JobConfig/" class="btn btn-neutral float-right" title="JobConfig">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../JobContainer/" class="btn btn-neutral" title="JobContainer"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../JobContainer/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../JobConfig/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script>
+
+</body>
+</html>
