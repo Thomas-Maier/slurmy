@@ -68,7 +68,7 @@ class JobContainer(dict, object):
             if tags and job.has_tags(tags): continue
             if states and job_status not in states: continue
             printlist.append('Job "{}": {}'.format(job.name, job_status.name))
-            if job_status not in summary:
+            if job_status.name not in summary:
                 summary[job_status.name] = 0
             summary[job_status.name] += 1
         if print_summary:
