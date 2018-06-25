@@ -7,7 +7,9 @@ class JobContainer(dict, object):
     Container class which holds the jobs associated to a JobHandler session. Jobs are attached as properties to allow for easy access in interactive slurmy.
     """
     def __init__(self):
-        self.states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILURE: set(), Status.CANCELLED: set()}
+        self._states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILURE: set(), Status.CANCELLED: set()}
+        self._tags = {}
+        self._local = []
 
     ## TODO: probably should be a generator
     def get(self, tags = None):
@@ -27,13 +29,13 @@ class JobContainer(dict, object):
         name = job.name
         new_status = job.get_status(skip_eval = skip_eval, force_success_check = force_success_check)
         ## If old and new status are the same, do nothing
-        if name in self.states[new_status]: return
+        if name in self._states[new_status]: return
         ## Remove current status entry for job
         for status in Status:
-            if name not in self.states[status]: continue
-            self.states[status].remove(name)
+            if name not in self._states[status]: continue
+            self._states[status].remove(name)
         ## Add new one
-        self.states[new_status].add(name)
+        self._states[new_status].add(name)
 
     def _update_job_states(self, **kwargs):
         for job in self.values():

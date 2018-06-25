@@ -104,8 +104,6 @@ class JobHandler:
             local_max = 0
         ## Variables that are not picklable
         self.jobs = JobContainer()
-        self._tagged_jobs = {}
-        self._local_jobs = []
         ## Backend setup
         if backend is None and ops.Main.backend is not None:
             backend = get_backend(ops.Main.backend)
@@ -184,11 +182,11 @@ class JobHandler:
         if tags is not None:
             if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
                 for tag in tags:
-                    if tag not in self._tagged_jobs: self._tagged_jobs[tag] = []
-                    self._tagged_jobs[tag].append(job)
+                    if tag not in self.jobs._tags: self.jobs._tags[tag] = []
+                    self.jobs._tags[tag].append(job)
             else:
-                if tags not in self._tagged_jobs: self._tagged_jobs[tags] = []
-                self._tagged_jobs[tags].append(job)
+                if tags not in self.jobs._tags: self.jobs._tags[tags] = []
+                self.jobs._tags[tags].append(job)
         ## Ensure that a first snapshot is made
         if self.config.do_snapshot: job.update_snapshot()
 
@@ -258,10 +256,10 @@ class JobHandler:
         if not parent_tags:
             return True
         for tag in parent_tags:
-            if tag not in self._tagged_jobs:
+            if tag not in self.jobs._tags:
                 log.error('Parent tag is not registered in jobs list!')
                 continue
-            for tagged_job in self._tagged_jobs[tag]:
+            for tagged_job in self.jobs._tags[tag]:
                 status = tagged_job.get_status()
                 if status == Status.SUCCESS: continue
                 ## If a parent job is uncoverably failed/cancelled, cancel this job as well
@@ -273,12 +271,12 @@ class JobHandler:
     def _get_print_string(self):
         print_string = 'Jobs '
         if self.config.is_verbose:
-            n_running = len(self.jobs.states[Status.RUNNING])
-            n_local = len(self._local_jobs)
+            n_running = len(self.jobs._states[Status.RUNNING])
+            n_local = len(self.jobs._local)
             n_batch = n_running - n_local
             print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
-        n_success = len(self.jobs.states[Status.SUCCESS])
-        n_failed = len(self.jobs.states[Status.FAILURE])
+        n_success = len(self.jobs._states[Status.SUCCESS])
+        n_failed = len(self.jobs._states[Status.FAILURE])
         n_all = len(self.jobs)
         print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
@@ -348,9 +346,9 @@ class JobHandler:
                 self.submit_jobs(wait = False, retry = retry, rerun = rerun)
                 print_string = self._get_print_string()
                 if interval == -1: print_string += ' - press enter to update status'
-                n_success = len(self.jobs.states[Status.SUCCESS])
-                n_failed = len(self.jobs.states[Status.FAILURE])
-                n_cancelled = len(self.jobs.states[Status.CANCELLED])
+                n_success = len(self.jobs._states[Status.SUCCESS])
+                n_failed = len(self.jobs._states[Status.FAILURE])
+                n_cancelled = len(self.jobs._states[Status.CANCELLED])
                 if (n_success+n_failed+n_cancelled) == n_all:
                     running = False
                 else:
@@ -400,7 +398,7 @@ class JobHandler:
             self._check_local_jobs(skip_eval = True)
             for job in self.jobs.get(tags):
                 ## Submit new jobs only if current number of running jobs is below maximum, if set
-                if self.config.run_max and not (len(self.jobs.states[Status.RUNNING]) < self.config.run_max):
+                if self.config.run_max and not (len(self.jobs._states[Status.RUNNING]) < self.config.run_max):
                     log.debug('Maximum number of running jobs reached, skip job submission')
                     break
                 ## Get job status, skip status evaluation since this was already done
@@ -415,9 +413,9 @@ class JobHandler:
                 if status != Status.CONFIGURED: continue
                 ## Check if job is ready to be submitted
                 if not self._job_ready(job): continue
-                if len(self._local_jobs) < self.config.local_max:
+                if len(self.jobs._local) < self.config.local_max:
                     job.set_local()
-                    self._local_jobs.append(job)
+                    self.jobs._local.append(job)
                     self.config.local_counter += 1
                 status = job.submit()
                 ## Update job status
@@ -460,10 +458,10 @@ class JobHandler:
         print (print_string)
 
     def _check_local_jobs(self, skip_eval = False):
-        for i, job in enumerate(self._local_jobs):
+        for i, job in enumerate(self.jobs._local):
             status = job.get_status(skip_eval = skip_eval)
             if status == Status.RUNNING: continue
-            self._local_jobs.pop(i)
+            self.jobs._local.pop(i)
 
     @staticmethod
     def _add_bookkeeping(name, folder, description = None):
