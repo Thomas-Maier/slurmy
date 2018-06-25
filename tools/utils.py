@@ -171,3 +171,12 @@ def set_update_properties(class_obj):
     for prop_name in class_obj._properties:
         setattr(class_obj, prop_name.strip('_'), _get_update_property(prop_name))
     setattr(class_obj, 'update', True)
+
+## Update decorator
+def update_decorator(func):
+    def new_func(self, *args, **kwargs):
+        self.update = True
+        
+        return func(self, *args, **kwargs)
+
+    return new_func

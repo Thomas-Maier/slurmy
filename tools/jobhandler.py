@@ -14,7 +14,7 @@ from ..backends.utils import get_backend
 from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties
 from .jobcontainer import JobContainer
-from .updater import UpdateList
+from .utils import update_decorator
 
 log = logging.getLogger('slurmy')
         
@@ -46,11 +46,15 @@ class JobHandlerConfig:
         self._do_snapshot = do_snapshot
         self._wrapper = wrapper
         ## Dynamic variables
-        self._job_config_paths = UpdateList(self)
+        self._job_config_paths = []
         self._local_counter = 0
 
     def __getitem__(self, key):
         return self.__dict__[key]
+
+    @update_decorator
+    def add_job_path(self, job_path):
+        self.job_config_paths.append(job_path)
 
     @staticmethod
     def get_dirs(name, work_dir, script = 'scripts', log = 'logs', output = 'output', snapshot = 'snapshot', tmp = 'tmp', snapshot_name = 'JobHandlerConfig.pkl'):
@@ -245,7 +249,7 @@ class JobHandler:
 
         job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
         ## Add job config snapshot path to list in JobHandlerConfig
-        self.config.job_config_paths.append(config_path)
+        self.config.add_job_path(config_path)
         ## Update snapshot to make sure job configs list is properly updated
         self.update_snapshot(skip_jobs = True)
 
