@@ -14,7 +14,7 @@ from ..backends.utils import get_backend
 from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties
 from .jobcontainer import JobContainer
-from .updater import UpdateSet, UpdateList
+from .updater import UpdateList
 
 log = logging.getLogger('slurmy')
         
@@ -29,7 +29,7 @@ class JobHandlerConfig:
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_base_dir', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
                    '_success_func', '_finished_func', '_is_verbose', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
-                   '_wrapper', '_jobs_configs', '_job_states', '_local_counter']
+                   '_wrapper', '_job_config_paths', '_local_counter']
     
     def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None):
         ## Static variables
@@ -46,8 +46,7 @@ class JobHandlerConfig:
         self._do_snapshot = do_snapshot
         self._wrapper = wrapper
         ## Dynamic variables
-        self._jobs_configs = UpdateList(self)
-        self._job_states = {Status.CONFIGURED: UpdateSet(self), Status.RUNNING: UpdateSet(self), Status.FINISHED: UpdateSet(self), Status.SUCCESS: UpdateSet(self), Status.FAILURE: UpdateSet(self), Status.CANCELLED: UpdateSet(self)}
+        self._job_config_paths = UpdateList(self)
         self._local_counter = 0
 
     def __getitem__(self, key):
@@ -123,7 +122,9 @@ class JobHandler:
             with open(path, 'rb') as in_file:
                 self.config = pickle.load(in_file)
             log.debug('Load job snapshots')
-            for job_config in self.config.jobs_configs:
+            for job_config_path in self.config.job_config_paths:
+                with open(job_config_path, 'rb') as in_file:
+                    job_config = pickle.load(in_file)
                 self._add_job_with_config(job_config)
         else:
             ## Make new JobHandler config
@@ -245,7 +246,8 @@ class JobHandler:
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
         job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
-        self.config.jobs_configs.append(job_config)
+        ## Add job config snapshot path to list in JobHandlerConfig
+        self.config.job_config_paths.append(config_path)
         ## Update snapshot to make sure job configs list is properly updated
         self.update_snapshot(skip_jobs = True)
 
@@ -271,12 +273,12 @@ class JobHandler:
     def _get_print_string(self):
         print_string = 'Jobs '
         if self.config.is_verbose:
-            n_running = len(self.config.job_states[Status.RUNNING])
+            n_running = len(self.jobs.states[Status.RUNNING])
             n_local = len(self._local_jobs)
             n_batch = n_running - n_local
             print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
-        n_success = len(self.config.job_states[Status.SUCCESS])
-        n_failed = len(self.config.job_states[Status.FAILURE])
+        n_success = len(self.jobs.states[Status.SUCCESS])
+        n_failed = len(self.jobs.states[Status.FAILURE])
         n_all = len(self.jobs)
         print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
@@ -322,22 +324,6 @@ class JobHandler:
             log.debug('Wait for job {}'.format(job.name))
             job.wait()
 
-    def _update_job_status(self, job, skip_eval = False, force_success_check = False):
-        name = job.name
-        new_status = job.get_status(skip_eval = skip_eval, force_success_check = force_success_check)
-        ## If old and new status are the same, do nothing
-        if name in self.config.job_states[new_status]: return
-        ## Remove current status entry for job
-        for status in self.config.job_states.keys():
-            if name not in self.config.job_states[status]: continue
-            self.config.job_states[status].remove(name)
-        ## Add new one
-        self.config.job_states[new_status].add(name)
-
-    def _update_job_states(self, **kwargs):
-        for job in self.jobs.values():
-            self._update_job_status(job, **kwargs)
-
     def print_summary(self, time_spent = None):
         """@SLURMY
         Print a summary of the job processing.
@@ -362,9 +348,9 @@ class JobHandler:
                 self.submit_jobs(wait = False, retry = retry, rerun = rerun)
                 print_string = self._get_print_string()
                 if interval == -1: print_string += ' - press enter to update status'
-                n_success = len(self.config.job_states[Status.SUCCESS])
-                n_failed = len(self.config.job_states[Status.FAILURE])
-                n_cancelled = len(self.config.job_states[Status.CANCELLED])
+                n_success = len(self.jobs.states[Status.SUCCESS])
+                n_failed = len(self.jobs.states[Status.FAILURE])
+                n_cancelled = len(self.jobs.states[Status.CANCELLED])
                 if (n_success+n_failed+n_cancelled) == n_all:
                     running = False
                 else:
@@ -409,12 +395,12 @@ class JobHandler:
         """
         try:
             ## Get current job states
-            self._update_job_states()
+            self.jobs._update_job_states()
             ## Check local jobs progression, skip status evaluation since this was already done
             self._check_local_jobs(skip_eval = True)
             for job in self.jobs.get(tags):
                 ## Submit new jobs only if current number of running jobs is below maximum, if set
-                if self.config.run_max and not (len(self.config.job_states[Status.RUNNING]) < self.config.run_max):
+                if self.config.run_max and not (len(self.jobs.states[Status.RUNNING]) < self.config.run_max):
                     log.debug('Maximum number of running jobs reached, skip job submission')
                     break
                 ## Get job status, skip status evaluation since this was already done
@@ -435,7 +421,7 @@ class JobHandler:
                     self.config.local_counter += 1
                 status = job.submit()
                 ## Update job status
-                self._update_job_status(job, skip_eval = True)
+                self.jobs._update_job_status(job, skip_eval = True)
             if wait: self._wait_for_jobs(tags)
             if make_snapshot: self.update_snapshot()
         ## In case of a keyboard interrupt we just want to stop slurmy processing but keep current batch jobs running
@@ -469,7 +455,7 @@ class JobHandler:
 
         * `force_success_check` Force the success routine to be run, even if the job is already in a post-finished state.
         """
-        self._update_job_states(force_success_check = force_success_check)
+        self.jobs._update_job_states(force_success_check = force_success_check)
         print_string = self._get_print_string()
         print (print_string)
 
