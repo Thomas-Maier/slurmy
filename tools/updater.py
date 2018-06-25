@@ -32,10 +32,10 @@ class UpdateBase:
     def __init__(self, parent):
         self._parent = parent
 
-class UpdateSet(UpdateBase, set):
-    _properties_0 = ['clear']
-    _properties_1 = ['add', 'pop', 'remove', 'update']
-_overwrite_properties(UpdateSet)
+# class UpdateSet(UpdateBase, set):
+#     _properties_0 = ['clear']
+#     _properties_1 = ['add', 'pop', 'remove', 'update']
+# _overwrite_properties(UpdateSet)
 
 class UpdateList(UpdateBase, list):
     _properties_0 = ['clear']

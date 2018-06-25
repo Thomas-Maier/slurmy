@@ -5,7 +5,7 @@ import pickle
 import logging
 from .defs import Status
 from .utils import set_update_properties
-from .updater import UpdateSet
+from .updater import UpdateList
 
 log = logging.getLogger('slurmy')
 
@@ -35,9 +35,9 @@ class JobConfig:
         self._backend = backend
         self._name = self.backend.name
         self._path = path
-        self._tags = UpdateSet(self)
+        self._tags = UpdateList(self)
         if tags is not None: self.add_tags(tags)
-        self._parent_tags = UpdateSet(self)
+        self._parent_tags = UpdateList(self)
         if parent_tags is not None: self.add_tags(parent_tags, True)
         self._success_func = success_func
         self._finished_func = finished_func
@@ -53,9 +53,9 @@ class JobConfig:
 
     def add_tag(self, tag, is_parent = False):
         if is_parent:
-            self.parent_tags.add(tag)
+            self.parent_tags.append(tag)
         else:
-            self.tags.add(tag)
+            self.tags.append(tag)
 
     def add_tags(self, tags, is_parent = False):
         if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
@@ -168,7 +168,7 @@ class Job:
         """@SLURMY
         Check if the job has a given tag.
         """
-        if tag in self.tags:
+        if tag in set(self.tags):
             return True
         else:
             return False
@@ -180,7 +180,7 @@ class Job:
         * `tags` Set of tags.
         """
 
-        return bool(self.tags & tags)
+        return bool(set(self.tags) & tags)
 
     def submit(self):
         """@SLURMY
