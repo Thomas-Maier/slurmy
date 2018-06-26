@@ -17,6 +17,7 @@ class Options:
         self.bookkeeping = None
         self.workdir = None
         self.backend = None
+        self.editor = None
         ## Additional options
         self.test_mode = False
         self.interactive_mode = False

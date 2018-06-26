@@ -5,6 +5,7 @@ import pickle
 import logging
 from .defs import Status
 from .utils import set_update_properties, update_decorator
+from . import options
 
 log = logging.getLogger('slurmy')
 
@@ -80,7 +81,7 @@ class Job:
         self._local_process = None
 
     def __repr__(self):
-        print_string = 'Job "{}"\n'.format(self.config.name)
+        print_string = 'Job "{}"\n'.format(self.name)
         print_string += 'Local: {}\n'.format(self.is_local)
         print_string += 'Backend: {}\n'.format(self.config.backend.bid)
         print_string += 'Script: {}\n'.format(self.config.backend.run_script)
@@ -98,7 +99,7 @@ class Job:
 
         * `reset_retries` Also reset number of retries attempted so far.
         """
-        log.debug('({}) Reset job'.format(self.config.name))
+        log.debug('({}) Reset job'.format(self.name))
         self.config.status = Status.CONFIGURED
         self.config.job_id = None
         self._local_process = None
@@ -108,7 +109,7 @@ class Job:
         self.update_snapshot()
 
     def _write_log(self):
-        log.debug('({}) Write log file'.format(self.config.name))
+        log.debug('({}) Write log file'.format(self.name))
         with open(self.config.backend.log, 'w') as out_file:
             out_file.write(self._local_process.stdout.read())
 
@@ -117,7 +118,7 @@ class Job:
         If job is locally processing, wait for the process to finish.
         """
         if self._local_process is None:
-            log.warning('({}) No local process present to wait for...'.format(self.config.name))
+            log.warning('({}) No local process present to wait for...'.format(self.name))
             return
         self._local_process.wait()
 
@@ -129,9 +130,9 @@ class Job:
         if not self.config.path: return
         ## If config is not tagged for an update, do nothing
         if not self.config.update:
-            log.debug('({}) No changes made, skip snapshot update'.format(self.config.name))
+            log.debug('({}) No changes made, skip snapshot update'.format(self.name))
             return
-        log.debug('({}) Update snapshot'.format(self.config.name))
+        log.debug('({}) Update snapshot'.format(self.name))
         ## Check status again
         self.get_status()
         with open(self.config.path, 'wb') as out_file:
@@ -146,7 +147,7 @@ class Job:
         * `is_local` Turn on/off local processing for the job.
         """
         if self.config.status != Status.CONFIGURED:
-            log.warning('({}) Not in Configured state, cannot set to local'.format(self.config.name))
+            log.warning('({}) Not in Configured state, cannot set to local'.format(self.name))
             raise Exception
         self.config.is_local = is_local
 
@@ -197,11 +198,11 @@ class Job:
         Returns the job status (Status).
         """
         if self.config.status != Status.CONFIGURED:
-            log.warning('({}) Not in Configured state, cannot submit'.format(self.config.name))
+            log.warning('({}) Not in Configured state, cannot submit'.format(self.name))
             raise Exception
         if self.config.is_local:
             command = self._get_local_command()
-            log.debug('({}) Submit local process with command {}'.format(self.config.name, command))
+            log.debug('({}) Submit local process with command {}'.format(self.name, command))
             self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)
         else:
             self.config.job_id = self.config.backend.submit()
@@ -219,7 +220,7 @@ class Job:
         """
         ## Do nothing if job is already in failed state
         if self.config.status == Status.FAILURE: return
-        log.debug('({}) Cancel job'.format(self.config.name))
+        log.debug('({}) Cancel job'.format(self.name))
         ## Stop job if it's in running state
         if self.config.status == Status.RUNNING:
             if self.config.is_local:
@@ -240,7 +241,7 @@ class Job:
         * `ignore_max_retries` Ignore maximum number of retries.
         """
         if not ignore_max_retries and not self._do_retry(): return
-        log.debug('({}) Retry job'.format(self.config.name))
+        log.debug('({}) Retry job'.format(self.name))
         if self.config.status == Status.RUNNING:
             if force:
                 self.cancel()
@@ -325,13 +326,17 @@ class Job:
         if self.config.post_func is not None:
             self.config.post_func(self.config)
 
-    def edit_script(self, editor = 'emacs -nw'):
+    def edit_script(self, editor = None):
         """@SLURMY
         Open the job's run script in an editor.
 
-        * `editor` Command line editor to use.
+        * `editor` Command line editor to use. If none is specified, the default editor according to the slurmy config is used.
         """
-        os.system('{} {}'.format(editor, self.config.backend.run_script))
+        editor = editor or options.Main.editor
+        if editor:
+            os.system('{} {}'.format(editor, self.config.backend.run_script))
+        else:
+            log.error('({}) No (default) editor specified'.format(self.name))
 
     @property
     def tags(self):

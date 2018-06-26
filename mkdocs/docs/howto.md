@@ -14,6 +14,7 @@ You just need to create a file `~/.slurmy` with this content (which you might wa
 bookkeeping = ~/.slurmy_bookkeeping
 workdir = ./
 backend = Slurm
+editor = emacs -nw
 ## Slurm backend options
 Slurm.partition = lsschaile
 #Slurm.clusters = 
