@@ -324,6 +324,17 @@
 
 
   <li class="toctree-l2 toc-item">
+    <a href="#edit_script" title="Job">edit_script</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
     <a href="#get_status" title="Job">get_status</a>
   </li>
 
@@ -563,17 +574,19 @@
 </ul>
 <h1 id="properties">Properties</h1>
 <h2 id="is_local">is_local</h2>
-<p>Returns if the job is set to local processing or not.</p>
+<p>Returns if the job is set to local processing or not (bool).</p>
 <h2 id="log">log</h2>
 <p>Open the job log file with less.</p>
+<p>Returns the log file path (str).</p>
 <h2 id="name">name</h2>
-<p>Return the name of the job.</p>
+<p>Returns the name of the job (str).</p>
 <h2 id="parent_tags">parent_tags</h2>
-<p>Return the list of parent tags associated to this job.</p>
+<p>Returns the list of parent tags associated to this job ([str]).</p>
 <h2 id="script">script</h2>
 <p>Open the job script file with less.</p>
+<p>Returns the script file path (str).</p>
 <h2 id="tags">tags</h2>
-<p>Return the list of tags associated to this job.</p>
+<p>Returns the list of tags associated to this job ([str]).</p>
 <h1 id="member-functions">Member functions</h1>
 <h2 id="add_tag">add_tag</h2>
 <pre><code class="python">Job.add_tag(self, tag, is_parent=False)
@@ -601,6 +614,15 @@
 <ul>
 <li><code>clear_retry</code> Deactivate automatic retry mechanism</li>
 </ul>
+<p>Returns the job status (Status).</p>
+<h2 id="edit_script">edit_script</h2>
+<pre><code class="python">Job.edit_script(self, editor='emacs -nw')
+</code></pre>
+
+<p>Open the job's run script in an editor.</p>
+<ul>
+<li><code>editor</code> Command line editor to use.</li>
+</ul>
 <h2 id="get_status">get_status</h2>
 <pre><code class="python">Job.get_status(self, skip_eval=False, force_success_check=False)
 </code></pre>
@@ -610,11 +632,13 @@
 <li><code>skip_eval</code> Skip the status evaluation and just return the stored value.</li>
 <li><code>force_success_check</code> Force the success routine to be run, even if the job is already in a post-finished state.</li>
 </ul>
+<p>Returns the job status (Status).</p>
 <h2 id="has_tag">has_tag</h2>
 <pre><code class="python">Job.has_tag(self, tag)
 </code></pre>
 
 <p>Check if the job has a given tag.</p>
+<p>Returns if job has the tag (bool).</p>
 <h2 id="has_tags">has_tags</h2>
 <pre><code class="python">Job.has_tags(self, tags)
 </code></pre>
@@ -623,6 +647,7 @@
 <ul>
 <li><code>tags</code> Set of tags.</li>
 </ul>
+<p>Returns if job has any of the tags (bool).</p>
 <h2 id="rerun">rerun</h2>
 <pre><code class="python">Job.rerun(self, local=False)
 </code></pre>
@@ -632,10 +657,13 @@
 <li><code>local</code> Submit as a local job.</li>
 </ul>
 <h2 id="reset">reset</h2>
-<pre><code class="python">Job.reset(self)
+<pre><code class="python">Job.reset(self, reset_retries=True)
 </code></pre>
 
 <p>Reset the job.</p>
+<ul>
+<li><code>reset_retries</code> Also reset number of retries attempted so far.</li>
+</ul>
 <h2 id="set_local">set_local</h2>
 <pre><code class="python">Job.set_local(self, is_local=True)
 </code></pre>
@@ -649,6 +677,7 @@
 </code></pre>
 
 <p>Submit the job.</p>
+<p>Returns the job status (Status).</p>
 <h2 id="update_snapshot">update_snapshot</h2>
 <pre><code class="python">Job.update_snapshot(self)
 </code></pre>

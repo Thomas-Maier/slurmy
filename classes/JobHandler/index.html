@@ -463,6 +463,7 @@
 <li><code>parent_tags</code> List of parent tags attached to the job.</li>
 <li><code>name</code> Name of the job. This must be a string that conforms with the restrictions on class property names. Slurmy will make sure that job names stay unique, even if the same job name is set multiple times.</li>
 </ul>
+<p>Returns the job (Job).</p>
 <h2 id="cancel_jobs">cancel_jobs</h2>
 <pre><code class="python">JobHandler.cancel_jobs(self, tags=None, only_local=False, only_batch=False, make_snapshot=True)
 </code></pre>
@@ -488,22 +489,24 @@
 
 <p>Print a summary of the job processing.</p>
 <h2 id="reset">reset</h2>
-<pre><code class="python">JobHandler.reset(self)
+<pre><code class="python">JobHandler.reset(self, skip_jobs=False)
 </code></pre>
 
 <p>Reset the <a href="./#JobHandler">JobHandler</a> session.</p>
+<ul>
+<li><code>skip_jobs</code> Skip job reset.</li>
+</ul>
 <h2 id="run_jobs">run_jobs</h2>
-<pre><code class="python">JobHandler.run_jobs(self, interval=5, retry=False, rerun=False)
+<pre><code class="python">JobHandler.run_jobs(self, interval=5, retry=False)
 </code></pre>
 
 <p>Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.</p>
 <ul>
 <li><code>interval</code> The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually.</li>
 <li><code>retry</code> Retry failed or cancelled jobs.</li>
-<li><code>rerun</code> Rerun all jobs.</li>
 </ul>
 <h2 id="submit_jobs">submit_jobs</h2>
-<pre><code class="python">JobHandler.submit_jobs(self, tags=None, make_snapshot=True, wait=True, retry=False, rerun=False)
+<pre><code class="python">JobHandler.submit_jobs(self, tags=None, make_snapshot=True, wait=True, retry=False)
 </code></pre>
 
 <p>Submit jobs according to the <a href="./#JobHandler">JobHandler</a> configuration.</p>
@@ -512,7 +515,6 @@
 <li><code>make_snapshot</code> Make a snapshot of the jobs and the <a href="./#JobHandler">JobHandler</a> after the submission cycle.</li>
 <li><code>wait</code> Wait for locally submitted job.</li>
 <li><code>retry</code> Retry failed or cancelled jobs.</li>
-<li><code>rerun</code> Rerun all jobs.</li>
 </ul>
 <h2 id="update_snapshot">update_snapshot</h2>
 <pre><code class="python">JobHandler.update_snapshot(self, skip_jobs=False)

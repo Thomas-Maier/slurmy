@@ -98,6 +98,8 @@
       
   
   
+  
+  
   <ul class="current subnav">
     
       
@@ -107,9 +109,36 @@
   
 
 
-  <li class="current toctree-l2">
+  <li class="toctree-l2 toc-item">
+    <a href="#example-usage" title="Interactive Slurmy">Example usage</a>
+  </li>
+
     
-    <ul class="current subnav">
+      
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#job-configuration-file" title="Interactive Slurmy">Job configuration file</a>
+  </li>
+
+    
+      
+
+  
+  
+
+
+  <li class=" toctree-l2">
+    
+      <a href="#interactive-slurmy-functions" title="Interactive Slurmy"
+          class="">
+        Interactive slurmy functions
+      </a>
+    
+    <ul class=" subnav">
       
         
 
@@ -362,8 +391,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="interactive-slurmy">Interactive Slurmy</h1>
-<p>You can use the <code>slurmy</code> executable to start an interactive slurmy session, which allows to interact with past JobHandler sessions or start new ones.</p>
+                <p>You can use the <code>slurmy</code> executable to start an interactive slurmy session, which allows to interact with past JobHandler sessions or start new ones.</p>
 <p>Usage from <code>slurmy --help</code>:</p>
 <pre><code class="shell">usage: slurmy [-h] [-p PATH] [-c CONFIG] [-t] [--debug]
 
@@ -380,9 +408,103 @@ optional arguments:
 </code></pre>
 
 <p>If you prefer to use python2 (not recommended), you can also run the <code>slurmy2</code> executable.</p>
-<p>The job definition file passed with <code>-c</code> is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with (you can omit import statements). As long as your definition file is "flat" (no encapsulated definitions), i.e. like the examples given in the <a href="../howto/">HowTo</a> section, you can pass it to interactive slurmy</p>
-<p>If no argument is passed to the slurmy executable, it tries to load the latest session according to the bookkeeping.</p>
-<p>The interactive slurmy session also defines a couple of functions:</p>
+<p>If no argument is passed to the slurmy executable, it tries to load the latest session according to the bookkeeping and load it as <code>jh</code>.</p>
+<h1 id="example-usage">Example usage</h1>
+<p>In general you can do everything in interactive slurmy that you can also do in python file which handles your job definition. On top of that you can easily inspect and manipulate an already existing <a href="../classes/JobHandler/">JobHandler</a> session. Just executing <code>slurmy</code> will bring up the latest <a href="../classes/JobHandler/">JobHandler</a> session:</p>
+<pre><code class="python">In [1]: jh
+Out[1]: Azathoth_1530049255
+</code></pre>
+
+<p>Every <a href="../classes/JobHandler/">JobHandler</a> has a member <code>jobs</code> which keeps track of all it's attached jobs:</p>
+<pre><code class="python">In [2]: jh.jobs
+Out[2]: 
+Job &quot;hans&quot;: CONFIGURED
+------------
+CONFIGURED(1)
+</code></pre>
+
+<p>As you can see, the <a href="../classes/JobHandler/">JobHandler</a> in this case has one job named "hans", which is in the CONFIGURED state. Every job is attached as property to <a href="../classes/JobHandler/">JobHandler</a>.jobs, which provides a direct handle to access them:</p>
+<pre><code class="python">In [3]: jh.jobs.hans
+Out[3]: 
+Job &quot;hans&quot;
+Local: False
+Backend: Slurm
+Script: /home/thomas/test/Azathoth_1530049255/scripts/hans
+Status: CONFIGURED
+</code></pre>
+
+<p>Alternatively, jobs can be accessed directly by name via the <a href="../classes/JobHandler/">JobHandler</a> itself:</p>
+<pre><code class="python">In [4]: jh['hans']
+Out[4]: 
+Job &quot;hans&quot;
+Local: False
+Backend: Slurm
+Script: /home/thomas/test/Azathoth_1530049255/scripts/hans
+Status: CONFIGURED
+</code></pre>
+
+<p><a href="../classes/JobHandler/">JobHandler</a>.jobs also has a <code>status_</code> property for every possible job status, which will print all jobs which currently are in this status:</p>
+<pre><code class="python">In [5]: jh.jobs.status_CONFIGURED
+Job &quot;hans&quot;: CONFIGURED
+
+In [6]: jh.jobs.status_RUNNING
+
+
+In [7]:
+</code></pre>
+
+<p>In this example, job "hans" is in CONFIGURED state so we can run the job submission (<code>run_jobs</code> for continuous submission until finished or <code>submit_jobs</code> for a single submission cycle):</p>
+<pre><code class="python">In [7]: jh.run_jobs()
+Jobs processed (batch/local/all): (0/1/1)
+     successful (batch/local/all): (0/0/0)
+     failed (batch/local/all): (0/1/1)
+Time spent: 5.0 s
+</code></pre>
+
+<p>The job "hans" is now in FAILED state:</p>
+<pre><code class="python">In [8]: jh.jobs
+Out[8]: 
+Job &quot;hans&quot;: FAILURE
+------------
+FAILURE(1)
+</code></pre>
+
+<p>We can access the log file of the job directly via it's dedicated property (which opens the log with less), in order to find out what went wrong:</p>
+<pre><code class="python">In [9]: jh.jobs.hans.log
+</code></pre>
+
+<p>Usually, you probably want to fix our job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:</p>
+<pre><code class="python">jh.jobs.hans.edit_script()
+</code></pre>
+
+<p>If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by passing <code>retry = True</code> to <code>run_jobs</code> or <code>submit_jobs</code>:</p>
+<pre><code class="python">In [11]: jh.run_jobs(retry = True)
+Jobs processed (batch/local/all): (-1/2/1)
+     successful (batch/local/all): (0/1/1)
+Time spent: 5.0 s
+</code></pre>
+
+<p>Ignore the broken summary for now. The job "hans" is now in SUCCESS state (from fixing the run script before retrying the job):</p>
+<pre><code class="python">In [12]: jh.jobs
+Out[12]: 
+Job &quot;hans&quot;: SUCCESS
+------------
+SUCCESS(1)
+</code></pre>
+
+<p>While the job management should be handled by the <a href="../classes/JobHandler/">JobHandler</a>, you can also run job commands directly:</p>
+<pre><code class="python">In [13]: jh.jobs.hans.rerun()
+
+In [14]: jh.jobs.hans.get_status()
+Out[14]: &lt;Status.SUCCESS: 3&gt;
+</code></pre>
+
+<p>You should also run <code>jh.check_status()</code> to update the <a href="../classes/JobHandler/">JobHandler</a> job bookkeeping. However, it's likely that running jobs directly screws up the bookkeeping.</p>
+<p>Have a look at the <a href="../classes/JobHandler/">JobHandler</a> and <a href="../classes/Job/">Job</a> documentation to see what you execute in interactive slurmy.</p>
+<h1 id="job-configuration-file">Job configuration file</h1>
+<p>The job definition file passed with <code>-c</code> is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with (you can omit import statements). As long as your definition file is "flat" (no encapsulated definitions), i.e. like the examples given in the <a href="../howto/">HowTo</a> section, you can pass it to interactive slurmy.</p>
+<h1 id="interactive-slurmy-functions">Interactive slurmy functions</h1>
+<p>The interactive slurmy session also defines a couple of functions.</p>
 <h2 id="list_sessions">list_sessions</h2>
 <pre><code class="python">list_sessions()
 </code></pre>
