@@ -75,6 +75,29 @@
     
 
 
+<ul class="" href="/howto/">
+  
+    
+    
+      <li class=" toctree-l1">
+        <a class="" href="/howto/">HowTo</a>
+      </li>
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+
+
 <ul class="current" href="/interactive_slurmy/">
   
     
@@ -93,8 +116,55 @@
   
 
 
+  <li class="current toctree-l2">
+    
+    <ul class="current subnav">
+      
+        
+
+  
+  
+
+
   <li class="toctree-l2 toc-item">
-    <a href="#interactive-slurmy" title="Interactive Slurmy">Interactive Slurmy</a>
+    <a href="#list_sessions" title="Interactive Slurmy">list_sessions</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#load" title="Interactive Slurmy">load</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#load_path" title="Interactive Slurmy">load_path</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#load_latest" title="Interactive Slurmy">load_latest</a>
+  </li>
+
+      
+    </ul>
   </li>
 
     
@@ -193,6 +263,76 @@
 </div>
 
 
+
+  
+    
+    
+    
+    
+    
+    
+
+  <p class="caption">Utility</p>
+
+
+<ul class="" href="utils/SuccessOutputFile">
+  
+    
+      
+<li class=" toctree-l1">
+  <a href="../utils/SuccessOutputFile/" title="SuccessOutputFile"
+      class="">
+    SuccessOutputFile
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../utils/SuccessTrigger/" title="SuccessTrigger"
+      class="">
+    SuccessTrigger
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../utils/FinishedTrigger/" title="FinishedTrigger"
+      class="">
+    FinishedTrigger
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../utils/LogMover/" title="LogMover"
+      class="">
+    LogMover
+  </a>
+
+  
+  
+</li>
+    
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
       </div>
       &nbsp;
     </nav>
@@ -224,20 +364,56 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="interactive-slurmy">Interactive Slurmy</h2>
-<p>You can use the slurmy executable to start an interactive slurmy session, which allows to interact with past JobHandler sessions or start new ones.</p>
-<p>Arguments that can be passed to the executable:</p>
-<p><strong>-p PATH</strong>: Path to the base folder of a JobHandler session. Directly loads the JobHandler as "jh".</p>
-<p><strong>-c CONFIG</strong>: Path to a job definition file. More details, see below.</p>
-<p><strong>--debug</strong>: Run in debugging mode.</p>
-<p>The job definition file passed with <strong>-c</strong> is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with.</p>
-<p><strong>Example of a job definition file which can be passed to slurmy:</strong> <a href="../examples/example_interactive_config.py">examples/example_interactive_config.py</a></p>
+                <h1 id="interactive-slurmy">Interactive Slurmy</h1>
+<p>You can use the <code>slurmy</code> executable to start an interactive slurmy session, which allows to interact with past JobHandler sessions or start new ones.</p>
+<p>Usage from <code>slurmy --help</code>:</p>
+<pre><code class="shell">usage: slurmy [-h] [-p PATH] [-c CONFIG] [-t] [--debug]
+
+Slurmy interactive
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PATH, --path PATH  Path to the base folder of an existing JobHandler
+                        session. Directly loads the JobHandler as &quot;jh&quot;.
+  -c CONFIG, --config CONFIG
+                        Path to a job configuration file.
+  -t                    Switch to start in test mode.
+  --debug               Run in debugging mode.
+</code></pre>
+
+<p>If you prefer to use python2 (not recommended), you can also run the <code>slurmy2</code> executable.</p>
+<p>The job definition file passed with <code>-c</code> is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with (you can omit import statements). As long as your definition file is "flat" (no encapsulated definitions), i.e. like the examples given in the <a href="../howto/">HowTo</a> section, you can pass it to interactive slurmy</p>
 <p>If no argument is passed to the slurmy executable, it tries to load the latest session according to the bookkeeping.</p>
 <p>The interactive slurmy session also defines a couple of functions:</p>
-<p><strong>list_sessions()</strong>: List all past JobHandler sessions with some information. Sessions are kept track of in a json file, which is defined in ~/.slurmy. They are either defined by the full path to the base folder on disk, or by the name as given in the list.</p>
-<p><strong>load(name)</strong>: Load a JobHandler as given by the name in list_sessions().</p>
-<p><strong>load_path(path)</strong>: Load a JobHandler as given by the path to the base folder (relative or absolute).</p>
-<p><strong>load_latest()</strong>: Load the latest session according to the bookkeeping.</p>
+<h2 id="list_sessions">list_sessions</h2>
+<pre><code class="python">list_sessions()
+</code></pre>
+
+<p>List all available slurmy session according to the central bookkeeping.</p>
+<h2 id="load">load</h2>
+<pre><code class="python">load(name)
+</code></pre>
+
+<p>Load a slurmy session by name.</p>
+<ul>
+<li><code>name</code> Name of the slurmy session, as listed by list_sessions().</li>
+</ul>
+<p>Returns jobhandler associated to the session (JobHandler).</p>
+<h2 id="load_path">load_path</h2>
+<pre><code class="python">load_path(path)
+</code></pre>
+
+<p>Load a slurmy session by full path.</p>
+<ul>
+<li><code>path</code> Full folder path of the slurmy session, as listed by list_sessions().</li>
+</ul>
+<p>Returns jobhandler associated to the session (JobHandler).</p>
+<h2 id="load_latest">load_latest</h2>
+<pre><code class="python">load_latest()
+</code></pre>
+
+<p>Load the latest slurmy session according to central bookkeeping.</p>
+<p>Returns jobhandler associated to the session (JobHandler).</p>
               
             </div>
           </div>
@@ -248,7 +424,7 @@
         <a href="../classes/JobHandler/" class="btn btn-neutral float-right" title="JobHandler">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href=".." class="btn btn-neutral" title="Slurmy"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../howto/" class="btn btn-neutral" title="HowTo"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -274,7 +450,7 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../howto/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../classes/JobHandler/" style="color: #fcfcfc">Next &raquo;</a></span>

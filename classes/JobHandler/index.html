@@ -75,6 +75,29 @@
     
 
 
+<ul class="" href="/howto/">
+  
+    
+    
+      <li class=" toctree-l1">
+        <a class="" href="/howto/">HowTo</a>
+      </li>
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+
+
 <ul class="" href="/interactive_slurmy/">
   
     
@@ -182,17 +205,6 @@
 
   <li class="toctree-l2 toc-item">
     <a href="#check_status" title="JobHandler">check_status</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#get_jobs" title="JobHandler">get_jobs</a>
   </li>
 
       
@@ -316,6 +328,76 @@
 </div>
 
 
+
+  
+    
+    
+    
+    
+    
+    
+
+  <p class="caption">Utility</p>
+
+
+<ul class="" href="utils/SuccessOutputFile">
+  
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/SuccessOutputFile/" title="SuccessOutputFile"
+      class="">
+    SuccessOutputFile
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/SuccessTrigger/" title="SuccessTrigger"
+      class="">
+    SuccessTrigger
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/FinishedTrigger/" title="FinishedTrigger"
+      class="">
+    FinishedTrigger
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/LogMover/" title="LogMover"
+      class="">
+    LogMover
+  </a>
+
+  
+  
+</li>
+    
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
       </div>
       &nbsp;
     </nav>
@@ -410,14 +492,6 @@
 <ul>
 <li><code>force_success_check</code> Force the success routine to be run, even if the job is already in a post-finished state.</li>
 </ul>
-<h2 id="get_jobs">get_jobs</h2>
-<pre><code class="python">JobHandler.get_jobs(self, tags=None)
-</code></pre>
-
-<p>Get the list of jobs.</p>
-<ul>
-<li><code>tags</code> Tags that jobs are filtered on.</li>
-</ul>
 <h2 id="print_summary">print_summary</h2>
 <pre><code class="python">JobHandler.print_summary(self, time_spent=None)
 </code></pre>
@@ -454,7 +528,7 @@
 <pre><code class="python">JobHandler.update_snapshot(self, skip_jobs=False)
 </code></pre>
 
-<p>Update snapshots of the <a href="./#JobHandler">JobHandler</a> and the associated Jobs on disk.</p>
+<p>Update snapshots of the <a href="./#JobHandler">JobHandler</a> and the associated Jobs on disk. Snaphots are only updated if something changed in the respective <a href="../JobHandlerConfig/#JobHandlerConfig">JobHandlerConfig</a> or <a href="../JobConfig/#JobConfig">JobConfig</a>.</p>
 <ul>
 <li><code>skip_jobs</code> Skip the job snapshot update.</li>
 </ul>

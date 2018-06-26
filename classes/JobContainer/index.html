@@ -75,6 +75,29 @@
     
 
 
+<ul class="" href="/howto/">
+  
+    
+    
+      <li class=" toctree-l1">
+        <a class="" href="/howto/">HowTo</a>
+      </li>
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+
+
 <ul class="" href="/interactive_slurmy/">
   
     
@@ -142,6 +165,7 @@
     
     
       
+  
   
   
   
@@ -244,6 +268,47 @@
   </li>
 
     
+      
+
+  
+  
+
+
+  <li class=" toctree-l2">
+    
+      <a href="#member-functions" title="JobContainer"
+          class="">
+        Member functions
+      </a>
+    
+    <ul class=" subnav">
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#get" title="JobContainer">get</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#print" title="JobContainer">print</a>
+  </li>
+
+      
+    </ul>
+  </li>
+
+    
   </ul>
 
     
@@ -266,6 +331,76 @@
   <a href="../JobConfig/" title="JobConfig"
       class="">
     JobConfig
+  </a>
+
+  
+  
+</li>
+    
+</ul>
+
+<!--
+ | This is a hacky way to pass setting from the template generator to the
+ | javascript that drives the dropdown functionality
+-->
+<div style="width: 1px; height: 1px; visibility: none;">
+
+</div>
+
+
+
+  
+    
+    
+    
+    
+    
+    
+
+  <p class="caption">Utility</p>
+
+
+<ul class="" href="utils/SuccessOutputFile">
+  
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/SuccessOutputFile/" title="SuccessOutputFile"
+      class="">
+    SuccessOutputFile
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/SuccessTrigger/" title="SuccessTrigger"
+      class="">
+    SuccessTrigger
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/FinishedTrigger/" title="FinishedTrigger"
+      class="">
+    FinishedTrigger
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../../utils/LogMover/" title="LogMover"
+      class="">
+    LogMover
   </a>
 
   
@@ -336,6 +471,25 @@
 <p>List jobs in status RUNNING.</p>
 <h2 id="status_success">status_SUCCESS</h2>
 <p>List jobs in status SUCCESS.</p>
+<h1 id="member-functions">Member functions</h1>
+<h2 id="get">get</h2>
+<pre><code class="python">JobContainer.get(self, tags=None)
+</code></pre>
+
+<p>Get the list of jobs.</p>
+<ul>
+<li><code>tags</code> Tags that jobs are filtered on.</li>
+</ul>
+<h2 id="print">print</h2>
+<pre><code class="python">JobContainer.print(self, tags=None, states=None, print_summary=True)
+</code></pre>
+
+<p>Print the list of jobs and their current status.</p>
+<ul>
+<li><code>tags</code> Tags that jobs should match with (single string or list of strings). If a job has any of the provided tags it will be printed.</li>
+<li><code>states</code> States that jobs should match with (single string or list of strings). If a job is in any of the provided states it will be printed.</li>
+<li><code>print_summary</code> Print overall summary as well.</li>
+</ul>
               
             </div>
           </div>

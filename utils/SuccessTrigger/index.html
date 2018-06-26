@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>JobConfig - Slurmy</title>
+  <title>SuccessTrigger - Slurmy</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
   <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 
@@ -18,9 +18,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "JobConfig";
-    var mkdocs_page_input_path = "classes/JobConfig.md";
-    var mkdocs_page_url = "/classes/JobConfig/";
+    var mkdocs_page_name = "SuccessTrigger";
+    var mkdocs_page_input_path = "utils/SuccessTrigger.md";
+    var mkdocs_page_url = "/utils/SuccessTrigger/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -128,12 +128,12 @@
   <p class="caption">Classes</p>
 
 
-<ul class="current" href="classes/JobHandler">
+<ul class="" href="classes/JobHandler">
   
     
       
 <li class=" toctree-l1">
-  <a href="../JobHandler/" title="JobHandler"
+  <a href="../../classes/JobHandler/" title="JobHandler"
       class="">
     JobHandler
   </a>
@@ -144,7 +144,7 @@
     
       
 <li class=" toctree-l1">
-  <a href="../JobHandlerConfig/" title="JobHandlerConfig"
+  <a href="../../classes/JobHandlerConfig/" title="JobHandlerConfig"
       class="">
     JobHandlerConfig
   </a>
@@ -155,7 +155,7 @@
     
       
 <li class=" toctree-l1">
-  <a href="../JobContainer/" title="JobContainer"
+  <a href="../../classes/JobContainer/" title="JobContainer"
       class="">
     JobContainer
   </a>
@@ -166,7 +166,7 @@
     
       
 <li class=" toctree-l1">
-  <a href="../Job/" title="Job"
+  <a href="../../classes/Job/" title="Job"
       class="">
     Job
   </a>
@@ -176,36 +176,13 @@
 </li>
     
       
-<li class="current toctree-l1">
-  <a href="./" title="JobConfig"
-      class="current">
+<li class=" toctree-l1">
+  <a href="../../classes/JobConfig/" title="JobConfig"
+      class="">
     JobConfig
   </a>
 
   
-  
-    
-    
-      
-  
-  
-  <ul class="current subnav">
-    
-      
-
-  
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#jobconfig" title="JobConfig">JobConfig</a>
-  </li>
-
-    
-  </ul>
-
-    
   
 </li>
     
@@ -232,12 +209,12 @@
   <p class="caption">Utility</p>
 
 
-<ul class="" href="utils/SuccessOutputFile">
+<ul class="current" href="utils/SuccessOutputFile">
   
     
       
 <li class=" toctree-l1">
-  <a href="../../utils/SuccessOutputFile/" title="SuccessOutputFile"
+  <a href="../SuccessOutputFile/" title="SuccessOutputFile"
       class="">
     SuccessOutputFile
   </a>
@@ -247,19 +224,42 @@
 </li>
     
       
-<li class=" toctree-l1">
-  <a href="../../utils/SuccessTrigger/" title="SuccessTrigger"
-      class="">
+<li class="current toctree-l1">
+  <a href="./" title="SuccessTrigger"
+      class="current">
     SuccessTrigger
   </a>
 
   
   
+    
+    
+      
+  
+  
+  <ul class="current subnav">
+    
+      
+
+  
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#successtrigger" title="SuccessTrigger">SuccessTrigger</a>
+  </li>
+
+    
+  </ul>
+
+    
+  
 </li>
     
       
 <li class=" toctree-l1">
-  <a href="../../utils/FinishedTrigger/" title="FinishedTrigger"
+  <a href="../FinishedTrigger/" title="FinishedTrigger"
       class="">
     FinishedTrigger
   </a>
@@ -270,7 +270,7 @@
     
       
 <li class=" toctree-l1">
-  <a href="../../utils/LogMover/" title="LogMover"
+  <a href="../LogMover/" title="LogMover"
       class="">
     LogMover
   </a>
@@ -311,11 +311,11 @@
     
       
         
-          <li>Classes &raquo;</li>
+          <li>Utility &raquo;</li>
         
       
     
-    <li>JobConfig</li>
+    <li>SuccessTrigger</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -325,22 +325,14 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="jobconfig">JobConfig</h1>
-<pre><code class="python">JobConfig(backend, path, success_func=None, finished_func=None, post_func=None, max_retries=0, tags=None, parent_tags=None, is_local=False, output=None)
+                <h1 id="successtrigger">SuccessTrigger</h1>
+<pre><code class="python">SuccessTrigger(success_file, failure_file)
 </code></pre>
 
-<p>Config class for the <a href="../Job/#Job">Job</a> class. Stores all necessary information to load the <a href="../Job/#Job">Job</a> at a later time. All properties are assigned with a custom getter function, which keeps track of updates to the respective property (tracked with the "update" variable).</p>
+<p>Callable class which can be used as success_func of a slurmy job. It continuously checks if either the success_file or the failure_file is present in the underlying file system.</p>
 <ul>
-<li><code>backend</code> Backend instance used for the job setup.</li>
-<li><code>path</code> Path of the job's snapshot file.</li>
-<li><code>success_func</code> Success function used for the job setup.</li>
-<li><code>finished_func</code> Finished function used for the job setup.</li>
-<li><code>post_func</code> Post execution function used for the job setup.</li>
-<li><code>max_retries</code> Maximum number of retries that are attempted when job is failing.</li>
-<li><code>tags</code> List of tags attached to the job.</li>
-<li><code>parent_tags</code> List of parent tags attached to the job.</li>
-<li><code>is_local</code> Define job as local.</li>
-<li><code>output</code> Output file of the job.</li>
+<li><code>success_file</code> The file which is created if the job is successful.</li>
+<li><code>failure_file</code> The file which is created if the job failed.</li>
 </ul>
               
             </div>
@@ -349,10 +341,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../utils/SuccessOutputFile/" class="btn btn-neutral float-right" title="SuccessOutputFile">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../FinishedTrigger/" class="btn btn-neutral float-right" title="FinishedTrigger">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../Job/" class="btn btn-neutral" title="Job"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../SuccessOutputFile/" class="btn btn-neutral" title="SuccessOutputFile"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -378,10 +370,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../Job/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../SuccessOutputFile/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../utils/SuccessOutputFile/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../FinishedTrigger/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
