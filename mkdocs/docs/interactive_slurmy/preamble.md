@@ -27,7 +27,7 @@ In general you can do everything in interactive slurmy that you can also do in p
 
 ```python
 In [1]: jh
-Out[1]: Azathoth_1530049255
+Out[1]: Azathoth_1530051215
 ```
 
 Every [JobHandler](classes/JobHandler.md) has a member `jobs` which keeps track of all it's attached jobs:
@@ -48,7 +48,7 @@ Out[3]:
 Job "hans"
 Local: False
 Backend: Slurm
-Script: /home/thomas/test/Azathoth_1530049255/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
 Status: CONFIGURED
 ```
 
@@ -60,7 +60,7 @@ Out[4]:
 Job "hans"
 Local: False
 Backend: Slurm
-Script: /home/thomas/test/Azathoth_1530049255/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
 Status: CONFIGURED
 ```
 
@@ -80,11 +80,13 @@ In this example, job "hans" is in CONFIGURED state so we can run the job submiss
 
 ```python
 In [7]: jh.run_jobs()
-Jobs processed (batch/local/all): (0/1/1)
+Jobs processed (batch/local/all): (1/0/1)
      successful (batch/local/all): (0/0/0)
-     failed (batch/local/all): (0/1/1)
-Time spent: 5.0 s
+     failed (batch/local/all): (1/0/1)
+Time spent: 5.4 s
 ```
+
+(Note: the submission interval of `run_jobs` is set to 5 seconds by default)
 
 The job "hans" is now in FAILED state:
 
@@ -105,19 +107,19 @@ In [9]: jh.jobs.hans.log
 Usually, you probably want to fix our job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:
 
 ```python
-jh.jobs.hans.edit_script()
+In [10]: jh.jobs.hans.edit_script()
 ```
 
 If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by passing `retry = True` to `run_jobs` or `submit_jobs`:
 
 ```python
 In [11]: jh.run_jobs(retry = True)
-Jobs processed (batch/local/all): (-1/2/1)
-     successful (batch/local/all): (0/1/1)
-Time spent: 5.0 s
+Jobs processed (batch/local/all): (1/0/1)
+     successful (batch/local/all): (1/0/1)
+Time spent: 5.3 s
 ```
 
-Ignore the broken summary for now. The job "hans" is now in SUCCESS state (from fixing the run script before retrying the job):
+The job "hans" is now in SUCCESS state (from fixing the run script before retrying the job):
 
 ```python
 In [12]: jh.jobs
@@ -136,7 +138,14 @@ In [14]: jh.jobs.hans.get_status()
 Out[14]: <Status.SUCCESS: 3>
 ```
 
-You should also run `jh.check_status()` to update the [JobHandler](classes/JobHandler.md) job bookkeeping. However, it's likely that running jobs directly screws up the bookkeeping.
+You should also run `jh.check_status()` to update the [JobHandler](classes/JobHandler.md) job bookkeeping:
+
+```python
+In [15]: jh.check_status()
+Jobs (success/fail/all): (1/0/1)
+```
+
+However, it's likely that running jobs directly screws up the bookkeeping.
 
 Have a look at the [JobHandler](classes/JobHandler.md) and [Job](classes/Job.md) documentation to see what you execute in interactive slurmy.
 
