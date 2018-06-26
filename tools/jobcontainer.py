@@ -11,12 +11,13 @@ class JobContainer(dict, object):
         self._tags = {}
         self._local = []
 
-    ## TODO: probably should be a generator
     def get(self, tags = None):
         """@SLURMY
         Get the list of jobs.
 
         * `tags` Tags that jobs are filtered on.
+
+        Returns list of jobs ([Job]).
         """
         job_list = []
         for job in self.values():

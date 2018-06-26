@@ -92,14 +92,18 @@ class Job:
 
         return print_string
 
-    def reset(self):
+    def reset(self, reset_retries = True):
         """@SLURMY
         Reset the job.
+
+        * `reset_retries` Also reset number of retries attempted so far.
         """
         log.debug('({}) Reset job'.format(self.config.name))
         self.config.status = Status.CONFIGURED
         self.config.job_id = None
         self._local_process = None
+        if reset_retries:
+            self.config.n_retries = 0
         if os.path.isfile(self.config.backend.log): os.remove(self.config.backend.log)
         self.update_snapshot()
 
@@ -167,6 +171,8 @@ class Job:
     def has_tag(self, tag):
         """@SLURMY
         Check if the job has a given tag.
+
+        Returns if job has the tag (bool).
         """
         if tag in set(self.tags):
             return True
@@ -178,6 +184,8 @@ class Job:
         Check if the job has any tag of a given list of tags.
 
         * `tags` Set of tags.
+
+        Returns if job has any of the tags (bool).
         """
 
         return bool(set(self.tags) & tags)
@@ -185,6 +193,8 @@ class Job:
     def submit(self):
         """@SLURMY
         Submit the job.
+
+        Returns the job status (Status).
         """
         if self.config.status != Status.CONFIGURED:
             log.warning('({}) Not in Configured state, cannot submit'.format(self.config.name))
@@ -204,6 +214,8 @@ class Job:
         Cancel the job.
         
         * `clear_retry` Deactivate automatic retry mechanism
+
+        Returns the job status (Status).
         """
         ## Do nothing if job is already in failed state
         if self.config.status == Status.FAILURE: return
@@ -219,7 +231,6 @@ class Job:
 
         return self.config.status
 
-    ## TODO: need some quality of life functions and make this one only internal --> rerun, rerun_local
     def _retry(self, force = False, submit = True, ignore_max_retries = False, local = False):
         """@SLURMY
         Retry job according to configuration.
@@ -236,7 +247,7 @@ class Job:
             else:
                 print ("Job is still running, use force=True to force re-submit")
                 return
-        self.reset()
+        self.reset(reset_retries = False)
         self.set_local(local)
         self.config.n_retries += 1
         if submit: self.submit()
@@ -260,6 +271,8 @@ class Job:
 
         * `skip_eval` Skip the status evaluation and just return the stored value.
         * `force_success_check` Force the success routine to be run, even if the job is already in a post-finished state.
+
+        Returns the job status (Status).
         """
         ## Just return current status and skip status evaluation
         if skip_eval:
@@ -312,24 +325,32 @@ class Job:
         if self.config.post_func is not None:
             self.config.post_func(self.config)
 
+    def edit_script(self, editor = 'emacs -nw'):
+        """@SLURMY
+        Open the job's run script in an editor.
+
+        * `editor` Command line editor to use.
+        """
+        os.system('{} {}'.format(editor, self.config.backend.run_script))
+
     @property
     def tags(self):
         """@SLURMY
-        Return the list of tags associated to this job.
+        Returns the list of tags associated to this job ([str]).
         """
         return self.config.tags
 
     @property
     def parent_tags(self):
         """@SLURMY
-        Return the list of parent tags associated to this job.
+        Returns the list of parent tags associated to this job ([str]).
         """
         return self.config.parent_tags
 
     @property
     def name(self):
         """@SLURMY
-        Return the name of the job.
+        Returns the name of the job (str).
         """
         return self.config.name
 
@@ -337,6 +358,8 @@ class Job:
     def log(self):
         """@SLURMY
         Open the job log file with less.
+
+        Returns the log file path (str).
         """
         os.system('less -R {}'.format(self.config.backend.log))
 
@@ -346,6 +369,8 @@ class Job:
     def script(self):
         """@SLURMY
         Open the job script file with less.
+
+        Returns the script file path (str).
         """
         os.system('less -R {}'.format(self.config.backend.run_script))
 
@@ -354,7 +379,7 @@ class Job:
     @property
     def is_local(self):
         """@SLURMY
-        Returns if the job is set to local processing or not.
+        Returns if the job is set to local processing or not (bool).
         """
         return self.config.is_local
 

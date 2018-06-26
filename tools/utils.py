@@ -220,3 +220,14 @@ def update_decorator(func):
         return func(self, *args, **kwargs)
 
     return new_func
+
+## Folder utils
+def make_dir(folder):
+    import os
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+
+def remove_content(folder):
+    import os, glob
+    for file_name in glob.glob(os.path.join(folder, '*')):
+        os.remove(file_name)

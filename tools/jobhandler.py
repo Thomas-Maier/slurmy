@@ -12,7 +12,7 @@ from .namegenerator import NameGenerator
 from . import options as ops
 from ..backends.utils import get_backend
 from .parser import Parser
-from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties
+from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties, make_dir, remove_content
 from .jobcontainer import JobContainer
 from .utils import update_decorator
 
@@ -27,7 +27,7 @@ class JobHandlerConfig:
     """
     
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
-    _properties = ['_name_gen', '_name', '_base_dir', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
+    _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
                    '_success_func', '_finished_func', '_is_verbose', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
                    '_wrapper', '_job_config_paths', '_local_counter']
     
@@ -35,7 +35,12 @@ class JobHandlerConfig:
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
         self._name = self._name_gen.name
-        self._base_dir, self._script_dir, self._log_dir, self._output_dir, self._snapshot_dir, self._tmp_dir, self._path = JobHandlerConfig.get_dirs(self._name, work_dir)
+        ## Get directory paths
+        self.dirs = JobHandlerConfig.get_dirs(self._name, work_dir)
+        ## Pop of path to snapshot
+        self._path = self.dirs.pop(-1)
+        ## Explicitly set directory properties
+        self._script_dir, self._log_dir, self._output_dir, self._snapshot_dir, self._tmp_dir = self.dirs
         self._success_func = success_func
         self._finished_func = finished_func
         self._is_verbose = is_verbose
@@ -72,8 +77,9 @@ class JobHandlerConfig:
         snapshot_dir = os.path.join(base_dir, snapshot)
         tmp_dir = os.path.join(base_dir, tmp)
         path = os.path.join(snapshot_dir, snapshot_name)
+        
 
-        return base_dir, script_dir, log_dir, output_dir, snapshot_dir, tmp_dir, path
+        return [script_dir, log_dir, output_dir, snapshot_dir, tmp_dir, path]
 ## Set properties to incorporate update tagging
 set_update_properties(JobHandlerConfig)
 
@@ -133,7 +139,7 @@ class JobHandler:
             backend.load_default_config()
             ## Make new JobHandler config
             self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper)
-            self.reset()
+            self.reset(skip_jobs = True)
             JobHandler._add_bookkeeping(self.config.name, work_dir, description)
         ## Variable parser
         self._parser = Parser(self.config)
@@ -144,18 +150,32 @@ class JobHandler:
     def __repr__(self):
         return self.config.name
 
-    def reset(self):
+    def reset(self, skip_jobs = False):
         """@SLURMY
         Reset the JobHandler session.
+
+        * `skip_jobs` Skip job reset.
         """
         log.debug('Reset JobHandler')
-        if os.path.isdir(self.config.base_dir): os.system('rm -r {}'.format(self.config.base_dir))
-        os.makedirs(self.config.script_dir)
-        os.makedirs(self.config.log_dir)
-        os.makedirs(self.config.output_dir)
-        if os.path.isdir(self.config.snapshot_dir): os.system('rm -r {}'.format(self.config.snapshot_dir))
-        os.makedirs(self.config.snapshot_dir)
-        os.makedirs(self.config.tmp_dir)
+        ## Make folders if it doesn't exist yet
+        for folder in self.config.dirs:
+            make_dir(folder)
+        ## Remove logs
+        remove_content(self.config.log_dir)
+        ## Remove remaining tmp files
+        remove_content(self.config.tmp_dir)
+        ## Remove outputs
+        remove_content(self.config.output_dir)
+        if not skip_jobs:
+            ## Reset jobs
+            for job in self.jobs.values():
+                job.reset()
+            ## Reset local job counter
+            self.config.local_counter = 0
+            ## Reset job states bookkeeping:
+            for status in self.jobs._states:
+                self.jobs._states[status].clear()
+        ## Make snapshots
         self.update_snapshot()
 
     def update_snapshot(self, skip_jobs = False):
@@ -213,6 +233,8 @@ class JobHandler:
         * `tags` List of tags attached to the job.
         * `parent_tags` List of parent tags attached to the job.
         * `name` Name of the job. This must be a string that conforms with the restrictions on class property names. Slurmy will make sure that job names stay unique, even if the same job name is set multiple times.
+
+        Returns the job (Job).
         """
         if backend is None and ops.Main.backend is not None:
             backend = get_backend(ops.Main.backend)
@@ -336,20 +358,19 @@ class JobHandler:
         stdout.write('\r'+print_string)
         stdout.write('\n')
 
-    def run_jobs(self, interval = 5, retry = False, rerun = False):
+    def run_jobs(self, interval = 5, retry = False):
         """@SLURMY
         Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.
 
         * `interval` The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually.
         * `retry` Retry failed or cancelled jobs.
-        * `rerun` Rerun all jobs.
         """
         time_now = time.time()
         try:
             n_all = len(self.jobs)
             running = True
             while running:
-                self.submit_jobs(wait = False, retry = retry, rerun = rerun)
+                self.submit_jobs(wait = False, retry = retry)
                 print_string = self._get_print_string()
                 if interval == -1: print_string += ' - press enter to update status'
                 n_success = len(self.jobs._states[Status.SUCCESS])
@@ -387,7 +408,7 @@ class JobHandler:
             time_now = time.time() - time_now
             if not self._debug: self.print_summary(time_now)
 
-    def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False, rerun = False):
+    def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False):
         """@SLURMY
         Submit jobs according to the JobHandler configuration.
 
@@ -395,7 +416,6 @@ class JobHandler:
         * `make_snapshot` Make a snapshot of the jobs and the JobHandler after the submission cycle.
         * `wait` Wait for locally submitted job.
         * `retry` Retry failed or cancelled jobs.
-        * `rerun` Rerun all jobs.
         """
         try:
             ## Get current job states
@@ -412,9 +432,6 @@ class JobHandler:
                 ## If jobs are in FAILURE or CANCELLED state, do retry routine. Ignore maximum number of retries if requested.
                 if (status == Status.FAILURE or status == Status.CANCELLED):
                     status = job._retry(submit = False, ignore_max_retries = retry)
-                ## Rerun all jobs if requested
-                if rerun:
-                    status = job._retry(force = True, submit = False, ignore_max_retries = True)
                 ## If job is not in Configured state there is nothing to do
                 if status != Status.CONFIGURED: continue
                 ## Check if job is ready to be submitted
