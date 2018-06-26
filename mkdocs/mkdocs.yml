@@ -1,9 +1,10 @@
 site_name: Slurmy
 
 pages:
-- Slurmy: index.md
-- HowTo: howto.md
-- Interactive Slurmy: interactive_slurmy.md
+- Slurmy:
+  - Slurmy: index.md
+  - HowTo: howto.md
+  - Interactive Slurmy: interactive_slurmy.md
 - Classes:
   - JobHandler: classes/JobHandler.md
   - JobHandlerConfig: classes/JobHandlerConfig.md
