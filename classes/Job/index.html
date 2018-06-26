@@ -616,12 +616,12 @@
 </ul>
 <p>Returns the job status (Status).</p>
 <h2 id="edit_script">edit_script</h2>
-<pre><code class="python">Job.edit_script(self, editor='emacs -nw')
+<pre><code class="python">Job.edit_script(self, editor=None)
 </code></pre>
 
 <p>Open the job's run script in an editor.</p>
 <ul>
-<li><code>editor</code> Command line editor to use.</li>
+<li><code>editor</code> Command line editor to use. If none is specified, the default editor according to the slurmy config is used.</li>
 </ul>
 <h2 id="get_status">get_status</h2>
 <pre><code class="python">Job.get_status(self, skip_eval=False, force_success_check=False)
