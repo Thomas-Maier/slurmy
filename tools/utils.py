@@ -5,6 +5,11 @@ log = logging.getLogger('slurmy')
 
 ## Success classes
 class SuccessOutputFile:
+    """@SLURMY
+    Callable class which can be used as success_func of a slurmy job. It checks if the output file that is associated to the job is present in the underlying file system.
+
+    * `delay` Time (in seconds) that the job should wait before making the success evaluation.
+    """
     def __init__(self, delay = 1):
         self._delay = delay
         
@@ -15,6 +20,12 @@ class SuccessOutputFile:
         return os.path.isfile(config.output)
 
 class SuccessTrigger:
+    """@SLURMY
+    Callable class which can be used as success_func of a slurmy job. It continuously checks if either the success_file or the failure_file is present in the underlying file system.
+
+    * `success_file` The file which is created if the job is successful.
+    * `failure_file` The file which is created if the job failed.
+    """
     def __init__(self, success_file, failure_file):
         self._success_file = success_file
         self._failure_file = failure_file
@@ -34,6 +45,11 @@ class SuccessTrigger:
 
 ## Finished classes
 class FinishedTrigger:
+    """@SLURMY
+    Callable class which can be used as finished_func of a slurmy job. It checks if finished_file is present in the underlying file system.
+
+    * `finished_file` The file which is created if the job is finished.
+    """
     def __init__(self, finished_file):
         self._finished_file = finished_file
 
@@ -46,6 +62,11 @@ class FinishedTrigger:
 
 ## Post-function classes
 class LogMover:
+    """@SLURMY
+    Callable class which can be used as post_func of a slurmy job. It moves the slurm log file to the new destination target_path.
+
+    * `target_path` New destination of the log file.
+    """
     def __init__(self, target_path):
         self._target_path = target_path
 
@@ -65,6 +86,11 @@ def _get_prompt():
         return shell.interact
 
 def get_sessions():
+    """@SLURMY
+    Get all available slurmy session according to the central bookkeeping.
+
+    Returns list of bookkeeping items ([str, dict]).
+    """
     from slurmy.tools import options as ops
     ## Synchronise bookkeeping with entries on disk
     ops.Main.sync_bookkeeping()
@@ -76,6 +102,9 @@ def get_sessions():
     return sorted(bk.items(), key = lambda val: val[0].rsplit('_', 1)[-1])
 
 def list_sessions():
+    """@SLURMY
+    List all available slurmy session according to the central bookkeeping.
+    """
     sessions = get_sessions()
     for name, vals in sessions:
         path = vals['path']
@@ -86,6 +115,13 @@ def list_sessions():
         print (print_string)
 
 def load(name):
+    """@SLURMY
+    Load a slurmy session by name.
+
+    * `name` Name of the slurmy session, as listed by list_sessions().
+
+    Returns jobhandler associated to the session (JobHandler).
+    """
     from slurmy.tools import options as ops
     from slurmy import JobHandler
     import sys
@@ -105,25 +141,29 @@ def load(name):
     return jh
 
 def load_path(path):
+    """@SLURMY
+    Load a slurmy session by full path.
+
+    * `path` Full folder path of the slurmy session, as listed by list_sessions().
+
+    Returns jobhandler associated to the session (JobHandler).
+    """
     from slurmy import JobHandler
     jh_name = path
     jh_path = ''
     if '/' in jh_name:
         jh_path = jh_name.rsplit('/', 1)[0]
         jh_name = jh_name.rsplit('/', 1)[-1]
-    jh = None
-    # try:
     jh = JobHandler(name = jh_name, work_dir = jh_path, use_snapshot = True)
-    # except ImportError:
-    #   _log.error('Import error during pickle load, please make sure that your success class definition is in your PYTHONPATH')
-    #   raise
-    # except AttributeError:
-    #   _log.error('')
-    #   raise
 
     return jh
 
 def load_latest():
+    """@SLURMY
+    Load the latest slurmy session according to central bookkeeping.
+
+    Returns jobhandler associated to the session (JobHandler).
+    """
     sessions = get_sessions()
     if not sessions:
         log.debug('No recorded sessions found')

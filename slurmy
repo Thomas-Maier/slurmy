@@ -11,10 +11,10 @@ _log = logging.getLogger('slurmy')
 
 if __name__ == '__main__':
     _parser = argparse.ArgumentParser(description = 'Slurmy interactive')
-    _parser.add_argument('-p', '--path', dest = 'path', type = str, default = None, help = 'Path to existing session')
-    _parser.add_argument('-c', '--config', dest = 'config', type = str, default = None, help = 'Job configuration file')
-    _parser.add_argument('-t', dest = 'test_mode', action = 'store_true', default = False, help = 'Switch to start in test mode')
-    _parser.add_argument('--debug', dest = 'debug', action = 'store_true', default = False, help = 'Debug mode')
+    _parser.add_argument('-p', '--path', dest = 'path', type = str, default = None, help = 'Path to the base folder of an existing JobHandler session. Directly loads the JobHandler as "jh".')
+    _parser.add_argument('-c', '--config', dest = 'config', type = str, default = None, help = 'Path to a job configuration file.')
+    _parser.add_argument('-t', dest = 'test_mode', action = 'store_true', default = False, help = 'Switch to start in test mode.')
+    _parser.add_argument('--debug', dest = 'debug', action = 'store_true', default = False, help = 'Run in debugging mode.')
     _args = _parser.parse_args()
 
     ## Modes to start slurmy in

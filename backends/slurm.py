@@ -12,6 +12,24 @@ log = logging.getLogger('slurmy')
 
 
 class Slurm(Base):
+    """@SLURMY
+    Slurm backend class. Inherits from the Base backend class.
+
+    * `name` Name of the parent job.
+    * `log` Log file written by slurm.
+    * `run_script` The script that is executed on the worker node.
+    * `run_args` Run arguments that are passed to the run_script.
+
+    Slurm batch submission arguments (see slurm documentation):
+
+    * `partition` Partition on which the slurm job is running.
+    * `exclude` Worker node(s) that should be excluded.
+    * `clusters` Cluster(s) in which the slurm job is running.
+    * `qos` Additional quality of service setting.
+    * `mem` Memory limit for the slurm job.
+    * `time` Time limit for the slurm job.
+    * `export` Environment exports that are propagated to the slurm job.
+    """
     bid = bids['SLURM']
     _script_options_identifier = 'SBATCH'
     _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
@@ -38,6 +56,11 @@ class Slurm(Base):
         self._check_commands()
 
     def submit(self):
+        """@SLURMY
+        Submit the job to the slurm batch system.
+
+        Returns the job id (int).
+        """
         submit_list = ['sbatch']
         if self.name: submit_list += ['-J', self.name]
         if self.log: submit_list += ['-o', self.log]
@@ -65,10 +88,18 @@ class Slurm(Base):
         return job_id
 
     def cancel(self):
+        """@SLURMY
+        Cancel the slurm job.
+        """
         log.debug('({}) Cancel job'.format(self.name))
         os.system('scancel {}'.format(self._job_id))
 
     def status(self):
+        """@SLURMY
+        Get the status of slurm job from sacct entry.
+
+        Returns the job status (Status).
+        """
         sacct_list = self._get_sacct_entry('State,ExitCode')
         status = Status.RUNNING
         if sacct_list is not None:
@@ -78,6 +109,11 @@ class Slurm(Base):
         return status
 
     def exitcode(self):
+        """@SLURMY
+        Get the exitcode of slurm job from sacct entry. Evaluation is actually done by Slurm.status(), Slurm.exitcode() only returns the value.
+
+        Returns the job exitcode (str).
+        """
         return self._exitcode
 
     def _get_sacct_entry(self, column):

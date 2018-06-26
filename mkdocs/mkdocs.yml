@@ -2,6 +2,7 @@ site_name: Slurmy
 
 pages:
 - Slurmy: index.md
+- HowTo: howto.md
 - Interactive Slurmy: interactive_slurmy.md
 - Classes:
   - JobHandler: classes/JobHandler.md
@@ -9,5 +10,10 @@ pages:
   - JobContainer: classes/JobContainer.md
   - Job: classes/Job.md
   - JobConfig: classes/JobConfig.md
+- Utility:
+  - SuccessOutputFile: utils/SuccessOutputFile.md
+  - SuccessTrigger: utils/SuccessTrigger.md
+  - FinishedTrigger: utils/FinishedTrigger.md
+  - LogMover: utils/LogMover.md
         
 theme: rtd-dropdown

@@ -40,6 +40,11 @@ class Base:
         return print_string
 
     def sync(self, config):
+        """@SLURMY
+        Synchronise backend configuration with reference one. Options from self are prioritised.
+
+        * `config` Reference backend object to synchronise with.
+        """
         if config is None: return
         if not isinstance(config, self.__class__):
             log.error('({})Backend class "{}" does not match class "{}" of sync object'.format(self.name, self.__class__, config.__class__))
@@ -50,6 +55,11 @@ class Base:
             self[key] = self[key] or config[key]
 
     def write_script(self, script_folder):
+        """@SLURMY
+        Write the run_script according to configuration.
+
+        * `script_folder` Folder to store the script file in.
+        """
         out_file_name = os.path.join(script_folder, self.name)
         ## If the provided run script is already existing, just copy it
         if os.path.isfile(self.run_script):
