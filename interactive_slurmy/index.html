@@ -412,7 +412,7 @@ optional arguments:
 <h1 id="example-usage">Example usage</h1>
 <p>In general you can do everything in interactive slurmy that you can also do in python file which handles your job definition. On top of that you can easily inspect and manipulate an already existing <a href="../classes/JobHandler/">JobHandler</a> session. Just executing <code>slurmy</code> will bring up the latest <a href="../classes/JobHandler/">JobHandler</a> session:</p>
 <pre><code class="python">In [1]: jh
-Out[1]: Azathoth_1530049255
+Out[1]: Azathoth_1530051215
 </code></pre>
 
 <p>Every <a href="../classes/JobHandler/">JobHandler</a> has a member <code>jobs</code> which keeps track of all it's attached jobs:</p>
@@ -429,7 +429,7 @@ Out[3]:
 Job &quot;hans&quot;
 Local: False
 Backend: Slurm
-Script: /home/thomas/test/Azathoth_1530049255/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
 Status: CONFIGURED
 </code></pre>
 
@@ -439,7 +439,7 @@ Out[4]:
 Job &quot;hans&quot;
 Local: False
 Backend: Slurm
-Script: /home/thomas/test/Azathoth_1530049255/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
 Status: CONFIGURED
 </code></pre>
 
@@ -455,12 +455,13 @@ In [7]:
 
 <p>In this example, job "hans" is in CONFIGURED state so we can run the job submission (<code>run_jobs</code> for continuous submission until finished or <code>submit_jobs</code> for a single submission cycle):</p>
 <pre><code class="python">In [7]: jh.run_jobs()
-Jobs processed (batch/local/all): (0/1/1)
+Jobs processed (batch/local/all): (1/0/1)
      successful (batch/local/all): (0/0/0)
-     failed (batch/local/all): (0/1/1)
-Time spent: 5.0 s
+     failed (batch/local/all): (1/0/1)
+Time spent: 5.4 s
 </code></pre>
 
+<p>(Note: the submission interval of <code>run_jobs</code> is set to 5 seconds by default)</p>
 <p>The job "hans" is now in FAILED state:</p>
 <pre><code class="python">In [8]: jh.jobs
 Out[8]: 
@@ -474,17 +475,17 @@ FAILURE(1)
 </code></pre>
 
 <p>Usually, you probably want to fix our job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:</p>
-<pre><code class="python">jh.jobs.hans.edit_script()
+<pre><code class="python">In [10]: jh.jobs.hans.edit_script()
 </code></pre>
 
 <p>If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by passing <code>retry = True</code> to <code>run_jobs</code> or <code>submit_jobs</code>:</p>
 <pre><code class="python">In [11]: jh.run_jobs(retry = True)
-Jobs processed (batch/local/all): (-1/2/1)
-     successful (batch/local/all): (0/1/1)
-Time spent: 5.0 s
+Jobs processed (batch/local/all): (1/0/1)
+     successful (batch/local/all): (1/0/1)
+Time spent: 5.3 s
 </code></pre>
 
-<p>Ignore the broken summary for now. The job "hans" is now in SUCCESS state (from fixing the run script before retrying the job):</p>
+<p>The job "hans" is now in SUCCESS state (from fixing the run script before retrying the job):</p>
 <pre><code class="python">In [12]: jh.jobs
 Out[12]: 
 Job &quot;hans&quot;: SUCCESS
@@ -499,7 +500,12 @@ In [14]: jh.jobs.hans.get_status()
 Out[14]: &lt;Status.SUCCESS: 3&gt;
 </code></pre>
 
-<p>You should also run <code>jh.check_status()</code> to update the <a href="../classes/JobHandler/">JobHandler</a> job bookkeeping. However, it's likely that running jobs directly screws up the bookkeeping.</p>
+<p>You should also run <code>jh.check_status()</code> to update the <a href="../classes/JobHandler/">JobHandler</a> job bookkeeping:</p>
+<pre><code class="python">In [15]: jh.check_status()
+Jobs (success/fail/all): (1/0/1)
+</code></pre>
+
+<p>However, it's likely that running jobs directly screws up the bookkeeping.</p>
 <p>Have a look at the <a href="../classes/JobHandler/">JobHandler</a> and <a href="../classes/Job/">Job</a> documentation to see what you execute in interactive slurmy.</p>
 <h1 id="job-configuration-file">Job configuration file</h1>
 <p>The job definition file passed with <code>-c</code> is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with (you can omit import statements). As long as your definition file is "flat" (no encapsulated definitions), i.e. like the examples given in the <a href="../howto/">HowTo</a> section, you can pass it to interactive slurmy.</p>
