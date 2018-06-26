@@ -19,6 +19,7 @@ class Options:
         self.backend = None
         ## Additional options
         self.test_mode = False
+        self.interactive_mode = False
         ## Backend options
         self._backend_options = {}
         ## Internal vars

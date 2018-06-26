@@ -22,6 +22,9 @@ class Base:
     run_script = None
     run_args = None
 
+    def __init__(self):
+        self._check_commands()
+
     def __getitem__(self, key):
         return self.__dict__[key]
 
@@ -38,6 +41,12 @@ class Base:
         print_string = print_string.rstrip('\n')
 
         return print_string
+
+    def load_default_config(self):
+        """@SLURMY
+        Load the default backend configuration, as defined in the slurmy config file.
+        """
+        options.Main.get_backend_options(self)
 
     def sync(self, config):
         """@SLURMY
@@ -86,7 +95,9 @@ class Base:
         for command in self._commands:
             if Base._check_command(command): continue
             log.error('{} command not found: "{}"'.format(self.bid, command))
-            if _prompt_decision('Switch to test mode (batch submission will not work)'):
+            ## If we are in interactive mode, switch into test/local mode
+            if options.Main.interactive_mode:
+                log.warning('Switching to test/local mode (batch submission will not work)!')
                 options.Main.test_mode = True
                 break
             raise Exception

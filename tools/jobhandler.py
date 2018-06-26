@@ -108,9 +108,6 @@ class JobHandler:
             local_max = 0
         ## Variables that are not picklable
         self.jobs = JobContainer()
-        ## Backend setup
-        if backend is None and ops.Main.backend is not None:
-            backend = get_backend(ops.Main.backend)
         ## Snapshot loading
         if use_snapshot:
             if not name:
@@ -129,6 +126,11 @@ class JobHandler:
                     job_config = pickle.load(in_file)
                 self._add_job_with_config(job_config)
         else:
+            ## Backend setup
+            if backend is None and ops.Main.backend is not None:
+                backend = get_backend(ops.Main.backend)
+            ## Set default backend configuration
+            backend.load_default_config()
             ## Make new JobHandler config
             self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper)
             self.reset()

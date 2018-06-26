@@ -5,7 +5,6 @@ import shlex
 import logging
 from ..tools.defs import Status
 from .base import Base
-from ..tools import options as ops
 from .defs import bids
 
 log = logging.getLogger('slurmy')
@@ -34,6 +33,7 @@ class Slurm(Base):
     _script_options_identifier = 'SBATCH'
     _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
     def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None, mem = None, time = None, export = None):
+        super(Slurm, self).__init__()
         ## Common backend options
         self.name = name
         self.log = log
@@ -50,10 +50,6 @@ class Slurm(Base):
         ## Internal variables
         self._job_id = None
         self._exitcode = None
-        ## Get default options
-        ops.Main.get_backend_options(self)
-        ## Check if necessary slurm commands are available on the system
-        self._check_commands()
 
     def submit(self):
         """@SLURMY
