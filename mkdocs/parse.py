@@ -133,10 +133,10 @@ def get_md_class(class_obj):
 
     return '\n'.join(md_list)
 
-def get_md_functions(func_list):
+def get_md_functions(func_list, header_depth = '##'):
     doc_list = []
     for func_obj in func_list:
-        append_doc_list(func_obj, doc_list, header_depth = '##')
+        append_doc_list(func_obj, doc_list, header_depth = header_depth)
 
     return '\n'.join(doc_list)
 

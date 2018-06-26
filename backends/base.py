@@ -95,9 +95,12 @@ class Base:
         for command in self._commands:
             if Base._check_command(command): continue
             log.error('{} command not found: "{}"'.format(self.bid, command))
-            ## If we are in interactive mode, switch into test/local mode
+            ## If we are in interactive mode, switch into test/local mode. If in normal mode, prompt the user.
             if options.Main.interactive_mode:
                 log.warning('Switching to test/local mode (batch submission will not work)!')
+                options.Main.test_mode = True
+                break
+            elif _prompt_decision('Switch to test mode (batch submission will not work)?'):
                 options.Main.test_mode = True
                 break
             raise Exception
