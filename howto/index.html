@@ -427,6 +427,7 @@
               
                 <h2 id="general-usage">General Usage</h2>
 <p>You can just write a piece of python code that imports the required slurmy classes (e.g. <a href="../classes/JobHandler/">JobHandler</a> and the backend class of your choice), defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scripts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.</p>
+<p>Below you'll find several examples of how your job configuration script can look like. You should also have a look at the <a href="../interactive_slurmy/">interactive slurmy</a> section to get an idea what you can do. Make sure to also take a look at the documentation of <a href="../classes/JobHandler/">JobHandler</a>, in particular <a href="../classes/JobHandler/#add_job">JobHandler.add_job()</a>.</p>
 <p><a name="slurmyconfig"></a></p>
 <h2 id="what-you-want-to-do-before-doing-anything-else">What you want to do before doing anything else</h2>
 <p>You can (and should) specify a slurmy config file, which defines your default configuration of relevant slurmy properties. In particular you can define which batch system backend you want to use and how it should be configured. This safes you from having to specify this every single time you want to use slurmy.</p>

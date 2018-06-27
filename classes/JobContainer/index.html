@@ -217,7 +217,7 @@
 
 
   <li class="toctree-l2 toc-item">
-    <a href="#status_failure" title="JobContainer">status_FAILURE</a>
+    <a href="#status_failed" title="JobContainer">status_FAILED</a>
   </li>
 
       
@@ -453,8 +453,8 @@
 <p>List jobs in status CANCELLED.</p>
 <h2 id="status_configured">status_CONFIGURED</h2>
 <p>List jobs in status CONFIGURED.</p>
-<h2 id="status_failure">status_FAILURE</h2>
-<p>List jobs in status FAILURE.</p>
+<h2 id="status_failed">status_FAILED</h2>
+<p>List jobs in status FAILED.</p>
 <h2 id="status_finished">status_FINISHED</h2>
 <p>List jobs in status FINISHED.</p>
 <h2 id="status_running">status_RUNNING</h2>
@@ -463,12 +463,13 @@
 <p>List jobs in status SUCCESS.</p>
 <h1 id="member-functions">Member functions</h1>
 <h2 id="get">get</h2>
-<pre><code class="python">JobContainer.get(self, tags=None)
+<pre><code class="python">JobContainer.get(self, tags=None, states=None)
 </code></pre>
 
 <p>Get the list of jobs.</p>
 <ul>
-<li><code>tags</code> Tags that jobs are filtered on.</li>
+<li><code>tags</code> Tags that the jobs must match to.</li>
+<li><code>states</code> <a href="../Job/#Job">Job</a> states that the jobs must match to.</li>
 </ul>
 <p>Returns list of jobs ([Job]).</p>
 <h2 id="print">print</h2>

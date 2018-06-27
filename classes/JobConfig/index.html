@@ -316,7 +316,7 @@
             <div class="section">
               
                 <h1 id="jobconfig">JobConfig</h1>
-<pre><code class="python">JobConfig(backend, path, success_func=None, finished_func=None, post_func=None, max_retries=0, tags=None, parent_tags=None, is_local=False, output=None)
+<pre><code class="python">JobConfig(backend, path, success_func=None, finished_func=None, post_func=None, max_retries=0, tags=None, parent_tags=None, job_type=&lt;Type.BATCH: 0&gt;, output=None)
 </code></pre>
 
 <p>Config class for the <a href="../Job/#Job">Job</a> class. Stores all necessary information to load the <a href="../Job/#Job">Job</a> at a later time. All properties are assigned with a custom getter function, which keeps track of updates to the respective property (tracked with the "update" variable).</p>
@@ -329,7 +329,7 @@
 <li><code>max_retries</code> Maximum number of retries that are attempted when job is failing.</li>
 <li><code>tags</code> List of tags attached to the job.</li>
 <li><code>parent_tags</code> List of parent tags attached to the job.</li>
-<li><code>is_local</code> Define job as local.</li>
+<li><code>job_type</code> Define the type of the job.</li>
 <li><code>output</code> Output file of the job.</li>
 </ul>
               

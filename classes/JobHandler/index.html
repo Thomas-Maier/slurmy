@@ -194,7 +194,7 @@
 
 
   <li class="toctree-l2 toc-item">
-    <a href="#check_status" title="JobHandler">check_status</a>
+    <a href="#check" title="JobHandler">check</a>
   </li>
 
       
@@ -228,6 +228,17 @@
 
   <li class="toctree-l2 toc-item">
     <a href="#run_jobs" title="JobHandler">run_jobs</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#set_jobs_config_attr" title="JobHandler">set_jobs_config_attr</a>
   </li>
 
       
@@ -446,7 +457,7 @@
 </ul>
 <h1 id="member-functions">Member functions</h1>
 <h2 id="add_job">add_job</h2>
-<pre><code class="python">JobHandler.add_job(self, backend=None, run_script=None, run_args=None, success_func=None, finished_func=None, post_func=None, max_retries=None, output=None, tags=None, parent_tags=None, name=None)
+<pre><code class="python">JobHandler.add_job(self, backend=None, run_script=None, run_args=None, success_func=None, finished_func=None, post_func=None, max_retries=None, output=None, tags=None, parent_tags=None, name=None, job_type=&lt;Type.BATCH: 0&gt;)
 </code></pre>
 
 <p>Add a job to the list of jobs to be processed by the <a href="./#JobHandler">JobHandler</a>.</p>
@@ -462,6 +473,7 @@
 <li><code>tags</code> List of tags attached to the job.</li>
 <li><code>parent_tags</code> List of parent tags attached to the job.</li>
 <li><code>name</code> Name of the job. This must be a string that conforms with the restrictions on class property names. Slurmy will make sure that job names stay unique, even if the same job name is set multiple times.</li>
+<li><code>job_type</code> Type of the job. Can be set to Type.LOCAL to make it a local processing job.</li>
 </ul>
 <p>Returns the job (Job).</p>
 <h2 id="cancel_jobs">cancel_jobs</h2>
@@ -475,13 +487,14 @@
 <li><code>only_batch</code> Cancel only batch jobs.</li>
 <li><code>make_snapshot</code> Make a snapshot after cancelling jobs.</li>
 </ul>
-<h2 id="check_status">check_status</h2>
-<pre><code class="python">JobHandler.check_status(self, force_success_check=False)
+<h2 id="check">check</h2>
+<pre><code class="python">JobHandler.check(self, force_success_check=False, print_summary=True)
 </code></pre>
 
-<p>Check the status of the jobs.</p>
+<p>Check the status and tags of the jobs.</p>
 <ul>
 <li><code>force_success_check</code> Force the success routine to be run, even if the job is already in a post-finished state.</li>
+<li><code>print_summary</code> Print the job processing summary.</li>
 </ul>
 <h2 id="print_summary">print_summary</h2>
 <pre><code class="python">JobHandler.print_summary(self, time_spent=None)
@@ -503,7 +516,18 @@
 <p>Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.</p>
 <ul>
 <li><code>interval</code> The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually.</li>
-<li><code>retry</code> Retry failed or cancelled jobs.</li>
+<li><code>retry</code> Retry jobs in status FAILED or CANCELLED. This will attempt one cycle of job retrying.</li>
+</ul>
+<h2 id="set_jobs_config_attr">set_jobs_config_attr</h2>
+<pre><code class="python">JobHandler.set_jobs_config_attr(self, attr, val, tags=None, states=None)
+</code></pre>
+
+<p>Set the job config attribute of jobs associated to the <a href="./#JobHandler">JobHandler</a>.</p>
+<ul>
+<li><code>attr</code> Name of the attribute which is set.</li>
+<li><code>val</code> Value that the attribute is set to.</li>
+<li><code>tags</code> Set of tags which the jobs have to match to.</li>
+<li><code>states</code> Set of job states which the jobs have to match to.</li>
 </ul>
 <h2 id="submit_jobs">submit_jobs</h2>
 <pre><code class="python">JobHandler.submit_jobs(self, tags=None, make_snapshot=True, wait=True, retry=False)
@@ -514,7 +538,7 @@
 <li><code>tags</code> Tags of jobs that will be submitted.</li>
 <li><code>make_snapshot</code> Make a snapshot of the jobs and the <a href="./#JobHandler">JobHandler</a> after the submission cycle.</li>
 <li><code>wait</code> Wait for locally submitted job.</li>
-<li><code>retry</code> Retry failed or cancelled jobs.</li>
+<li><code>retry</code> Retry jobs in status FAILED or CANCELLED. This circumvents the automatic retry routine.</li>
 </ul>
 <h2 id="update_snapshot">update_snapshot</h2>
 <pre><code class="python">JobHandler.update_snapshot(self, skip_jobs=False)

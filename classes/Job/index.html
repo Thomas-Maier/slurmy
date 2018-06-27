@@ -206,17 +206,6 @@
 
 
   <li class="toctree-l2 toc-item">
-    <a href="#is_local" title="Job">is_local</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
     <a href="#log" title="Job">log</a>
   </li>
 
@@ -262,6 +251,17 @@
 
   <li class="toctree-l2 toc-item">
     <a href="#tags" title="Job">tags</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#type" title="Job">type</a>
   </li>
 
       
@@ -380,17 +380,6 @@
 
   <li class="toctree-l2 toc-item">
     <a href="#reset" title="Job">reset</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#set_local" title="Job">set_local</a>
   </li>
 
       
@@ -573,8 +562,6 @@
 <li><code>config</code> The <a href="../JobConfig/#JobConfig">JobConfig</a> instance that defines the initial job setup.</li>
 </ul>
 <h1 id="properties">Properties</h1>
-<h2 id="is_local">is_local</h2>
-<p>Returns if the job is set to local processing or not (bool).</p>
 <h2 id="log">log</h2>
 <p>Open the job log file with less.</p>
 <p>Returns the log file path (str).</p>
@@ -587,6 +574,8 @@
 <p>Returns the script file path (str).</p>
 <h2 id="tags">tags</h2>
 <p>Returns the list of tags associated to this job ([str]).</p>
+<h2 id="type">type</h2>
+<p>Returns the type of the job (Type).</p>
 <h1 id="member-functions">Member functions</h1>
 <h2 id="add_tag">add_tag</h2>
 <pre><code class="python">Job.add_tag(self, tag, is_parent=False)
@@ -649,12 +638,12 @@
 </ul>
 <p>Returns if job has any of the tags (bool).</p>
 <h2 id="rerun">rerun</h2>
-<pre><code class="python">Job.rerun(self, local=False)
+<pre><code class="python">Job.rerun(self, job_type=None)
 </code></pre>
 
 <p>Resets the job and submits it again.</p>
 <ul>
-<li><code>local</code> Submit as a local job.</li>
+<li><code>job_type</code> New job type the job should be processed as.</li>
 </ul>
 <h2 id="reset">reset</h2>
 <pre><code class="python">Job.reset(self, reset_retries=True)
@@ -663,14 +652,6 @@
 <p>Reset the job.</p>
 <ul>
 <li><code>reset_retries</code> Also reset number of retries attempted so far.</li>
-</ul>
-<h2 id="set_local">set_local</h2>
-<pre><code class="python">Job.set_local(self, is_local=True)
-</code></pre>
-
-<p>Set the job to be local/not local. <a href="./#Job">Job</a> needs to be in CONFIGURED state.</p>
-<ul>
-<li><code>is_local</code> Turn on/off local processing for the job.</li>
 </ul>
 <h2 id="submit">submit</h2>
 <pre><code class="python">Job.submit(self)

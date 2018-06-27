@@ -506,6 +506,15 @@ Jobs (success/fail/all): (1/0/1)
 </code></pre>
 
 <p>However, it's likely that running jobs directly screws up the bookkeeping.</p>
+<p>Finally, if you want to start from a clean slate you can reset the <a href="../classes/JobHandler/">JobHandler</a> completely:</p>
+<pre><code class="python">In [16]: jh.reset()
+In [17]: jh.run_jobs()
+Jobs processed (batch/local/all): (0/1/1)
+     successful (batch/local/all): (0/1/1)
+Time spent: 5.4 s
+</code></pre>
+
+<p>In this case you actually might want to start again from the job configuration script that you wrote for your job submission.</p>
 <p>Have a look at the <a href="../classes/JobHandler/">JobHandler</a> and <a href="../classes/Job/">Job</a> documentation to see what you execute in interactive slurmy.</p>
 <h1 id="job-configuration-file">Job configuration file</h1>
 <p>The job definition file passed with <code>-c</code> is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with (you can omit import statements). As long as your definition file is "flat" (no encapsulated definitions), i.e. like the examples given in the <a href="../howto/">HowTo</a> section, you can pass it to interactive slurmy.</p>
