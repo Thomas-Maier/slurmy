@@ -138,10 +138,10 @@ In [14]: jh.jobs.hans.get_status()
 Out[14]: <Status.SUCCESS: 3>
 ```
 
-You should also run `jh.check_status()` to update the [JobHandler](classes/JobHandler.md) job bookkeeping:
+You should also run `jh.check()` to update the [JobHandler](classes/JobHandler.md) job bookkeeping:
 
 ```python
-In [15]: jh.check_status()
+In [15]: jh.check()
 Jobs (success/fail/all): (1/0/1)
 ```
 
