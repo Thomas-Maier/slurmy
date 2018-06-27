@@ -3,6 +3,8 @@
 
 You can just write a piece of python code that imports the required slurmy classes (e.g. [JobHandler](classes/JobHandler.md) and the backend class of your choice), defines jobs and calls the job submission. Job execution definitions can either be provided by already written batch shell scripts, or by defining the content of the shell script directly in your python code. For both cases, arguments that should be passed upon the execution to the scripts can also be specified.
 
+Below you'll find several examples of how your job configuration script can look like. You should also have a look at the [interactive slurmy](interactive_slurmy.md) section to get an idea what you can do. Make sure to also take a look at the documentation of [JobHandler](classes/JobHandler.md), in particular [JobHandler.add_job()](classes/JobHandler.md#add_job).
+
 <a name="slurmyconfig"></a>
 ## What you want to do before doing anything else
 

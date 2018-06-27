@@ -147,6 +147,18 @@ Jobs (success/fail/all): (1/0/1)
 
 However, it's likely that running jobs directly screws up the bookkeeping.
 
+Finally, if you want to start from a clean slate you can reset the [JobHandler](classes/JobHandler.md) completely:
+
+```python
+In [16]: jh.reset()
+In [17]: jh.run_jobs()
+Jobs processed (batch/local/all): (0/1/1)
+     successful (batch/local/all): (0/1/1)
+Time spent: 5.4 s
+```
+
+In this case you actually might want to start again from the job configuration script that you wrote for your job submission.
+
 Have a look at the [JobHandler](classes/JobHandler.md) and [Job](classes/Job.md) documentation to see what you execute in interactive slurmy.
 
 # Job configuration file
