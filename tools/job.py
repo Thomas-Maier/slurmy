@@ -3,7 +3,7 @@ import subprocess as sp
 import os
 import pickle
 import logging
-from .defs import Status
+from .defs import Status, Type
 from .utils import set_update_properties, update_decorator
 from . import options
 
@@ -22,15 +22,15 @@ class JobConfig:
     * `max_retries` Maximum number of retries that are attempted when job is failing.
     * `tags` List of tags attached to the job.
     * `parent_tags` List of parent tags attached to the job.
-    * `is_local` Define job as local.
+    * `job_type` Define the type of the job.
     * `output` Output file of the job.
     """
     
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_backend', '_name', '_path', '_tags', '_parent_tags', '_success_func', '_finished_func', '_post_func',
-                   '_is_local', '_max_retries', '_output', '_status', '_job_id', '_n_retries', '_exitcode']
+                   '_max_retries', '_output', '_type', '_status', '_job_id', '_n_retries', '_exitcode']
     
-    def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, is_local = False, output = None):
+    def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, job_type = Type.BATCH, output = None):
         ## Static variables
         self._backend = backend
         self._name = self.backend.name
@@ -42,10 +42,10 @@ class JobConfig:
         self._success_func = success_func
         self._finished_func = finished_func
         self._post_func = post_func
-        self._is_local = is_local
         self._max_retries = max_retries
         self._output = output
         ## Dynamic variables
+        self._type = job_type
         self._status = Status.CONFIGURED
         self._job_id = None
         self._n_retries = 0
@@ -82,7 +82,7 @@ class Job:
 
     def __repr__(self):
         print_string = 'Job "{}"\n'.format(self.name)
-        print_string += 'Local: {}\n'.format(self.is_local)
+        print_string += 'Type: {}\n'.format(self.type.name)
         print_string += 'Backend: {}\n'.format(self.config.backend.bid)
         print_string += 'Script: {}\n'.format(self.config.backend.run_script)
         if self.config.backend.run_args: print_string += 'Args: {}\n'.format(self.config.backend.run_args)
@@ -140,17 +140,6 @@ class Job:
         ## Reset update flag
         self.config.update = False
 
-    def set_local(self, is_local = True):
-        """@SLURMY
-        Set the job to be local/not local. Job needs to be in CONFIGURED state.
-
-        * `is_local` Turn on/off local processing for the job.
-        """
-        if self.config.status != Status.CONFIGURED:
-            log.warning('({}) Not in Configured state, cannot set to local'.format(self.name))
-            raise Exception
-        self.config.is_local = is_local
-
     def add_tag(self, tag, is_parent = False):
         """@SLURMY
         Add tag to be associated to the job.
@@ -200,7 +189,7 @@ class Job:
         if self.config.status != Status.CONFIGURED:
             log.warning('({}) Not in Configured state, cannot submit'.format(self.name))
             raise Exception
-        if self.config.is_local:
+        if self.type == Type.LOCAL:
             command = self._get_local_command()
             log.debug('({}) Submit local process with command {}'.format(self.name, command))
             self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)
@@ -223,7 +212,7 @@ class Job:
         log.debug('({}) Cancel job'.format(self.name))
         ## Stop job if it's in running state
         if self.config.status == Status.RUNNING:
-            if self.config.is_local:
+            if self.type == Type.LOCAL:
                 self._local_process.terminate()
             else:
                 self.config.backend.cancel()
@@ -249,7 +238,11 @@ class Job:
                 print ("Job is still running, use force=True to force re-submit")
                 return
         self.reset(reset_retries = False)
-        self.set_local(local)
+        ## Change job type to local, if requested
+        if local:
+            self.type = Type.LOCAL
+        else:
+            self.type = Type.BATCH
         self.config.n_retries += 1
         if submit: self.submit()
 
@@ -280,7 +273,7 @@ class Job:
             return self.config.status
         ## Evaluate if job is finished
         if self.config.status == Status.RUNNING:
-            if self.config.is_local:
+            if self.type == Type.LOCAL:
                 self._get_local_status()
             else:
                 if self.config.finished_func is not None:
@@ -312,7 +305,7 @@ class Job:
     def _is_success(self):
         success = False
         if self.config.success_func is None:
-            if self.config.is_local:
+            if self.type == Type.LOCAL:
                 success = (self.config.exitcode == 0)
             else:
                 self.config.exitcode = self.config.backend.exitcode()
@@ -382,11 +375,23 @@ class Job:
         return self.config.backend.run_script
 
     @property
-    def is_local(self):
+    def type(self):
         """@SLURMY
-        Returns if the job is set to local processing or not (bool).
+        Returns the type of the job (Type).
         """
-        return self.config.is_local
+        return self.config.type
+
+    @type.setter
+    def type(self, job_type):
+        """@SLURMY
+        Set the type of the job. Job must be in CONFIGURED state to change it's type.
+
+        * `job_type` Job type the job is set to.
+        """
+        if self.config.status != Status.CONFIGURED:
+            log.warning('({}) Not in CONFIGURED state, cannot change job type'.format(self.name))
+            raise Exception
+        self.config.type = job_type
 
     def _get_local_command(self):
         command = ['/bin/bash']

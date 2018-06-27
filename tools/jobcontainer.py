@@ -1,5 +1,5 @@
 
-from .defs import Status
+from .defs import Status, Type
 
 
 class JobContainer(dict, object):
@@ -9,6 +9,7 @@ class JobContainer(dict, object):
     def __init__(self):
         self._states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILURE: set(), Status.CANCELLED: set()}
         self._tags = {}
+        self._tags[Type.LOCAL] = set()
         self._local = []
 
     def get(self, tags = None):
@@ -41,6 +42,22 @@ class JobContainer(dict, object):
     def _update_job_states(self, **kwargs):
         for job in self.values():
             self._update_job_status(job, **kwargs)
+
+    def _update_tags(self, job):
+        name = job.name
+        job_type = job.type
+        if job_type == Type.LOCAL:
+            ## Job name already in list of local jobs, nothing to be done
+            if name in self._tags[Type.LOCAL]: return
+            self._tags[Type.LOCAL].add(name)
+        else:
+            ## Job name not in list of local jobs, nothing to be done
+            if name not in self._tags[Type.LOCAL]: return
+            self._tags[Type.LOCAL].remove(name)
+
+    def _update_job_tags(self):
+        for job in self.values():
+            self._update_tags(job)
 
     def print(self, tags = None, states = None, print_summary = True):
         """@SLURMY

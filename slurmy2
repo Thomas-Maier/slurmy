@@ -5,6 +5,7 @@ import os
 import logging
 from slurmy import JobHandler, test_mode, Slurm
 from slurmy.tools.utils import _get_prompt, list_sessions, load, load_path, load_latest
+from slurmy.tools.defs import Status, Type, Theme
 import slurmy.tools.options as _ops
 
 _log = logging.getLogger('slurmy')

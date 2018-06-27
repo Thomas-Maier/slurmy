@@ -10,6 +10,10 @@ class Status(Enum):
     FAILURE = 4
     CANCELLED = 5
 
+class Type(Enum):
+    BATCH = 0
+    LOCAL = 1
+
 class Theme(Enum):
     Boring = 0
     Lovecraft = 1

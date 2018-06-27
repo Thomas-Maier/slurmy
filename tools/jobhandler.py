@@ -6,7 +6,7 @@ from sys import stdout, version_info
 from collections import OrderedDict
 import pickle
 import logging
-from .defs import Status, Theme
+from .defs import Status, Type, Theme
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
 from . import options as ops
@@ -29,7 +29,7 @@ class JobHandlerConfig:
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
                    '_success_func', '_finished_func', '_is_verbose', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
-                   '_wrapper', '_job_config_paths', '_local_counter']
+                   '_wrapper', '_job_config_paths']
     
     def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None):
         ## Static variables
@@ -52,7 +52,6 @@ class JobHandlerConfig:
         self._wrapper = wrapper
         ## Dynamic variables
         self._job_config_paths = []
-        self._local_counter = 0
 
     def __getitem__(self, key):
         return self.__dict__[key]
@@ -170,8 +169,6 @@ class JobHandler:
             ## Reset jobs
             for job in self.jobs.values():
                 job.reset()
-            ## Reset local job counter
-            self.config.local_counter = 0
             ## Reset job states bookkeeping:
             for status in self.jobs._states:
                 self.jobs._states[status].clear()
@@ -311,21 +308,24 @@ class JobHandler:
         return print_string
 
     def _get_summary_string(self, time_spent = None):
+        n_jobs = len(self.jobs)
+        n_local = len(self.jobs._tags[Type.LOCAL])
+        n_batch = n_jobs - n_local
         summary_dict = OrderedDict()
-        summary_dict['all'] = {'string': 'Jobs processed ', 'batch': len(self.jobs)-self.config.local_counter, 'local': self.config.local_counter}
+        summary_dict['all'] = {'string': 'Jobs processed ', 'batch': n_batch, 'local': n_local}
         summary_dict['success'] = {'string': '     successful ', 'batch': 0, 'local': 0}
         summary_dict['fail'] = {'string': '     failed ', 'batch': 0, 'local': 0}
         jobs_failed = ''
         for job in self.jobs.values():
             status = job.get_status()
             if status == Status.SUCCESS:
-                if job.is_local:
+                if job.type == Type.LOCAL:
                     summary_dict['success']['local'] += 1
                 else:
                     summary_dict['success']['batch'] += 1
             elif status == Status.FAILURE or status == Status.CANCELLED:
                 jobs_failed += '{} '.format(job.name)
-                if job.is_local:
+                if job.type == Type.LOCAL:
                     summary_dict['fail']['local'] += 1
                 else:
                     summary_dict['fail']['batch'] += 1
@@ -346,7 +346,7 @@ class JobHandler:
 
     def _wait_for_jobs(self, tags = None):
         for job in self.jobs.get(tags):
-            if not job.is_local: continue
+            if job.type != Type.LOCAL: continue
             log.debug('Wait for job {}'.format(job.name))
             job.wait()
 
@@ -418,8 +418,8 @@ class JobHandler:
         * `retry` Retry failed or cancelled jobs.
         """
         try:
-            ## Get current job states
-            self.jobs._update_job_states()
+            ## Check job states and tags
+            self.check(print_summary = False)
             ## Check local jobs progression, skip status evaluation since this was already done
             self._check_local_jobs(skip_eval = True)
             for job in self.jobs.get(tags):
@@ -436,13 +436,15 @@ class JobHandler:
                 if status != Status.CONFIGURED: continue
                 ## Check if job is ready to be submitted
                 if not self._job_ready(job): continue
+                ##TODO: if a job is already defined as local, need to take this into account
                 if len(self.jobs._local) < self.config.local_max:
-                    job.set_local()
+                    job.type = Type.LOCAL
                     self.jobs._local.append(job)
-                    self.config.local_counter += 1
                 status = job.submit()
                 ## Update job status
                 self.jobs._update_job_status(job, skip_eval = True)
+                ## Update job tags (keeping track of local jobs)
+                self.jobs._update_tags(job)
             if wait: self._wait_for_jobs(tags)
             if make_snapshot: self.update_snapshot()
         ## In case of a keyboard interrupt we just want to stop slurmy processing but keep current batch jobs running
@@ -465,20 +467,24 @@ class JobHandler:
         for job in self.jobs.get(tags):
             ## Nothing to do when job is not in Running state
             if job.get_status() != Status.RUNNING: continue
-            if only_local and not job.is_local: continue
-            if only_batch and job.is_local: continue
+            if only_local and job.type != Type.LOCAL: continue
+            if only_batch and job.type == Type.LOCAL: continue
             job.cancel()
         if make_snapshot: self.update_snapshot()
 
-    def check_status(self, force_success_check = False):
+    def check(self, force_success_check = False, print_summary = True):
         """@SLURMY
         Check the status of the jobs.
 
         * `force_success_check` Force the success routine to be run, even if the job is already in a post-finished state.
         """
+        ## Update job states
         self.jobs._update_job_states(force_success_check = force_success_check)
-        print_string = self._get_print_string()
-        print (print_string)
+        ## Update job tags (keeping track of local jobs)
+        self.jobs._update_job_tags()
+        if print_summary:
+            print_string = self._get_print_string()
+            print (print_string)
 
     def _check_local_jobs(self, skip_eval = False):
         for i, job in enumerate(self.jobs._local):
