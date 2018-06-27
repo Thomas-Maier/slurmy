@@ -208,7 +208,7 @@ class Job:
         Returns the job status (Status).
         """
         ## Do nothing if job is already in failed state
-        if self.config.status == Status.FAILURE: return
+        if self.config.status == Status.FAILED: return
         log.debug('({}) Cancel job'.format(self.name))
         ## Stop job if it's in running state
         if self.config.status == Status.RUNNING:
@@ -221,13 +221,14 @@ class Job:
 
         return self.config.status
 
-    def _retry(self, force = False, submit = True, ignore_max_retries = False, local = False):
+    def _retry(self, force = False, submit = True, ignore_max_retries = False, job_type = None):
         """@SLURMY
         Retry job according to configuration.
 
         * `force` Force a running job to resubmit.
         * `submit` Directly submit the job again.
         * `ignore_max_retries` Ignore maximum number of retries.
+        * `job_type` New job type the job should be processed as.
         """
         if not ignore_max_retries and not self._do_retry(): return
         log.debug('({}) Retry job'.format(self.name))
@@ -238,12 +239,12 @@ class Job:
                 print ("Job is still running, use force=True to force re-submit")
                 return
         self.reset(reset_retries = False)
-        ## Change job type to local, if requested
-        if local:
-            self.type = Type.LOCAL
-        else:
-            self.type = Type.BATCH
+        ## Change job type to new type, if specified
+        if job_type is not None:
+            self.type = job_type
+        ## Increment number of retries
         self.config.n_retries += 1
+        ## Submit job directly, if requested
         if submit: self.submit()
 
         return self.config.status
@@ -251,13 +252,13 @@ class Job:
     def _do_retry(self):
         return (self.config.max_retries > 0 and (self.config.n_retries < self.config.max_retries))
 
-    def rerun(self, local = False):
+    def rerun(self, job_type = None):
         """@SLURMY
         Resets the job and submits it again.
 
-        * `local` Submit as a local job.
+        * `job_type` New job type the job should be processed as.
         """
-        self._retry(force = True, ignore_max_retries = True, local = local)
+        self._retry(force = True, ignore_max_retries = True, job_type = job_type)
 
     def get_status(self, skip_eval = False, force_success_check = False):
         """@SLURMY
@@ -288,7 +289,7 @@ class Job:
             if self._is_success():
                 self.config.status = Status.SUCCESS
             else:
-                self.config.status = Status.FAILURE
+                self.config.status = Status.FAILED
             ## Finish the job, TODO: maybe let the jobhandler trigger this instead?
             self._finish()
 

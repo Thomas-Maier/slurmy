@@ -7,22 +7,24 @@ class JobContainer(dict, object):
     Container class which holds the jobs associated to a JobHandler session. Jobs are attached as properties to allow for easy access in interactive slurmy.
     """
     def __init__(self):
-        self._states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILURE: set(), Status.CANCELLED: set()}
+        self._states = {Status.CONFIGURED: set(), Status.RUNNING: set(), Status.FINISHED: set(), Status.SUCCESS: set(), Status.FAILED: set(), Status.CANCELLED: set()}
         self._tags = {}
         self._tags[Type.LOCAL] = set()
-        self._local = []
+        self._local = set()
 
-    def get(self, tags = None):
+    def get(self, tags = None, states = None):
         """@SLURMY
         Get the list of jobs.
 
-        * `tags` Tags that jobs are filtered on.
+        * `tags` Tags that the jobs must match to.
+        * `states` Job states that the jobs must match to.
 
         Returns list of jobs ([Job]).
         """
         job_list = []
         for job in self.values():
             if tags is not None and not job.has_tags(tags): continue
+            if states is not None and job.get_status() not in states: continue
             job_list.append(job)
 
         return job_list
@@ -81,11 +83,12 @@ class JobContainer(dict, object):
     def _jobs_printlist(self, tags = None, states = None, print_summary = True):
         printlist = []
         summary = {}
-        for job_name, job in self.items():
+        for job in self.get(tags = tags, states = states):
+            job_name = job.name
             job_status = job.get_status()
             if tags and job.has_tags(tags): continue
             if states and job_status not in states: continue
-            printlist.append('Job "{}": {}'.format(job.name, job_status.name))
+            printlist.append('Job "{}": {}'.format(job_name, job_status.name))
             if job_status.name not in summary:
                 summary[job_status.name] = 0
             summary[job_status.name] += 1

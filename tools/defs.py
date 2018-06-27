@@ -7,7 +7,7 @@ class Status(Enum):
     RUNNING = 1
     FINISHED = 2
     SUCCESS = 3
-    FAILURE = 4
+    FAILED = 4
     CANCELLED = 5
 
 class Type(Enum):

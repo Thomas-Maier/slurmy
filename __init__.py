@@ -2,7 +2,7 @@
 import logging
 logging.basicConfig(level=logging.WARNING)
 from .tools.jobhandler import JobHandler
-from .tools.defs import Theme
+from .tools.defs import Status, Type, Theme
 from .tools import options
 from .tools.wrapper import SingularityWrapper
 from .backends.slurm import Slurm

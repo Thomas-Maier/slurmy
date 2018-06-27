@@ -215,7 +215,7 @@ class JobHandler:
 
         return job
 
-    def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None):
+    def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None, job_type = Type.BATCH):
         """@SLURMY
         Add a job to the list of jobs to be processed by the JobHandler.
 
@@ -230,9 +230,14 @@ class JobHandler:
         * `tags` List of tags attached to the job.
         * `parent_tags` List of parent tags attached to the job.
         * `name` Name of the job. This must be a string that conforms with the restrictions on class property names. Slurmy will make sure that job names stay unique, even if the same job name is set multiple times.
+        * `job_type` Type of the job. Can be set to Type.LOCAL to make it a local processing job.
 
         Returns the job (Job).
         """
+        ## If job type is LOCAL but maximum number of local jobs is 0, set to 1
+        if job_type == Type.LOCAL and self.config.local_max == 0:
+            log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
+            self.config.local_max = 1
         if backend is None and ops.Main.backend is not None:
             backend = get_backend(ops.Main.backend)
         if backend is None:
@@ -248,15 +253,15 @@ class JobHandler:
         name = self.config.name_gen.next(name)
         backend.name = name
         ## Set and evaluate job label
-        job_label = {Status.FINISHED: None, Status.SUCCESS: None, Status.FAILURE: None}
+        job_label = {Status.FINISHED: None, Status.SUCCESS: None, Status.FAILED: None}
         for status in job_label:
             backend.run_script, job_label[status] = self._parser.set_status_label(backend.run_script, name, status)
         label_finished_func = None
         label_success_func = None
         if job_label[Status.FINISHED] is not None:
             label_finished_func = FinishedTrigger(job_label[Status.FINISHED])
-        if (job_label[Status.SUCCESS] is not None) and (job_label[Status.FAILURE] is not None):
-            label_success_func = SuccessTrigger(job_label[Status.SUCCESS], job_label[Status.FAILURE])
+        if (job_label[Status.SUCCESS] is not None) and (job_label[Status.FAILED] is not None):
+            label_success_func = SuccessTrigger(job_label[Status.SUCCESS], job_label[Status.FAILED])
         job_finished_func = finished_func or label_finished_func or self.config.finished_func
         job_success_func = success_func or label_success_func or self.config.success_func
         ## Parse variables
@@ -268,7 +273,7 @@ class JobHandler:
         job_max_retries = max_retries or self.config.max_retries
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
-        job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, output = output, tags = tags, parent_tags = parent_tags)
+        job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, job_type = job_type, output = output, tags = tags, parent_tags = parent_tags)
         ## Add job config snapshot path to list in JobHandlerConfig
         self.config.add_job_path(config_path)
         ## Update snapshot to make sure job configs list is properly updated
@@ -277,6 +282,14 @@ class JobHandler:
         return self._add_job_with_config(job_config)
 
     def _job_ready(self, job):
+        """@SLURMY
+        Check if job is ready to be submitted. Checks if all associated parent jobs are finished and in status SUCCESS. For local job, checks if local job queue is full.
+
+        * `job` Job to be checked.
+
+        Returns if the job is ready or not (bool).
+        """
+        ## Check if parent jobs are finished
         parent_tags = job.parent_tags
         if not parent_tags:
             return True
@@ -287,8 +300,12 @@ class JobHandler:
             for tagged_job in self.jobs._tags[tag]:
                 status = tagged_job.get_status()
                 if status == Status.SUCCESS: continue
-                ## If a parent job is uncoverably failed/cancelled, cancel this job as well
-                if (status == Status.FAILURE or status == Status.CANCELLED) and not tagged_job._do_retry(): job.cancel(clear_retry = True)
+                ## If a parent job is unrecoverably failed/cancelled, cancel this job as well
+                if (status == Status.FAILED or status == Status.CANCELLED) and not tagged_job._do_retry(): job.cancel(clear_retry = True)
+                return False
+        ## Check if local job queue is full
+        if job.type == Type.LOCAL:
+            if len(self.jobs._local) >= self.config.local_max:
                 return False
 
         return True
@@ -301,7 +318,7 @@ class JobHandler:
             n_batch = n_running - n_local
             print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
         n_success = len(self.jobs._states[Status.SUCCESS])
-        n_failed = len(self.jobs._states[Status.FAILURE])
+        n_failed = len(self.jobs._states[Status.FAILED])
         n_all = len(self.jobs)
         print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
 
@@ -323,7 +340,7 @@ class JobHandler:
                     summary_dict['success']['local'] += 1
                 else:
                     summary_dict['success']['batch'] += 1
-            elif status == Status.FAILURE or status == Status.CANCELLED:
+            elif status == Status.FAILED or status == Status.CANCELLED:
                 jobs_failed += '{} '.format(job.name)
                 if job.type == Type.LOCAL:
                     summary_dict['fail']['local'] += 1
@@ -363,18 +380,24 @@ class JobHandler:
         Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.
 
         * `interval` The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually.
-        * `retry` Retry failed or cancelled jobs.
+        * `retry` Retry jobs in status FAILED or CANCELLED. This will attempt one cycle of job retrying.
         """
         time_now = time.time()
         try:
+            ## If retry is set to True, for the relevant jobs (FAILED and CANCELLED) set maximum number of retries to 1 and number of attempted retries to 0
+            ## This will trigger the automatic retry routine for these jobs
+            if retry:
+                job_states = set([Status.FAILED, Status.CANCELLED])
+                self.set_jobs_config_attr('max_retries', 1, states = job_states)
+                self.set_jobs_config_attr('n_retries', 0, states = job_states)
             n_all = len(self.jobs)
             running = True
             while running:
-                self.submit_jobs(wait = False, retry = retry)
+                self.submit_jobs(wait = False)
                 print_string = self._get_print_string()
                 if interval == -1: print_string += ' - press enter to update status'
                 n_success = len(self.jobs._states[Status.SUCCESS])
-                n_failed = len(self.jobs._states[Status.FAILURE])
+                n_failed = len(self.jobs._states[Status.FAILED])
                 n_cancelled = len(self.jobs._states[Status.CANCELLED])
                 if (n_success+n_failed+n_cancelled) == n_all:
                     running = False
@@ -403,6 +426,9 @@ class JobHandler:
             self.cancel_jobs(make_snapshot = False)
             raise
         finally:
+            ## If retry is set to True, set maximum number of retries of all jobs to the JobHandler configuration again
+            if retry:
+                self.set_jobs_config_attr('max_retries', self.config.max_retries)
             ## Final snapshot
             self.update_snapshot()
             time_now = time.time() - time_now
@@ -415,36 +441,37 @@ class JobHandler:
         * `tags` Tags of jobs that will be submitted.
         * `make_snapshot` Make a snapshot of the jobs and the JobHandler after the submission cycle.
         * `wait` Wait for locally submitted job.
-        * `retry` Retry failed or cancelled jobs.
+        * `retry` Retry jobs in status FAILED or CANCELLED. This circumvents the automatic retry routine.
         """
         try:
-            ## Check job states and tags
-            self.check(print_summary = False)
-            ## Check local jobs progression, skip status evaluation since this was already done
-            self._check_local_jobs(skip_eval = True)
             for job in self.jobs.get(tags):
+                ## Check job status and tags
+                self._check_job(job)
+                ## Check local job status, skip status evaluation since this was already done
+                self._check_local_job(job, skip_eval = True)
                 ## Submit new jobs only if current number of running jobs is below maximum, if set
                 if self.config.run_max and not (len(self.jobs._states[Status.RUNNING]) < self.config.run_max):
                     log.debug('Maximum number of running jobs reached, skip job submission')
                     break
                 ## Get job status, skip status evaluation since this was already done
                 status = job.get_status(skip_eval = True)
-                ## If jobs are in FAILURE or CANCELLED state, do retry routine. Ignore maximum number of retries if requested.
-                if (status == Status.FAILURE or status == Status.CANCELLED):
+                ## If jobs are in FAILED or CANCELLED state, do retry routine. Ignore maximum number of retries if requested.
+                if (status == Status.FAILED or status == Status.CANCELLED):
                     status = job._retry(submit = False, ignore_max_retries = retry)
                 ## If job is not in Configured state there is nothing to do
                 if status != Status.CONFIGURED: continue
                 ## Check if job is ready to be submitted
                 if not self._job_ready(job): continue
-                ##TODO: if a job is already defined as local, need to take this into account
+                ## Dynamically set job type to LOCAL, if local job queue is not full
                 if len(self.jobs._local) < self.config.local_max:
                     job.type = Type.LOCAL
-                    self.jobs._local.append(job)
+                ## If job is type LOCAL, add job name to list of currently running local jobs
+                if job.type == Type.LOCAL:
+                    self.jobs._local.add(job.name)
+                ## Submit the job
                 status = job.submit()
-                ## Update job status
-                self.jobs._update_job_status(job, skip_eval = True)
-                ## Update job tags (keeping track of local jobs)
-                self.jobs._update_tags(job)
+                ## Check job status and tags again, skip status evaluation since this was already done
+                self._check_job(job, skip_eval = True)
             if wait: self._wait_for_jobs(tags)
             if make_snapshot: self.update_snapshot()
         ## In case of a keyboard interrupt we just want to stop slurmy processing but keep current batch jobs running
@@ -474,23 +501,52 @@ class JobHandler:
 
     def check(self, force_success_check = False, print_summary = True):
         """@SLURMY
-        Check the status of the jobs.
+        Check the status and tags of the jobs.
 
         * `force_success_check` Force the success routine to be run, even if the job is already in a post-finished state.
+        * `print_summary` Print the job processing summary.
         """
-        ## Update job states
-        self.jobs._update_job_states(force_success_check = force_success_check)
-        ## Update job tags (keeping track of local jobs)
-        self.jobs._update_job_tags()
+        for job in self.jobs.values():
+            self._check_job(job, force_success_check = force_success_check)
         if print_summary:
             print_string = self._get_print_string()
             print (print_string)
 
+    def _check_job(self, job, force_success_check = False, skip_eval = False):
+        ## Update job status
+        self.jobs._update_job_status(job, force_success_check = force_success_check, skip_eval = skip_eval)
+        ## Update job tags (keeping track of local jobs)
+        self.jobs._update_tags(job)
+
     def _check_local_jobs(self, skip_eval = False):
-        for i, job in enumerate(self.jobs._local):
-            status = job.get_status(skip_eval = skip_eval)
-            if status == Status.RUNNING: continue
-            self.jobs._local.pop(i)
+        for job_name in self.jobs._local:
+            job = self[job_name]
+            self._check_local_job(job, skip_eval = skip_eval)
+
+    def _check_local_job(self, job, skip_eval = False):
+        job_type = job.type
+        ## If job is not type LOCAL, nothing to do
+        if job_type != Type.LOCAL: return
+        name = job.name
+        ## If job name is not in the list of currently running local jobs, nothing to do
+        if name not in self.jobs._local: return
+        status = job.get_status(skip_eval = skip_eval)
+        ## If job is still running, nothing to do
+        if status == Status.RUNNING: return
+        ## Remove job from list of currently running local jobs
+        self.jobs._local.remove(name)
+
+    def set_jobs_config_attr(self, attr, val, tags = None, states = None):
+        """@SLURMY
+        Set the job config attribute of jobs associated to the JobHandler.
+
+        * `attr` Name of the attribute which is set.
+        * `val` Value that the attribute is set to.
+        * `tags` Set of tags which the jobs have to match to.
+        * `states` Set of job states which the jobs have to match to.
+        """
+        for job in self.jobs.get(tags = tags, states = states):
+            setattr(job.config, attr, val)
 
     @staticmethod
     def _add_bookkeeping(name, folder, description = None):
