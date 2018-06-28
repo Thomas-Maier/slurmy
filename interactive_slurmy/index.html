@@ -465,16 +465,16 @@ Time spent: 5.4 s
 <p>The job "hans" is now in FAILED state:</p>
 <pre><code class="python">In [8]: jh.jobs
 Out[8]: 
-Job &quot;hans&quot;: FAILURE
+Job &quot;hans&quot;: FAILED
 ------------
-FAILURE(1)
+FAILED(1)
 </code></pre>
 
 <p>We can access the log file of the job directly via it's dedicated property (which opens the log with less), in order to find out what went wrong:</p>
 <pre><code class="python">In [9]: jh.jobs.hans.log
 </code></pre>
 
-<p>Usually, you probably want to fix our job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:</p>
+<p>Usually, you probably want to fix your job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:</p>
 <pre><code class="python">In [10]: jh.jobs.hans.edit_script()
 </code></pre>
 
@@ -509,8 +509,8 @@ Jobs (success/fail/all): (1/0/1)
 <p>Finally, if you want to start from a clean slate you can reset the <a href="../classes/JobHandler/">JobHandler</a> completely:</p>
 <pre><code class="python">In [16]: jh.reset()
 In [17]: jh.run_jobs()
-Jobs processed (batch/local/all): (0/1/1)
-     successful (batch/local/all): (0/1/1)
+Jobs processed (batch/local/all): (1/0/1)
+     successful (batch/local/all): (1/0/1)
 Time spent: 5.4 s
 </code></pre>
 
