@@ -6,6 +6,7 @@ import logging
 from .defs import Status, Type
 from .utils import set_update_properties, update_decorator
 from . import options
+from .tracker import track
 
 log = logging.getLogger('slurmy')
 
@@ -122,6 +123,7 @@ class Job:
             return
         self._local_process.wait()
 
+    @track
     def update_snapshot(self):
         """@SLURMY
         Update the job snapshot on disk. Snaphot is only updated if something changed in the JobConfig.

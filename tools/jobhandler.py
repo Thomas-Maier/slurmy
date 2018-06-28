@@ -16,6 +16,7 @@ from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_p
 from .jobcontainer import JobContainer
 from .utils import update_decorator
 from . import tracker
+from .tracker import track
 
 log = logging.getLogger('slurmy')
         
@@ -176,6 +177,7 @@ class JobHandler:
         ## Make snapshots
         self.update_snapshot()
 
+    @track
     def update_snapshot(self, skip_jobs = False):
         """@SLURMY
         Update snapshots of the JobHandler and the associated Jobs on disk. Snaphots are only updated if something changed in the respective JobHandlerConfig or JobConfig.
@@ -438,6 +440,7 @@ class JobHandler:
             if ops.Main.track_mode:
                 tracker.Main.print()
 
+    @track
     def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False):
         """@SLURMY
         Submit jobs according to the JobHandler configuration.
