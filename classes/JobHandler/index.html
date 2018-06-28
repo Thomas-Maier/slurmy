@@ -435,7 +435,7 @@
             <div class="section">
               
                 <h1 id="jobhandler">JobHandler</h1>
-<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, is_verbose=False, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None)
+<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, is_verbose=False, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None, profiler=None)
 </code></pre>
 
 <p>Main handle to setup and submit jobs. Internally stores most information in the <a href="../JobHandlerConfig/#JobHandlerConfig">JobHandlerConfig</a> class, which is stored on disk as a snapshot of the <a href="./#JobHandler">JobHandler</a> session.</p>
@@ -454,6 +454,7 @@
 <li><code>use_snapshot</code> Load snapshot from disk instead of creating new jobhandler.</li>
 <li><code>description</code> Description of jobhandler that is stored in the bookkeeping.</li>
 <li><code>wrapper</code> Default run script wrapper used for the job setup.</li>
+<li><code>profiler</code> Profiler to be used for profiling.</li>
 </ul>
 <h1 id="member-functions">Member functions</h1>
 <h2 id="add_job">add_job</h2>
