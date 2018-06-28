@@ -93,9 +93,9 @@ The job "hans" is now in FAILED state:
 ```python
 In [8]: jh.jobs
 Out[8]: 
-Job "hans": FAILURE
+Job "hans": FAILED
 ------------
-FAILURE(1)
+FAILED(1)
 ```
 
 We can access the log file of the job directly via it's dedicated property (which opens the log with less), in order to find out what went wrong:
@@ -104,7 +104,7 @@ We can access the log file of the job directly via it's dedicated property (whic
 In [9]: jh.jobs.hans.log
 ```
 
-Usually, you probably want to fix our job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:
+Usually, you probably want to fix your job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:
 
 ```python
 In [10]: jh.jobs.hans.edit_script()
@@ -152,8 +152,8 @@ Finally, if you want to start from a clean slate you can reset the [JobHandler](
 ```python
 In [16]: jh.reset()
 In [17]: jh.run_jobs()
-Jobs processed (batch/local/all): (0/1/1)
-     successful (batch/local/all): (0/1/1)
+Jobs processed (batch/local/all): (1/0/1)
+     successful (batch/local/all): (1/0/1)
 Time spent: 5.4 s
 ```
 
