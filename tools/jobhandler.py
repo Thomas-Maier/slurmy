@@ -101,9 +101,10 @@ class JobHandler:
     * `use_snapshot` Load snapshot from disk instead of creating new jobhandler.
     * `description` Description of jobhandler that is stored in the bookkeeping.
     * `wrapper` Default run script wrapper used for the job setup.
+    * `profiler` Profiler to be used for profiling.
     """
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
@@ -142,6 +143,8 @@ class JobHandler:
             JobHandler._add_bookkeeping(self.config.name, work_dir, description)
         ## Variable parser
         self._parser = Parser(self.config)
+        ## Set profiler
+        self._profiler = profiler
 
     def __getitem__(self, key):
         return self.jobs[key]
@@ -382,11 +385,9 @@ class JobHandler:
         * `interval` The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually.
         * `retry` Retry jobs in status FAILED or CANCELLED. This will attempt one cycle of job retrying.
         """
-        ## If we are in profiling mode, set up Profiler
-        if options.Main.profile_mode:
-            from .profiler import Profiler
-            profiler = Profiler()
-            profiler.start()
+        ## If a profiler is set, start profiling
+        if self._profiler is not None:
+            self._profiler.start()
         time_now = time.time()
         try:
             ## If retry is set to True, for the relevant jobs (FAILED and CANCELLED) set maximum number of retries to 1 and number of attempted retries to 0
@@ -438,9 +439,9 @@ class JobHandler:
             self.update_snapshot()
             time_now = time.time() - time_now
             if not self._debug: self.print_summary(time_now)
-            ## If we are in profiling mode, print Profiler results
-            if options.Main.profile_mode:
-                profiler.stop()
+            ## If profiler is set, print profiling result
+            if self._profiler is not None:
+                self._profiler.stop()
 
     def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False):
         """@SLURMY
