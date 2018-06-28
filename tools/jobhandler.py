@@ -398,6 +398,9 @@ class JobHandler:
                 self.set_jobs_config_attr('n_retries', 0, states = job_states)
             n_all = len(self.jobs)
             running = True
+            ## Initial printout to avoid empty line until first cycle of submits is done
+            stdout.write('\r'+self._get_print_string())
+            stdout.flush()
             while running:
                 self.submit_jobs(wait = False)
                 print_string = self._get_print_string()
