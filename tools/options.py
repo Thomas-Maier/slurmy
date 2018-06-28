@@ -21,7 +21,7 @@ class Options:
         ## Additional options
         self.test_mode = False
         self.interactive_mode = False
-        self.track_mode = False
+        self.profile_mode = False
         ## Backend options
         self._backend_options = {}
         ## Internal vars

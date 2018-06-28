@@ -9,14 +9,12 @@ import logging
 from .defs import Status, Type, Theme
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
-from . import options as ops
+from . import options
 from ..backends.utils import get_backend
 from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties, make_dir, remove_content
 from .jobcontainer import JobContainer
 from .utils import update_decorator
-from . import tracker
-from .tracker import track
 
 log = logging.getLogger('slurmy')
         
@@ -134,8 +132,8 @@ class JobHandler:
                 self._add_job_with_config(job_config)
         else:
             ## Backend setup
-            if backend is None and ops.Main.backend is not None:
-                backend = get_backend(ops.Main.backend)
+            if backend is None and options.Main.backend is not None:
+                backend = get_backend(options.Main.backend)
             ## Set default backend configuration
             backend.load_default_config()
             ## Make new JobHandler config
@@ -177,7 +175,6 @@ class JobHandler:
         ## Make snapshots
         self.update_snapshot()
 
-    @track
     def update_snapshot(self, skip_jobs = False):
         """@SLURMY
         Update snapshots of the JobHandler and the associated Jobs on disk. Snaphots are only updated if something changed in the respective JobHandlerConfig or JobConfig.
@@ -241,8 +238,8 @@ class JobHandler:
         if job_type == Type.LOCAL and self.config.local_max == 0:
             log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
             self.config.local_max = 1
-        if backend is None and ops.Main.backend is not None:
-            backend = get_backend(ops.Main.backend)
+        if backend is None and options.Main.backend is not None:
+            backend = get_backend(options.Main.backend)
         if backend is None:
             log.error('No backend set for job, either set directly or define default in ~/.slurmy')
             return
@@ -385,6 +382,11 @@ class JobHandler:
         * `interval` The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually.
         * `retry` Retry jobs in status FAILED or CANCELLED. This will attempt one cycle of job retrying.
         """
+        ## If we are in profiling mode, set up Profiler
+        if options.Main.profile_mode:
+            from .profiler import Profiler
+            profiler = Profiler()
+            profiler.start()
         time_now = time.time()
         try:
             ## If retry is set to True, for the relevant jobs (FAILED and CANCELLED) set maximum number of retries to 1 and number of attempted retries to 0
@@ -436,11 +438,10 @@ class JobHandler:
             self.update_snapshot()
             time_now = time.time() - time_now
             if not self._debug: self.print_summary(time_now)
-            ## If we are in track mode, print tracker info
-            if ops.Main.track_mode:
-                tracker.Main.print()
+            ## If we are in profiling mode, print Profiler results
+            if options.Main.profile_mode:
+                profiler.stop()
 
-    @track
     def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False):
         """@SLURMY
         Submit jobs according to the JobHandler configuration.
@@ -560,4 +561,4 @@ class JobHandler:
         pwd = os.environ['PWD']
         work_dir = folder
         if not work_dir.startswith('/'): work_dir = os.path.join(pwd, work_dir)
-        ops.Main.add_bookkeeping(name, work_dir, description)
+        options.Main.add_bookkeeping(name, work_dir, description)

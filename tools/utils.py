@@ -91,10 +91,10 @@ def get_sessions():
 
     Returns list of bookkeeping items ([str, dict]).
     """
-    from slurmy.tools import options as ops
+    from slurmy.tools import options
     ## Synchronise bookkeeping with entries on disk
-    ops.Main.sync_bookkeeping()
-    bk = ops.Main.get_bookkeeping()
+    options.Main.sync_bookkeeping()
+    bk = options.Main.get_bookkeeping()
     if bk is None:
         log.debug('No bookeeping found')
         return []
@@ -122,12 +122,12 @@ def load(name):
 
     Returns jobhandler associated to the session (JobHandler).
     """
-    from slurmy.tools import options as ops
+    from slurmy.tools import options
     from slurmy import JobHandler
     import sys
     ## Synchronise bookkeeping with entries on disk
-    ops.Main.sync_bookkeeping()
-    bk = ops.Main.get_bookkeeping()
+    options.Main.sync_bookkeeping()
+    bk = options.Main.get_bookkeeping()
     if bk is None:
         log.error('No bookeeping found')
         return None
