@@ -10,3 +10,6 @@ from .tools.utils import SuccessOutputFile, SuccessTrigger, FinishedTrigger, Log
 
 def test_mode(mode = True):
     options.Main.test_mode = mode
+
+def track_mode(mode = True):
+    options.Main.track_mode = mode

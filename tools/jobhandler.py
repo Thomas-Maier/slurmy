@@ -15,6 +15,7 @@ from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties, make_dir, remove_content
 from .jobcontainer import JobContainer
 from .utils import update_decorator
+from . import tracker
 
 log = logging.getLogger('slurmy')
         
@@ -433,6 +434,9 @@ class JobHandler:
             self.update_snapshot()
             time_now = time.time() - time_now
             if not self._debug: self.print_summary(time_now)
+            ## If we are in track mode, print tracker info
+            if ops.Main.track_mode:
+                tracker.Main.print()
 
     def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False):
         """@SLURMY

@@ -6,6 +6,7 @@ import logging
 from ..tools.defs import Status
 from .base import Base
 from .defs import bids
+from ..tools.tracker import track
 
 log = logging.getLogger('slurmy')
 
@@ -51,6 +52,7 @@ class Slurm(Base):
         self._job_id = None
         self._exitcode = None
 
+    @track
     def submit(self):
         """@SLURMY
         Submit the job to the slurm batch system.
@@ -83,6 +85,7 @@ class Slurm(Base):
 
         return job_id
 
+    @track
     def cancel(self):
         """@SLURMY
         Cancel the slurm job.
@@ -90,6 +93,7 @@ class Slurm(Base):
         log.debug('({}) Cancel job'.format(self.name))
         os.system('scancel {}'.format(self._job_id))
 
+    @track
     def status(self):
         """@SLURMY
         Get the status of slurm job from sacct entry.
@@ -104,6 +108,7 @@ class Slurm(Base):
 
         return status
 
+    @track
     def exitcode(self):
         """@SLURMY
         Get the exitcode of slurm job from sacct entry. Evaluation is actually done by Slurm.status(), Slurm.exitcode() only returns the value.
