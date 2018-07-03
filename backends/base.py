@@ -16,6 +16,7 @@ class Base:
     bid = bids['BASE']
     _script_options_identifier = ''
     _commands = []
+    _successcode = '0:0'
     name = None
     log = None
     wrapper = Wrapper()

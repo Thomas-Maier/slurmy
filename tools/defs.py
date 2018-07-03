@@ -14,6 +14,10 @@ class Type(Enum):
     BATCH = 0
     LOCAL = 1
 
+class Mode(Enum):
+    ACTIVE = 0
+    PASSIVE = 1
+
 class Theme(Enum):
     Boring = 0
     Lovecraft = 1

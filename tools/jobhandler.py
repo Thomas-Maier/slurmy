@@ -6,7 +6,7 @@ from sys import stdout, version_info
 from collections import OrderedDict
 import pickle
 import logging
-from .defs import Status, Type, Theme
+from .defs import Status, Type, Theme, Mode
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
 from . import options
@@ -15,6 +15,7 @@ from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties, make_dir, remove_content
 from .jobcontainer import JobContainer
 from .utils import update_decorator
+from .listener import Listener
 
 log = logging.getLogger('slurmy')
         
@@ -79,6 +80,7 @@ class JobHandlerConfig:
         
 
         return [script_dir, log_dir, output_dir, snapshot_dir, tmp_dir, path]
+    
 ## Set properties to incorporate update tagging
 set_update_properties(JobHandlerConfig)
 
@@ -215,6 +217,9 @@ class JobHandler:
                 self.jobs._tags[tags].append(job)
         ## Ensure that a first snapshot is made
         if self.config.do_snapshot: job.update_snapshot()
+        ## If job is a batch job, store job id if it already has one
+        if job.type == Type.BATCH and job.id is not None:
+            self.jobs.add_id(job.id, job.name)
 
         return job
 
@@ -277,9 +282,15 @@ class JobHandler:
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
         job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, job_type = job_type, output = output, tags = tags, parent_tags = parent_tags)
+        ## If we have a custom finished_func, set the mode for RUNNING to ACTIVE
+        if job_finished_func:
+            job_config.set_mode(Status.RUNNING, Mode.ACTIVE)
+        ## If we have an output file, but no custom success_function, set the mode for FINISHED to PASSIVE
+        if output and not job_success_func:
+            job_config.set_mode(Status.FINISHED, Mode.PASSIVE)
         ## Add job config snapshot path to list in JobHandlerConfig
         self.config.add_job_path(config_path)
-        ## Update snapshot to make sure job configs list is properly updated
+        ## Update snapshot to make sure job config paths list is properly updated
         self.update_snapshot(skip_jobs = True)
 
         return self._add_job_with_config(job_config)
@@ -378,6 +389,30 @@ class JobHandler:
         stdout.write('\r'+print_string)
         stdout.write('\n')
 
+    def _setup_listeners(self):
+        """@SLURMY
+        Prepare Listeners.
+        """
+        listeners = []
+        ## Set up backend specific FINISHED listeners (for now only SLURMY). TODO: dynamically assert which backends are used (one listener for each?)
+        ## If we are in test mode (aka local mode), don't add batch listeners
+        if not options.Main.test_mode:
+            from ..backends.slurm import Slurm
+            ## This one also sets the exitcode of the job, so the success evaluation can be done by itself.
+            listen_slurm = Slurm.get_listen_func()
+            listener_slurm = Listener(self, listen_slurm, Status.RUNNING)
+            listeners.append(listener_slurm)
+        ## Get list of defined output files
+        file_list = [l.output for l in self.jobs.values() if l.output is not None]
+        ## Set up output file listener, if any are defined
+        if file_list:
+            from .utils import get_listen_files
+            listen_success = get_listen_files(file_list, Status.SUCCESS)
+            listener_success = Listener(self, listen_success, Status.FINISHED, map_property = 'output')
+            listeners.append(listener_success)
+
+        return listeners
+
     def run_jobs(self, interval = 5, retry = False):
         """@SLURMY
         Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.
@@ -388,8 +423,13 @@ class JobHandler:
         ## If a profiler is set, start profiling
         if self._profiler is not None:
             self._profiler.start()
+        ## Prepare listeners
+        listeners = self._setup_listeners()
         time_now = time.time()
         try:
+            ## Start listeners
+            for listener in listeners:
+                listener.start()
             ## If retry is set to True, for the relevant jobs (FAILED and CANCELLED) set maximum number of retries to 1 and number of attempted retries to 0
             ## This will trigger the automatic retry routine for these jobs
             if retry:
@@ -402,6 +442,9 @@ class JobHandler:
             stdout.write('\r'+self._get_print_string())
             stdout.flush()
             while running:
+                ## Update jobs with listeners
+                for listener in listeners:
+                    listener.update_jobs()
                 self.submit_jobs(wait = False)
                 print_string = self._get_print_string()
                 if interval == -1: print_string += ' - press enter to update status'
@@ -438,6 +481,9 @@ class JobHandler:
             ## If retry is set to True, set maximum number of retries of all jobs to the JobHandler configuration again
             if retry:
                 self.set_jobs_config_attr('max_retries', self.config.max_retries)
+            ## Stop listeners
+            for listener in listeners:
+                listener.stop()
             ## Final snapshot
             self.update_snapshot()
             time_now = time.time() - time_now
@@ -446,7 +492,7 @@ class JobHandler:
             if self._profiler is not None:
                 self._profiler.stop()
 
-    def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False):
+    def submit_jobs(self, tags = None, make_snapshot = True, wait = True, retry = False, skip_eval = False):
         """@SLURMY
         Submit jobs according to the JobHandler configuration.
 
@@ -454,6 +500,7 @@ class JobHandler:
         * `make_snapshot` Make a snapshot of the jobs and the JobHandler after the submission cycle.
         * `wait` Wait for locally submitted job.
         * `retry` Retry jobs in status FAILED or CANCELLED. This circumvents the automatic retry routine.
+        * `skip_eval` Skip job status evaluation everywhere.
         """
         try:
             for job in self.jobs.get(tags):
@@ -465,8 +512,8 @@ class JobHandler:
                 if self.config.run_max and not (len(self.jobs._states[Status.RUNNING]) < self.config.run_max):
                     log.debug('Maximum number of running jobs reached, skip job submission')
                     break
-                ## Get job status, skip status evaluation since this was already done
-                status = job.get_status(skip_eval = True)
+                ## Current job status
+                status = job.status
                 ## If jobs are in FAILED or CANCELLED state, do retry routine. Ignore maximum number of retries if requested.
                 if (status == Status.FAILED or status == Status.CANCELLED):
                     status = job._retry(submit = False, ignore_max_retries = retry)
@@ -482,9 +529,13 @@ class JobHandler:
                     self.jobs._local.add(job.name)
                 ## Submit the job
                 status = job.submit()
+                ### If job is a batch job, store the job id with job name
+                if job.type == Type.BATCH:
+                    self.jobs.add_id(job.id, job.name)
                 ## Check job status and tags again, skip status evaluation since this was already done
                 self._check_job(job, skip_eval = True)
             if wait: self._wait_for_jobs(tags)
+            ## Make JobHandler snapshot update, skip jobs since we already did them
             if make_snapshot: self.update_snapshot()
         ## In case of a keyboard interrupt we just want to stop slurmy processing but keep current batch jobs running
         except KeyboardInterrupt:
@@ -511,7 +562,7 @@ class JobHandler:
             job.cancel()
         if make_snapshot: self.update_snapshot()
 
-    def check(self, force_success_check = False, print_summary = True):
+    def check(self, force_success_check = False, skip_eval = False, print_summary = True):
         """@SLURMY
         Check the status and tags of the jobs.
 
@@ -519,7 +570,7 @@ class JobHandler:
         * `print_summary` Print the job processing summary.
         """
         for job in self.jobs.values():
-            self._check_job(job, force_success_check = force_success_check)
+            self._check_job(job, force_success_check = force_success_check, skip_eval = skip_eval)
         if print_summary:
             print_string = self._get_print_string()
             print (print_string)

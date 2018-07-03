@@ -3,6 +3,20 @@ import logging
 log = logging.getLogger('slurmy')
 
 
+def get_listen_files(file_list, status):
+    def listen_files(results, interval = 1):
+        import os, time
+        from slurmy import Status
+        while True:
+            res_dict = {}
+            for file_name in file_list:
+                if not os.path.isfile(file_name): continue
+                res_dict[file_name] = {'status': status}
+            results.put(res_dict)
+            time.sleep(interval)
+
+    return listen_files
+
 ## Success classes
 class SuccessOutputFile:
     """@SLURMY

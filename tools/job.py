@@ -3,7 +3,7 @@ import subprocess as sp
 import os
 import pickle
 import logging
-from .defs import Status, Type
+from .defs import Status, Type, Mode
 from .utils import set_update_properties, update_decorator
 from . import options
 
@@ -28,7 +28,7 @@ class JobConfig:
     
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_backend', '_name', '_path', '_tags', '_parent_tags', '_success_func', '_finished_func', '_post_func',
-                   '_max_retries', '_output', '_type', '_status', '_job_id', '_n_retries', '_exitcode']
+                   '_max_retries', '_output', '_type', '_modes', '_status', '_job_id', '_n_retries', '_exitcode']
     
     def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, job_type = Type.BATCH, output = None):
         ## Static variables
@@ -46,6 +46,11 @@ class JobConfig:
         self._output = output
         ## Dynamic variables
         self._type = job_type
+        self._modes = {}
+        ## By default, set all modes to ACTIVE, except RUNNING
+        for status in Status:
+            self._modes[status] = Mode.ACTIVE
+        self._modes[Status.RUNNING] = Mode.PASSIVE
         self._status = Status.CONFIGURED
         self._job_id = None
         self._n_retries = 0
@@ -53,17 +58,40 @@ class JobConfig:
 
     @update_decorator
     def add_tag(self, tag, is_parent = False):
+        """@SLURMY
+        Add a tag to the tags associated to the job.
+
+        * `tag` Tag to be added.
+        * `is_parent` Tag is added as a parent tag.
+        """
         if is_parent:
             self.parent_tags.add(tag)
         else:
             self.tags.add(tag)
 
     def add_tags(self, tags, is_parent = False):
+        """@SLURMY
+        Add a list of tags to the tags associated to the job.
+
+        * `tags` Tags to be added.
+        * `is_parent` Tags are added as parent tags.
+        """
         if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
             for tag in tags:
                 self.add_tag(tag, is_parent)
         else:
             self.add_tag(tags, is_parent)
+
+    @update_decorator
+    def set_mode(self, status, mode):
+        """@SLURMY
+        Set the mode the job will be in while being in the specified status.
+
+        * `status` Status for which the mode is set.
+        * `mode` Mode that the job is set to for the given status.
+        """
+        self._modes[status] = mode
+        
 ## Set properties to incorporate update tagging
 set_update_properties(JobConfig)
 
@@ -86,7 +114,7 @@ class Job:
         print_string += 'Backend: {}\n'.format(self.config.backend.bid)
         print_string += 'Script: {}\n'.format(self.config.backend.run_script)
         if self.config.backend.run_args: print_string += 'Args: {}\n'.format(self.config.backend.run_args)
-        print_string += 'Status: {}\n'.format(self.config.status.name)
+        print_string += 'Status: {}\n'.format(self.status.name)
         if self.config.tags: print_string += 'Tags: {}\n'.format(self.config.tags)
         if self.config.parent_tags: print_string += 'Parent tags: {}\n'.format(self.config.parent_tags)
         if self.config.output: print_string += 'Output: {}'.format(self.config.output)
@@ -100,7 +128,7 @@ class Job:
         * `reset_retries` Also reset number of retries attempted so far.
         """
         log.debug('({}) Reset job'.format(self.name))
-        self.config.status = Status.CONFIGURED
+        self.status = Status.CONFIGURED
         self.config.job_id = None
         self._local_process = None
         if reset_retries:
@@ -186,7 +214,7 @@ class Job:
 
         Returns the job status (Status).
         """
-        if self.config.status != Status.CONFIGURED:
+        if self.status != Status.CONFIGURED:
             log.warning('({}) Not in Configured state, cannot submit'.format(self.name))
             raise Exception
         if self.type == Type.LOCAL:
@@ -195,9 +223,9 @@ class Job:
             self._local_process = sp.Popen(command, stdout = sp.PIPE, stderr = sp.STDOUT, start_new_session = True, universal_newlines = True)
         else:
             self.config.job_id = self.config.backend.submit()
-        self.config.status = Status.RUNNING
+        self.status = Status.RUNNING
 
-        return self.config.status
+        return self.status
 
     def cancel(self, clear_retry = False):
         """@SLURMY
@@ -208,18 +236,18 @@ class Job:
         Returns the job status (Status).
         """
         ## Do nothing if job is already in failed state
-        if self.config.status == Status.FAILED: return
+        if self.status == Status.FAILED: return
         log.debug('({}) Cancel job'.format(self.name))
         ## Stop job if it's in running state
-        if self.config.status == Status.RUNNING:
+        if self.status == Status.RUNNING:
             if self.type == Type.LOCAL:
                 self._local_process.terminate()
             else:
                 self.config.backend.cancel()
-        self.config.status = Status.CANCELLED
+        self.status = Status.CANCELLED
         if clear_retry: self.config.max_retries = 0
 
-        return self.config.status
+        return self.status
 
     def _retry(self, force = False, submit = True, ignore_max_retries = False, job_type = None):
         """@SLURMY
@@ -229,15 +257,18 @@ class Job:
         * `submit` Directly submit the job again.
         * `ignore_max_retries` Ignore maximum number of retries.
         * `job_type` New job type the job should be processed as.
+
+        Returns status of the job (Status).
         """
-        if not ignore_max_retries and not self._do_retry(): return
+        if not ignore_max_retries and not self._do_retry():
+            return self.status
         log.debug('({}) Retry job'.format(self.name))
-        if self.config.status == Status.RUNNING:
+        if self.status == Status.RUNNING:
             if force:
                 self.cancel()
             else:
                 print ("Job is still running, use force=True to force re-submit")
-                return
+                return self.status
         self.reset(reset_retries = False)
         ## Change job type to new type, if specified
         if job_type is not None:
@@ -247,7 +278,7 @@ class Job:
         ## Submit job directly, if requested
         if submit: self.submit()
 
-        return self.config.status
+        return self.status
 
     def _do_retry(self):
         return (self.config.max_retries > 0 and (self.config.n_retries < self.config.max_retries))
@@ -271,46 +302,54 @@ class Job:
         """
         ## Just return current status and skip status evaluation
         if skip_eval:
-            return self.config.status
+            return self.status
+        ## If the job is not LOCAL and in PASSIVE mode, just return current status
+        if self.type != Type.LOCAL and self.mode == Mode.PASSIVE:
+            log.debug('({}) Batch job in PASSIVE mode, return current status'.format(self.name))
+            return self.status
         ## Evaluate if job is finished
-        if self.config.status == Status.RUNNING:
+        if self.status == Status.RUNNING:
             if self.type == Type.LOCAL:
                 self._get_local_status()
             else:
                 if self.config.finished_func is not None:
                     if self.config.finished_func(self.config):
-                        self.config.status = Status.FINISHED
+                        self.status = Status.FINISHED
                     else:
-                        self.config.status = Status.RUNNING
+                        self.status = Status.RUNNING
                 else:
-                    self.config.status = self.config.backend.status()
+                    self.status = self.config.backend.status()
+        ## Need to check again before moving on with the evaluation
+        if self.mode == Mode.PASSIVE:
+            log.debug('({}) Job in PASSIVE mode, return current status'.format(self.name))
+            return self.status
         ## Evaluate if job was successful
-        if self.config.status == Status.FINISHED or force_success_check:
+        if self.status == Status.FINISHED or force_success_check:
             if self._is_success():
-                self.config.status = Status.SUCCESS
+                self.status = Status.SUCCESS
             else:
-                self.config.status = Status.FAILED
-            ## Finish the job, TODO: maybe let the jobhandler trigger this instead?
+                self.status = Status.FAILED
+            ## Finish the job
+            ##TODO: maybe let the jobhandler trigger this instead?
+            ##TODO: this is not executed if the success check is done externally
             self._finish()
 
-        return self.config.status
+        return self.status
 
     def _get_local_status(self):
-        self.config.exitcode = self._local_process.poll()
-        if self.config.exitcode is None:
-            self.config.status = Status.RUNNING
-        else:
-            self.config.status = Status.FINISHED
-            self._write_log()
+        exitcode = self._local_process.poll()
+        if exitcode is not None:
+            self.status = Status.FINISHED
+            self.exitcode = exitcode
 
     def _is_success(self):
         success = False
         if self.config.success_func is None:
             if self.type == Type.LOCAL:
-                success = (self.config.exitcode == 0)
+                success = (self.exitcode == 0)
             else:
-                self.config.exitcode = self.config.backend.exitcode()
-                success = (self.config.exitcode == '0:0')
+                self.exitcode = self.config.backend.exitcode()
+                success = (self.exitcode == self.config.backend._successcode)
         else:
             success = self.config.success_func(self.config)
 
@@ -319,6 +358,9 @@ class Job:
     def _finish(self):
         if self.config.post_func is not None:
             self.config.post_func(self.config)
+        ## Write local job log
+        if self.type == Type.LOCAL:
+            self._write_log()
 
     def edit_script(self, editor = None):
         """@SLURMY
@@ -389,10 +431,77 @@ class Job:
 
         * `job_type` Job type the job is set to.
         """
-        if self.config.status != Status.CONFIGURED:
+        if self.status != Status.CONFIGURED:
             log.warning('({}) Not in CONFIGURED state, cannot change job type'.format(self.name))
             raise Exception
         self.config.type = job_type
+
+    @property
+    def id(self):
+        """@SLURMY
+        Returns the ID of the job (int).
+        """
+
+        return self.config.job_id
+
+    @property
+    def output(self):
+        """@SLURMY
+        Returns the output path of the job (str).
+        """
+
+        return self.config.output
+
+    @property
+    def status(self):
+        """@SLURMY
+        Returns the status of the job (Status).
+        """
+
+        return self.config.status
+
+    @status.setter
+    def status(self, status):
+        """@SLURMY
+        Set the status of the job.
+
+        * `status` Status to set the job status to.
+        """
+        self.config.status = status
+
+    @property
+    def exitcode(self):
+        """@SLURMY
+        Returns the exitcode of the job (str or int).
+        """
+
+        return self.config.exitcode
+
+    @exitcode.setter
+    def exitcode(self, exitcode):
+        """@SLURMY
+        Set the exitcode of the job.
+
+        * `exitcode` Exitcode to set the job exitcode to.
+        """
+        self.config.exitcode = exitcode
+
+    @property
+    def mode(self):
+        """@SLURMY
+        Returns the mode the job is in (Mode). The job can either be ACTIVE or PASSIVE. If it is ACTIVE, status update is done by the job itself, otherwise it's done externally.
+        """
+
+        return self.config.modes[self.status]
+
+    def set_mode(self, status, mode):
+        """@SLURMY
+        Set the mode the job will be in while being in the specified status.
+
+        * `status` Status for which the mode is set.
+        * `mode` Mode that the job is set to for the given status.
+        """
+        self.config.set_mode(status, mode)
 
     def _get_local_command(self):
         command = ['/bin/bash']

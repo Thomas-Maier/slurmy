@@ -29,9 +29,12 @@ class Slurm(Base):
     * `time` Time limit for the slurm job.
     * `export` Environment exports that are propagated to the slurm job.
     """
+    
     bid = bids['SLURM']
     _script_options_identifier = 'SBATCH'
     _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
+    _successcode = '0:0'
+    
     def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None, mem = None, time = None, export = None):
         super(Slurm, self).__init__()
         ## Common backend options
@@ -126,3 +129,28 @@ class Slurm(Base):
             log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_return))
 
         return sacct_return
+
+    @staticmethod
+    def get_listen_func(partition = None, clusters = None):
+        command = ['sacct']
+        if partition:
+            command.extend(['-r', partition])
+        if clusters:
+            command.extend(['-M', clusters])
+        user = os.environ['USER']
+        command.extend(['-u', user, '-P', '-o', 'JobID,ExitCode'])
+        ## Define function for Listener
+        def listen(results, interval = 1):
+            import subprocess, time
+            while True:
+                result = subprocess.check_output(command, universal_newlines = True).rstrip('\n').split('\n')
+                res_dict = {}
+                for res in result:
+                    job_id_full, exitcode = res.split('|')
+                    if not job_id_full.endswith('.batch'): continue
+                    job_id = job_id_full.split('.')[0]
+                    res_dict[job_id] = {'status': Status.FINISHED, 'exitcode': exitcode}
+                results.put(res_dict)
+                time.sleep(interval)
+
+        return listen

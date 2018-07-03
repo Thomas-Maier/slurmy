@@ -11,6 +11,10 @@ class JobContainer(dict, object):
         self._tags = {}
         self._tags[Type.LOCAL] = set()
         self._local = set()
+        self._ids = {}
+
+    def add_id(self, job_id, job_name):
+        self._ids[job_id] = job_name
 
     def get(self, tags = None, states = None):
         """@SLURMY
@@ -102,12 +106,19 @@ class JobContainer(dict, object):
         return self._jobs_printlist()
 
     def __setitem__(self, key, val):
-        super(JobContainer, self).__setitem__(key, val)
         ## Check if a property with name key already exists, in this case we would overwrite functionality of the dictionary class
         if getattr(self, key, None) is not None:
             log.error('Take a look at the properties list of the dict class and please do not choose a name that matches any of them')
             raise Exception
-        self.__dict__[key] = val
+        super(JobContainer, self).__setitem__(key, val)
+
+    def __getitem__(self, key):
+        ## If key is not in internal dict, try job id to job name matching
+        if key not in self and key in self._ids:
+            key = self._ids[key]
+            
+        return super(JobContainer, self).__getitem__(key)
+        
 ## Property for status printing
 def _get_status_property(status, docstring):
     def getter(self):
