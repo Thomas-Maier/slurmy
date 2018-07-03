@@ -129,6 +129,7 @@ class Job:
         """
         log.debug('({}) Reset job'.format(self.name))
         self.status = Status.CONFIGURED
+        self.exitcode = None
         self.config.job_id = None
         self._local_process = None
         if reset_retries:
@@ -348,7 +349,9 @@ class Job:
             if self.type == Type.LOCAL:
                 success = (self.exitcode == 0)
             else:
-                self.exitcode = self.config.backend.exitcode()
+                ## If exitcode is None, get it from underlying backend
+                if self.exitcode is None:
+                    self.exitcode = self.config.backend.exitcode()
                 success = (self.exitcode == self.config.backend._successcode)
         else:
             success = self.config.success_func(self.config)

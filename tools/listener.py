@@ -58,6 +58,8 @@ class Listener:
         Update jobs associated to parent JobHandler with the collected information.
         """
         for key, update_dict in self._results.get().items():
+            ## If key is not registered in the mapping, skip
+            if key not in self._map: continue
             job = self._map[key]
             ## If job is not in status which the listener should consider, skip
             if job.status != self._listen_status: continue
@@ -66,7 +68,7 @@ class Listener:
             new_status = update_dict['status']
             ## Set all properties forwarded by the results
             for up_key, up_val in update_dict.items():
-                log.debug('(Listener) Update {} of job "{}" from {} to {}'.format(up_key, job.name, getattr(job, up_key), up_val))
+                log.debug('(Listener {}) Update {} of job "{}" from {} to {}'.format(self._listen_status.name, up_key, job.name, getattr(job, up_key), up_val))
                 setattr(job, up_key, up_val)
 
     def stop(self):

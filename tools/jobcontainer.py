@@ -113,11 +113,15 @@ class JobContainer(dict, object):
         super(JobContainer, self).__setitem__(key, val)
 
     def __getitem__(self, key):
-        ## If key is not in internal dict, try job id to job name matching
-        if key not in self and key in self._ids:
+        ## If key is in job id dict, substitute with job name matched to job id
+        if key in self._ids:
             key = self._ids[key]
             
         return super(JobContainer, self).__getitem__(key)
+
+    def __contains__(self, key):
+        ## Check own dict as well as the job ids dict for the key
+        return (super(JobContainer, self).__contains__(key) or (key in self._ids))
         
 ## Property for status printing
 def _get_status_property(status, docstring):

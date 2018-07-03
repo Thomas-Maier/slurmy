@@ -148,7 +148,7 @@ class Slurm(Base):
                 for res in result:
                     job_id_full, exitcode = res.split('|')
                     if not job_id_full.endswith('.batch'): continue
-                    job_id = job_id_full.split('.')[0]
+                    job_id = int(job_id_full.split('.')[0])
                     res_dict[job_id] = {'status': Status.FINISHED, 'exitcode': exitcode}
                 results.put(res_dict)
                 time.sleep(interval)
