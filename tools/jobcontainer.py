@@ -106,11 +106,12 @@ class JobContainer(dict, object):
         return self._jobs_printlist()
 
     def __setitem__(self, key, val):
+        super(JobContainer, self).__setitem__(key, val)
         ## Check if a property with name key already exists, in this case we would overwrite functionality of the dictionary class
         if getattr(self, key, None) is not None:
             log.error('Take a look at the properties list of the dict class and please do not choose a name that matches any of them')
             raise Exception
-        super(JobContainer, self).__setitem__(key, val)
+        self.__dict__[key] = val
 
     def __getitem__(self, key):
         ## If key is in job id dict, substitute with job name matched to job id
