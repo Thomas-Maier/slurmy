@@ -9,16 +9,35 @@ import logging
 
 log = logging.getLogger('slurmy')
 
-testmodules = [
-    'submission'
-    ]
+def get_test_names(discover_list, test_modules, test_methods):
+    for test in discover_list:
+        ## If this is not a TestCase, dig deeper
+        if not isinstance(test, unittest.TestCase):
+            get_test_names(test, test_modules, test_methods)
+        else:
+            test_class_module = test.__class__.__module__
+            test_modules.add(test_class_module)
+            test_class_name = test.__class__.__name__
+            test_method_name = test._testMethodName
+            test_name = '{}.{}.{}'.format(test_class_module, test_class_name, test_method_name)
+            test_methods.append(test_name)
+            
+## Get discovery start directory via __file__
+start_dir = __file__.rsplit('/', 1)[0]
+discover_list = unittest.defaultTestLoader.discover(start_dir, pattern = '*.py')
+## Remove empty test suites
+discover_list = [t for t in discover_list if t.countTestCases()]
+test_modules = set()
+test_methods = []
+## Get test modules and methods from discovery list
+get_test_names(discover_list, test_modules, test_methods)
 
-print(sys.argv)
 
 parser = argparse.ArgumentParser(description = 'Run the slurmy unittests')
 parser.add_argument('tests', nargs = '*', help = 'Only run given tests')
 parser.add_argument('--log', help = 'Logging level')
-parser.add_argument('-l', '--list', help = 'List test modules', action = 'store_true')
+parser.add_argument('--list', dest = 'list', help = 'List test modules', action = 'store_true')
+parser.add_argument('--list-methods', dest = 'list_methods', help = 'List test methods', action = 'store_true')
 parser.add_argument('-q', help = 'Set test verbosity to 1 (default 2)', action = 'store_true', default = False)
 args = parser.parse_args()
 
@@ -32,15 +51,22 @@ else:
 if args.tests:
     tests = args.tests
 else:
-    tests = testmodules
+    tests = test_modules
 
-## TODO: also allow for printout of the tests themselves, if a detailed list is requested (also merge request to MPF)
 if args.list:
     print("Possible test modules:")
     print("======================")
-    for test in testmodules:
+    for test in test_modules:
         print(test)
     sys.exit(0)
+    
+if args.list_methods:
+    print("Possible test methods:")
+    print("======================")
+    for test in test_methods:
+        print(test)
+    sys.exit(0)    
+    
 
 suite = unittest.TestSuite()
 
@@ -56,7 +82,7 @@ for postfix in tests:
         log.info("Trying to import {}".format(importTest))
         mod = __import__(importTest, globals(), locals(), ['suite'])
     except ImportError:
-        log.error("Test {} not found - try {}".format(t, testmodules))
+        log.error("Test {} not found - try {}".format(t, test_modules))
         raise
     try:
         ## If the module defines a suite() function, call it to get the suite.
