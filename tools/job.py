@@ -47,10 +47,9 @@ class JobConfig(object):
         ## Dynamic variables
         self._type = job_type
         self._modes = {}
-        ## By default, set all modes to ACTIVE, except RUNNING
+        ## By default, set all modes to ACTIVE
         for status in Status:
             self._modes[status] = Mode.ACTIVE
-        self._modes[Status.RUNNING] = Mode.PASSIVE
         self._status = Status.CONFIGURED
         self._job_id = None
         self._n_retries = 0

@@ -30,9 +30,9 @@ class JobHandlerConfig(object):
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
                    '_success_func', '_finished_func', '_verbosity', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
-                   '_wrapper', '_job_config_paths']
+                   '_wrapper', '_job_config_paths', '_listens']
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
         self._name = self._name_gen.name
@@ -51,6 +51,7 @@ class JobHandlerConfig(object):
         self._backend = backend
         self._do_snapshot = do_snapshot
         self._wrapper = wrapper
+        self._listens = listens
         ## Dynamic variables
         self._job_config_paths = []
 
@@ -106,7 +107,7 @@ class JobHandler(object):
     * `profiler` Profiler to be used for profiling.
     """
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
@@ -140,7 +141,7 @@ class JobHandler(object):
             ## Set default backend configuration
             backend.load_default_config()
             ## Make new JobHandler config
-            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, verbosity = verbosity, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper)
+            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, verbosity = verbosity, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens)
             self.reset(skip_jobs = True)
             ## Add this session to the slurmy bookkeeping only if snapshot making is activated
             if do_snapshot:
@@ -244,6 +245,7 @@ class JobHandler(object):
 
         Returns the job (Job).
         """
+        ##TODO: rethink how this should be handled
         # ## If job type is LOCAL but maximum number of local jobs is 0, set to 1
         # if job_type == Type.LOCAL and self.config.local_max == 0:
         #     log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
@@ -270,6 +272,8 @@ class JobHandler(object):
         label_success_func = None
         if job_label[Status.FINISHED] is not None:
             label_finished_func = FinishedTrigger(job_label[Status.FINISHED])
+        ##TODO: reimplement to only success file needed which is set to the output, at which point the output file listener takes over
+        ##TODO: this needs examples in the documentation
         if (job_label[Status.SUCCESS] is not None) and (job_label[Status.FAILED] is not None):
             label_success_func = SuccessTrigger(job_label[Status.SUCCESS], job_label[Status.FAILED])
         job_finished_func = finished_func or label_finished_func or self.config.finished_func
@@ -284,10 +288,14 @@ class JobHandler(object):
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
         job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, job_type = job_type, output = output, tags = tags, parent_tags = parent_tags)
-        ## If we have a custom finished_func, set the mode for RUNNING to ACTIVE
+        ## Set modes
+        ### If JobHandler listens, set the mode for RUNNING to PASSIVE by default
+        if self.config.listens:
+            job_config.set_mode(Status.RUNNING, Mode.PASSIVE)
+        ### If we have a custom finished_func, set the mode for RUNNING to ACTIVE
         if job_finished_func:
             job_config.set_mode(Status.RUNNING, Mode.ACTIVE)
-        ## If we have an output file, but no custom success_function, set the mode for FINISHED to PASSIVE
+        ### If we have an output file, but no custom success_function, set the mode for FINISHED to PASSIVE
         if output and not job_success_func:
             job_config.set_mode(Status.FINISHED, Mode.PASSIVE)
         ## Add job config snapshot path to list in JobHandlerConfig
@@ -396,6 +404,9 @@ class JobHandler(object):
         Prepare Listeners.
         """
         listeners = []
+        ## If JobHandler doesn't listen, return empty list
+        if not self.config.listens:
+            return listeners
         ## Set up backend specific FINISHED listeners (for now only SLURMY). TODO: dynamically assert which backends are used (one listener for each?)
         ## If we are in test mode (aka local mode), don't add batch listeners
         if not options.Main.test_mode:
