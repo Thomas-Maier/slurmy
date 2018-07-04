@@ -426,7 +426,7 @@ class JobHandler(object):
 
         return listeners
 
-    def run_jobs(self, interval = 5, retry = False):
+    def run_jobs(self, interval = 1, retry = False):
         """@SLURMY
         Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.
 

@@ -498,7 +498,7 @@ class Job(object):
     @property
     def mode(self):
         """@SLURMY
-        Returns the mode the job is in (Mode). The job can either be ACTIVE or PASSIVE. If it is ACTIVE, status update is done by the job itself, otherwise it's done externally.
+        Returns the mode the job is currently in (Mode). The job can either be ACTIVE or PASSIVE. If it is ACTIVE, status update is done by the job itself, otherwise it's done externally.
         """
 
         return self.config.modes[self.status]
@@ -511,6 +511,14 @@ class Job(object):
         * `mode` Mode that the job is set to for the given status.
         """
         self.config.set_mode(status, mode)
+
+    def get_mode(self, status):
+        """@SLURMY
+        Returns the mode the job is in while being in the specified status (Mode).
+
+        * `status` Status to return the job mode for.
+        """
+        return self.config.modes[status]
 
     def _get_local_command(self):
         command = ['/bin/bash']
