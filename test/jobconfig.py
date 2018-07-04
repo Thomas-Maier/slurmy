@@ -2,6 +2,7 @@
 import unittest
 import os
 
+
 class Test(unittest.TestCase):
     def setUp(self):
         from slurmy import JobHandler, test_mode
@@ -14,7 +15,7 @@ class Test(unittest.TestCase):
         from slurmy import test_mode
         test_mode(False)
 
-    ##TODO: run_script test
+    ##TODO: run_script test --> with direct string and path to file
 
     def test_run_args(self):
         job = self.jh.add_job(run_script = self.run_script, run_args = 'test')

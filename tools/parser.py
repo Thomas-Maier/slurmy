@@ -13,9 +13,12 @@ class Parser(object):
 
     def replace(self, string):
         ## Replace config variables
-        for key, val in self.config.__dict__.items():
-            if key.startswith('_'): continue
-            string = string.replace('{}{}'.format(self._prefix, key), '{}'.format(val))
+        for prop in self.config._properties:
+            prop = prop.strip('_')
+            parse_string = '{}{}'.format(self._prefix, prop)
+            if parse_string not in string: continue
+            prop_val = getattr(self.config, prop)
+            string = string.replace(parse_string, prop_val)
         ## Make sanity check and print warning if prefix string still exists in script
         if self._prefix in string: log.warning('Unknown {} variable in input string'.format(self._prefix))
 
