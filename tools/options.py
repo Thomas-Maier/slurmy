@@ -9,7 +9,7 @@ from ..backends.utils import backend_list
 log = logging.getLogger('slurmy')
 
 
-class Options:
+class Options(object):
     _options_file = '{}/.slurmy'.format(os.environ['HOME'])
 
     def __init__(self):

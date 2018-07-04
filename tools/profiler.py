@@ -2,7 +2,7 @@
 import cProfile, pstats
 
 
-class Profiler:
+class Profiler(object):
     def __init__(self, print_restrictions = [], sortby = 'cumulative'):
         self._profile = cProfile.Profile()
         self._print_restrictions = print_restrictions

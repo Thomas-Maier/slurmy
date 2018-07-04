@@ -1,6 +1,6 @@
 
 import logging
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level = logging.INFO)
 from .tools.jobhandler import JobHandler
 from .tools.defs import Status, Type, Theme
 from .tools import options

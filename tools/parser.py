@@ -5,7 +5,7 @@ from .defs import Status
 log = logging.getLogger('slurmy')
 
 
-class Parser:
+class Parser(object):
     _prefix = '@SLURMY.'
     def __init__(self, config):
         ## The job/jobhandler config of the parent

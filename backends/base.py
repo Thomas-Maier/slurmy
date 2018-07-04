@@ -12,7 +12,7 @@ from ..tools.wrapper import Wrapper
 log = logging.getLogger('slurmy')
 
 
-class Base:
+class Base(object):
     bid = bids['BASE']
     _script_options_identifier = ''
     _commands = []
@@ -110,6 +110,8 @@ class Base:
     def _check_command(command):
         proc = subprocess.Popen(shlex.split('which {}'.format(command)), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
         ret_code = proc.wait()
+        ## Close stdout streaming
+        proc.stdout.close()
         if ret_code != 0:
             return False
 

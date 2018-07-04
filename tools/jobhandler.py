@@ -20,7 +20,7 @@ from .listener import Listener
 log = logging.getLogger('slurmy')
         
 
-class JobHandlerConfig:
+class JobHandlerConfig(object):
     """@SLURMY
     Config class for the JobHandler class. Stores all necessary information to load the JobHandler session at a later time. All properties are assigned with a custom getter function, which keeps track of updates to the respective property (tracked with the "update" variable).
 
@@ -29,10 +29,10 @@ class JobHandlerConfig:
     
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
-                   '_success_func', '_finished_func', '_is_verbose', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
+                   '_success_func', '_finished_func', '_verbosity', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
                    '_wrapper', '_job_config_paths']
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
         self._name = self._name_gen.name
@@ -44,7 +44,7 @@ class JobHandlerConfig:
         self._script_dir, self._log_dir, self._output_dir, self._snapshot_dir, self._tmp_dir = self.dirs
         self._success_func = success_func
         self._finished_func = finished_func
-        self._is_verbose = is_verbose
+        self._verbosity = verbosity
         self._local_max = local_max
         self._max_retries = max_retries
         self._run_max = run_max
@@ -85,7 +85,7 @@ class JobHandlerConfig:
 set_update_properties(JobHandlerConfig)
 
 
-class JobHandler:
+class JobHandler(object):
     """@SLURMY
     Main handle to setup and submit jobs. Internally stores most information in the JobHandlerConfig class, which is stored on disk as a snapshot of the JobHandler session.
 
@@ -93,7 +93,7 @@ class JobHandler:
     * `backend` Default backend instance used for the job setup.
     * `work_dir` Path where the base directory is created.
     * `local_max` Maximum number of local jobs that will be submitted at a time.
-    * `is_verbose` Increase verbosity of shell output.
+    * `verbosity` Verbosity of the shell output.
     * `success_func` Default success function used for the job setup.
     * `finished_func` Default finished function used for the job setup.
     * `max_retries` Maximum number of retries that are attempted for failing jobs.
@@ -106,7 +106,7 @@ class JobHandler:
     * `profiler` Profiler to be used for profiling.
     """
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, is_verbose = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
@@ -140,9 +140,11 @@ class JobHandler:
             ## Set default backend configuration
             backend.load_default_config()
             ## Make new JobHandler config
-            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, is_verbose = is_verbose, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper)
+            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, verbosity = verbosity, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper)
             self.reset(skip_jobs = True)
-            JobHandler._add_bookkeeping(self.config.name, work_dir, description)
+            ## Add this session to the slurmy bookkeeping only if snapshot making is activated
+            if do_snapshot:
+                JobHandler._add_bookkeeping(self.config.name, work_dir, description)
         ## Variable parser
         self._parser = Parser(self.config)
         ## Set profiler
@@ -242,10 +244,10 @@ class JobHandler:
 
         Returns the job (Job).
         """
-        ## If job type is LOCAL but maximum number of local jobs is 0, set to 1
-        if job_type == Type.LOCAL and self.config.local_max == 0:
-            log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
-            self.config.local_max = 1
+        # ## If job type is LOCAL but maximum number of local jobs is 0, set to 1
+        # if job_type == Type.LOCAL and self.config.local_max == 0:
+        #     log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
+        #     self.config.local_max = 1
         if backend is None and options.Main.backend is not None:
             backend = get_backend(options.Main.backend)
         if backend is None:
@@ -326,7 +328,7 @@ class JobHandler:
 
     def _get_print_string(self):
         print_string = 'Jobs '
-        if self.config.is_verbose:
+        if self.config.verbosity > 1:
             n_running = len(self.jobs._states[Status.RUNNING])
             n_local = len(self.jobs._local)
             n_batch = n_running - n_local
@@ -368,7 +370,7 @@ class JobHandler:
             n_local = summary_val['local']
             n_all = summary_val['batch'] + summary_val['local']
             print_string += '{}(batch/local/all): ({}/{}/{})\n'.format(summary_val['string'], n_batch, n_local, n_all)
-        if self.config.is_verbose and jobs_failed:
+        if self.config.verbosity > 1 and jobs_failed:
             print_string += 'Failed jobs: {}\n'.format(jobs_failed)
         if time_spent:
             print_string += 'Time spent: {:.1f} s'.format(time_spent)
@@ -439,8 +441,9 @@ class JobHandler:
             n_all = len(self.jobs)
             running = True
             ## Initial printout to avoid empty line until first cycle of submits is done
-            stdout.write('\r'+self._get_print_string())
-            stdout.flush()
+            if self.config.verbosity > 0:
+                stdout.write('\r'+self._get_print_string())
+                stdout.flush()
             while running:
                 ## Update jobs with listeners
                 for listener in listeners:
@@ -455,8 +458,9 @@ class JobHandler:
                     running = False
                 else:
                     if not self._debug:
-                        stdout.write('\r'+print_string)
-                        stdout.flush()
+                        if self.config.verbosity > 0:
+                            stdout.write('\r'+print_string)
+                            stdout.flush()
                     else:
                         log.debug(print_string)
                     if interval == -1:
@@ -487,7 +491,10 @@ class JobHandler:
             ## Final snapshot
             self.update_snapshot()
             time_now = time.time() - time_now
-            if not self._debug: self.print_summary(time_now)
+            ## Print final summary
+            if not self._debug:
+                if self.config.verbosity > 0:
+                    self.print_summary(time_now)
             ## If profiler is set, print profiling result
             if self._profiler is not None:
                 self._profiler.stop()

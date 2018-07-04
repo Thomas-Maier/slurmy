@@ -10,7 +10,7 @@ from . import options
 log = logging.getLogger('slurmy')
 
 
-class JobConfig:
+class JobConfig(object):
     """@SLURMY
     Config class for the Job class. Stores all necessary information to load the Job at a later time. All properties are assigned with a custom getter function, which keeps track of updates to the respective property (tracked with the "update" variable).
 
@@ -96,7 +96,7 @@ class JobConfig:
 set_update_properties(JobConfig)
 
 
-class Job:
+class Job(object):
     """@SLURMY
     Job class that holds the job configuration and status information. Internally stores most information in the JobConfig class, which is stored on disk as a snapshot of the Job. Jobs are not meant to be set up directly but rather via JobHandler.add_job().
 
@@ -242,13 +242,19 @@ class Job:
         ## Stop job if it's in running state
         if self.status == Status.RUNNING:
             if self.type == Type.LOCAL:
-                self._local_process.terminate()
+                self._stop_local()
             else:
                 self.config.backend.cancel()
         self.status = Status.CANCELLED
         if clear_retry: self.config.max_retries = 0
 
         return self.status
+
+    def _stop_local(self):
+        ## Close stdout streaming
+        self._local_process.stdout.close()
+        ## Terminate process
+        self._local_process.terminate()
 
     def _retry(self, force = False, submit = True, ignore_max_retries = False, job_type = None):
         """@SLURMY
@@ -364,6 +370,7 @@ class Job:
         ## Write local job log
         if self.type == Type.LOCAL:
             self._write_log()
+            self._stop_local()
 
     def edit_script(self, editor = None):
         """@SLURMY
