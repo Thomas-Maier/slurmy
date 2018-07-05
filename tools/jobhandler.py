@@ -3,7 +3,6 @@ from __future__ import print_function
 import os
 import time
 from sys import stdout, version_info
-from collections import OrderedDict
 import pickle
 import logging
 from .defs import Status, Type, Theme, Mode
@@ -16,6 +15,7 @@ from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_p
 from .jobcontainer import JobContainer
 from .utils import update_decorator
 from .listener import Listener
+from .printer import Printer
 
 log = logging.getLogger('slurmy')
         
@@ -29,10 +29,10 @@ class JobHandlerConfig(object):
     
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
-                   '_success_func', '_finished_func', '_verbosity', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
+                   '_success_func', '_finished_func', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
                    '_wrapper', '_job_config_paths', '_listens', '_output_max_attempts']
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
         self._name = self._name_gen.name
@@ -44,7 +44,6 @@ class JobHandlerConfig(object):
         self._script_dir, self._log_dir, self._output_dir, self._snapshot_dir, self._tmp_dir = self.dirs
         self._success_func = success_func
         self._finished_func = finished_func
-        self._verbosity = verbosity
         self._local_max = local_max
         self._max_retries = max_retries
         self._run_max = run_max
@@ -142,7 +141,7 @@ class JobHandler(object):
             ## Set default backend configuration
             backend.load_default_config()
             ## Make new JobHandler config
-            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, verbosity = verbosity, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens, output_max_attempts = output_max_attempts)
+            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens, output_max_attempts = output_max_attempts)
             self.reset(skip_jobs = True)
             ## Add this session to the slurmy bookkeeping only if snapshot making is activated
             if do_snapshot:
@@ -151,6 +150,8 @@ class JobHandler(object):
         self._parser = Parser(self.config)
         ## Set profiler
         self._profiler = profiler
+        ## Set up printer
+        self._printer = Printer(self, verbosity = verbosity)
 
     def __getitem__(self, key):
         return self.jobs[key]
@@ -339,70 +340,11 @@ class JobHandler(object):
 
         return True
 
-    def _get_print_string(self):
-        print_string = 'Jobs '
-        if self.config.verbosity > 1:
-            n_running = len(self.jobs._states[Status.RUNNING])
-            n_local = len(self.jobs._local)
-            n_batch = n_running - n_local
-            print_string += 'running (batch/local/all): ({}/{}/{}); '.format(n_batch, n_local, n_running)
-        n_success = len(self.jobs._states[Status.SUCCESS])
-        n_failed = len(self.jobs._states[Status.FAILED])
-        n_all = len(self.jobs)
-        print_string += '(success/fail/all): ({}/{}/{})'.format(n_success, n_failed, n_all)
-
-        return print_string
-
-    def _get_summary_string(self, time_spent = None):
-        n_jobs = len(self.jobs)
-        n_local = len(self.jobs._tags[Type.LOCAL])
-        n_batch = n_jobs - n_local
-        summary_dict = OrderedDict()
-        summary_dict['all'] = {'string': 'Jobs processed ', 'batch': n_batch, 'local': n_local}
-        summary_dict['success'] = {'string': '     successful ', 'batch': 0, 'local': 0}
-        summary_dict['fail'] = {'string': '     failed ', 'batch': 0, 'local': 0}
-        jobs_failed = ''
-        for job in self.jobs.values():
-            status = job.get_status()
-            if status == Status.SUCCESS:
-                if job.type == Type.LOCAL:
-                    summary_dict['success']['local'] += 1
-                else:
-                    summary_dict['success']['batch'] += 1
-            elif status == Status.FAILED or status == Status.CANCELLED:
-                jobs_failed += '{} '.format(job.name)
-                if job.type == Type.LOCAL:
-                    summary_dict['fail']['local'] += 1
-                else:
-                    summary_dict['fail']['batch'] += 1
-
-        print_string = ''
-        for key, summary_val in summary_dict.items():
-            if key == 'fail' and not jobs_failed: continue
-            n_batch = summary_val['batch']
-            n_local = summary_val['local']
-            n_all = summary_val['batch'] + summary_val['local']
-            print_string += '{}(batch/local/all): ({}/{}/{})\n'.format(summary_val['string'], n_batch, n_local, n_all)
-        if self.config.verbosity > 1 and jobs_failed:
-            print_string += 'Failed jobs: {}\n'.format(jobs_failed)
-        if time_spent:
-            print_string += 'Time spent: {:.1f} s'.format(time_spent)
-
-        return print_string
-
     def _wait_for_jobs(self, tags = None):
         for job in self.jobs.get(tags):
             if job.type != Type.LOCAL: continue
             log.debug('Wait for job {}'.format(job.name))
             job.wait()
-
-    def print_summary(self, time_spent = None):
-        """@SLURMY
-        Print a summary of the job processing.
-        """
-        print_string = self._get_summary_string(time_spent)
-        stdout.write('\r'+print_string)
-        stdout.write('\n')
 
     def _setup_listeners(self):
         """@SLURMY
@@ -445,8 +387,11 @@ class JobHandler(object):
             self._profiler.start()
         ## Prepare listeners
         listeners = self._setup_listeners()
-        time_now = time.time()
         try:
+            ## Start printer
+            self._printer.start()
+            ### Set printer to manual after start, if interval is set to -1
+            if interval == -1: self._printer.set_manual()
             ## Start listeners
             for listener in listeners:
                 listener.start()
@@ -458,17 +403,11 @@ class JobHandler(object):
                 self.set_jobs_config_attr('n_retries', 0, states = job_states)
             n_all = len(self.jobs)
             running = True
-            ## Initial printout to avoid empty line until first cycle of submits is done
-            if self.config.verbosity > 0:
-                stdout.write('\r'+self._get_print_string())
-                stdout.flush()
             while running:
                 ## Update jobs with listeners
                 for listener in listeners:
                     listener.update_jobs()
                 self.submit_jobs(wait = False)
-                print_string = self._get_print_string()
-                if interval == -1: print_string += ' - press enter to update status'
                 n_success = len(self.jobs._states[Status.SUCCESS])
                 n_failed = len(self.jobs._states[Status.FAILED])
                 n_cancelled = len(self.jobs._states[Status.CANCELLED])
@@ -476,11 +415,10 @@ class JobHandler(object):
                     running = False
                 else:
                     if not self._debug:
-                        if self.config.verbosity > 0:
-                            stdout.write('\r'+print_string)
-                            stdout.flush()
+                        ## Update printer output
+                        self._printer.update()
                     else:
-                        log.debug(print_string)
+                        log.debug(self._printer._get_print_string()+'\n')
                     if interval == -1:
                         get_input_func()()
                     else:
@@ -508,11 +446,8 @@ class JobHandler(object):
                 listener.stop()
             ## Final snapshot
             self.update_snapshot()
-            time_now = time.time() - time_now
-            ## Print final summary
-            if not self._debug:
-                if self.config.verbosity > 0:
-                    self.print_summary(time_now)
+            ## Print final summary and close printer
+            self._printer.stop()
             ## If profiler is set, print profiling result
             if self._profiler is not None:
                 self._profiler.stop()
