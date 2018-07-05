@@ -114,7 +114,7 @@ run_script_2 = """
 echo "horst"
 """
 ## Add job 2 with parent_tag "hans"
-jh.add_job(run_script = run_script_2, parent_tags = 'horst')
+jh.add_job(run_script = run_script_2, parent_tags = 'hans')
 ## Run all jobs
 jh.run_jobs()
 ```
