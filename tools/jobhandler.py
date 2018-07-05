@@ -238,7 +238,7 @@ class JobHandler(object):
         * `finished_func` Finished function used for the job setup.
         * `post_func` Post execution function used for the job setup.
         * `max_retries` Maximum number of retries that are attempted when job is failing.
-        * `output` Output file of the job.
+        * `output` Output file of the job. This **must** be an absolute path.
         * `tags` List of tags attached to the job.
         * `parent_tags` List of parent tags attached to the job.
         * `name` Name of the job. This must be a string that conforms with the restrictions on class property names. Slurmy will make sure that job names stay unique, even if the same job name is set multiple times.

@@ -119,31 +119,84 @@ jh.add_job(run_script = run_script_2, parent_tags = 'horst')
 jh.run_jobs()
 ```
 
-## Custom evaluations for success, finished, and post-execution
+## Steering evaluation of jobs processing status
 
-By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. If `success_func` was defined during add_job, the custom definition will be used instead of the default one during the success evaluation.
+By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it finished and was successful or not. However, you can change how slurmy will evaluate whether the job is finished or was successful.
 
-This example uses the predefined [SuccessOutputFile](utils/SuccessOutputFile.md) class, which checks if the output associated to job exists on disk in order to evaluate whether if it succeeded or not.
+### Job listener
+
+First a word on what the default evaluation setup of slurmy is. In general, jobs are designed to do their status evaluations themselves, i.e. the [JobHandler](classes/JobHandler.md) asks the job for it's status. This can get very performance heavy if this is connected to a request to the batch system accounting/bookkeeping. By default, slurmy runs a [Listener](classes/Listener.md) to collect the job information from the batch system and set it's exitcode when it's finished. Keep in mind that setting a `finished_func` (see below) will deactivate the listener and possibly slow down the job submission cycle (if you do something processing intensive for the evaluation).
+
+### Define output file for success evaluation
+You can define the `output` of each job explicitly to change the success evaluation to check for the output to be present. From a technical side, this sets up a [Listener](classes/Listener.md) which checks if the defined output files exist and sets the associated jobs status to SUCCESS if it finds them.
 
 ```python
-from slurmy import JobHandler, SuccessOutputFile
+from slurmy import JobHandler
 
-## Set up success evaluation class which checks if the job's output exists or not
-sf = SuccessOutputFile()
 ## Set up the JobHandler
-jh = JobHandler(success_func = sf)
+jh = JobHandler(output_max_attempts = 5)
 ## Define the run script content
 run_script = """
 touch ~/hans.txt
 """
 ## Add a job, specifying the output of the job.
-##The success evaluation class can be specified for each job separately.
-jh.add_job(run_script = run_script, output = '~/hans.txt', success_func = sf)
+jh.add_job(run_script = run_script, output = '~/hans.txt')
 ## Run all jobs
 jh.run_jobs()
 ```
 
-In the same way as `success_func`, you can also define `finished_func`, to evaluate if a job is finished, or `post_func`, to define a post-processing which will be done locally after the job's success evaluation was done.
+The `output_max_attempts` argument of the [JobHandler](classes/JobHandler.md) defines how many attempts are made to find the output file for a given job that is in FINISHED state. By default it is set to 5, in order to avoid delayed availablity of the output file in the underlying file system.
+
+### FINISHED and SUCCESS trigger in the run_script
+You can also set triggers in the run_script to indicate at which point in the job processing it should be considered as FINISHED and/or SUCCESS.
+
+```python
+from slurmy import JobHandler
+
+## Set up the JobHandler
+jh = JobHandler()
+## Define the run script content
+run_script = """
+echo "hans"
+@SLURMY.FINISHED
+echo "horst"
+@SLURMY.SUCCESS
+"""
+## Add a job
+jh.add_job(run_script = run_script)
+## Run all jobs
+jh.run_jobs()
+```
+
+From a technical point, `@SLURMY.FINISHED` and `@SLURMY.SUCCESS` are substituted by temporary files, which are created at these points in the script. The FINISHED/SUCCESS evaluation is then checking if these files exist. The file name associated to `@SLURMY.SUCCESS` is also set as `output`, if it's not already specified as `add_job` argument.
+
+## Custom evaluations for success, finished, and post-execution
+
+You can define a custom finished condition by creating a dedicated class with \_\_call\_\_ defined. The function has to have exactly one argument, which is the config instance of the job. If `finished_func` is defined during add_job, the custom definition will be used instead of the default one during the finished evaluation.
+
+This example uses the predefined [FinishedTrigger](utils/FinishedTrigger.md) class, which checks if the specified file exists on disk in order to evaluate whether if the job finished or not.
+
+```python
+from slurmy import JobHandler, FinishedTrigger
+
+## Set up finished evaluation class
+finished_file = '~/hans.txt'
+ft = FinishedTrigger(finished_file)
+## Set up the JobHandler
+jh = JobHandler()
+## Define the run script content
+run_script = """
+touch {}
+""".format(finished_file)
+## Add a job
+jh.add_job(run_script = run_script, finished_func = ft)
+## Run all jobs
+jh.run_jobs()
+```
+
+This will actually do the same as the `@SLURM.FINISHED` example above.
+
+In the same way as `finished_func`, you can also define `success_func`, to evaluate if a job is successful, or `post_func`, to define a post-processing which will be done locally after the job's success evaluation was done.
 
 ### Regarding class definitions
 

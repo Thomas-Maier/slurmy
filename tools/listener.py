@@ -8,7 +8,6 @@ import logging
 log = logging.getLogger('slurmy')
 
 
-##TODO: check if a "signaler" module already exists for python
 class Listener(object):
     """@SLURMY
     Listener class which is running in the background and collects state change information of jobs attached to the parent JobHandler instance.

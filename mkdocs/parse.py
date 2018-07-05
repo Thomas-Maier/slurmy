@@ -5,11 +5,12 @@ import os
 from slurmy.tools.jobhandler import JobHandler, JobHandlerConfig
 from slurmy.tools.jobcontainer import JobContainer
 from slurmy.tools.job import Job, JobConfig
+from slurmy.tools.listener import Listener
 from slurmy.tools.utils import SuccessOutputFile, SuccessTrigger, FinishedTrigger, LogMover, list_sessions, load, load_path, load_latest
 
 
 sub_dict = {}
-for class_name in ['JobHandler', 'JobHandlerConfig', 'JobContainer', 'Job', 'JobConfig']:
+for class_name in ['JobHandler', 'JobHandlerConfig', 'JobContainer', 'Job', 'JobConfig', 'Listener']:
     sub_dict['{}.'.format(class_name)] = '[{0}]({0}.md#{0}).'.format(class_name)
     sub_dict['{} '.format(class_name)] = '[{0}]({0}.md#{0}) '.format(class_name)
 
@@ -20,6 +21,7 @@ def parse():
         [JobContainer, 'docs/classes'],
         [Job, 'docs/classes'],
         [JobConfig, 'docs/classes'],
+        [Listener, 'docs/classes'],
         [SuccessOutputFile, 'docs/utils'],
         [SuccessTrigger, 'docs/utils'],
         [FinishedTrigger, 'docs/utils'],

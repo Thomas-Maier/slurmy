@@ -11,6 +11,7 @@ pages:
   - JobContainer: classes/JobContainer.md
   - Job: classes/Job.md
   - JobConfig: classes/JobConfig.md
+  - Listener: classes/Listener.md
 - Utility:
   - SuccessOutputFile: utils/SuccessOutputFile.md
   - SuccessTrigger: utils/SuccessTrigger.md
