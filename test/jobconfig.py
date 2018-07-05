@@ -10,6 +10,7 @@ class Test(unittest.TestCase):
         self.test_dir = 'slurmy_unittest/jobconfig'
         self.jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_jobconfig', do_snapshot = False)
         self.run_script = 'echo "test"'
+        self.run_script_trigger = '@SLURMY.FINISHED; @SLURMY.SUCCESS;'
 
     def tearDown(self):
         from slurmy import test_mode
@@ -46,7 +47,7 @@ class Test(unittest.TestCase):
 
     def test_output(self):
         from slurmy import Status, Mode
-        job = self.jh.add_job(run_script = self.run_script, output = 'hans')
+        job = self.jh.add_job(run_script = self.run_script, output = 'test')
         self.assertIs(job.get_mode(Status.FINISHED), Mode.PASSIVE)
         self.assertIsNotNone(job.output)
 
@@ -65,7 +66,19 @@ class Test(unittest.TestCase):
         self.assertIn('horst', job.parent_tags)
 
     def test_variable_substitution(self):
-        from slurmy import Status, Mode
+        from slurmy import Status
         job = self.jh.add_job(run_script = self.run_script, output = '@SLURMY.output_dir/test')
         output = os.path.join(self.jh.config.output_dir, 'test')
-        self.assertIs(job.output, output)
+        self.assertTrue(job.output == output)
+
+    def test_trigger(self):
+        from slurmy import Status, Mode
+        job = self.jh.add_job(run_script = self.run_script_trigger)
+        self.assertIsNotNone(job.output)
+        self.assertIsNotNone(job.config.finished_func)
+        self.assertIs(job.get_mode(Status.RUNNING), Mode.ACTIVE)
+        self.assertIs(job.get_mode(Status.FINISHED), Mode.PASSIVE)
+        job = self.jh.add_job(run_script = self.run_script_trigger, output = 'test')
+        self.assertIs(job.output, 'test')
+        self.assertIs(job.get_mode(Status.FINISHED), Mode.ACTIVE)
+        self.assertIsNotNone(job.config.success_func)

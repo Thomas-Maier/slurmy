@@ -227,7 +227,6 @@ class JobHandler(object):
 
         return job
 
-    ## TODO: ensure that output is an absolute path
     def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None, job_type = Type.BATCH):
         """@SLURMY
         Add a job to the list of jobs to be processed by the JobHandler.
@@ -267,7 +266,7 @@ class JobHandler(object):
         name = self.config.name_gen.next(name)
         backend.name = name
         ## Set and evaluate job label
-        job_label = {Status.FINISHED: None, Status.SUCCESS: None, Status.FAILED: None}
+        job_label = {Status.FINISHED: None, Status.SUCCESS: None}
         for status in job_label:
             backend.run_script, job_label[status] = self._parser.set_status_label(backend.run_script, name, status)
         label_finished_func = None

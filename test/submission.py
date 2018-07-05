@@ -2,10 +2,7 @@
 import unittest
 import os
 
-## TODO: maybe just split in classes Local, Batch, Mixed
-## TODO: Tests for
-##       - variable substitution (in job config)
-##       - output listening
+
 class Test(unittest.TestCase):
     def setUp(self):
         self.test_dir = 'slurmy_unittest/submission'
@@ -15,6 +12,7 @@ class Test(unittest.TestCase):
         self.output_file = '@SLURMY.output_dir/test'
         self.run_script_touch_file = '#!/bin/bash\ntouch {0}; sleep 2;'.format(self.output_file)
         self.run_script_ls_file = '#!/bin/bash\nls {};'.format(self.output_file)
+        self.run_script_trigger = '#!/bin/bash\necho "test"; @SLURMY.FINISHED; @SLURMY.SUCCESS;'
         script_path = os.path.abspath(os.path.join(self.test_dir, 'run_script_success.sh'))
         with open(script_path, 'w') as out_file:
             out_file.write(self.run_script)
@@ -168,7 +166,7 @@ class Test(unittest.TestCase):
 
     def test_output_listener(self):
         from slurmy import JobHandler, Status
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_output_listener', output_max_attempts = 5)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_output_listener')
         jh.add_job(run_script = self.run_script_touch_file, name = 'test', output = self.output_file)
         jh.run_jobs()
         self.assertIs(jh.jobs.test.status, Status.SUCCESS)
@@ -177,6 +175,13 @@ class Test(unittest.TestCase):
         jh.jobs.test.config.output = 'jwoigjwoijegoijwoijegoiwoeg'
         jh.run_jobs()
         self.assertIs(jh.jobs.test.status, Status.FAILED)
+
+    def test_trigger_listener(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_trigger_listener')
+        jh.add_job(run_script = self.run_script_trigger, name = 'test')
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test.status, Status.SUCCESS)
 
 if __name__ == '__main__':
     unittest.main()
