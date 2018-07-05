@@ -1,6 +1,5 @@
 
-import subprocess as sp
-import multiprocessing as mp
+import multiprocessing
 import glob
 import time
 from .defs import Status, Mode
@@ -34,20 +33,20 @@ class Listener(object):
             self._attempts = {}
         self._fail_results = fail_results or {'status': Status.FAILED}
         ## Results handle
-        self._results = mp.Queue()
+        self._results = multiprocessing.Queue()
         ## Process pointer
         self._process = None
-        ## Mapping function
-        self._map = lambda job, propname: getattr(job, propname)
+        ## Mapping property
+        self._map_property = map_property
 
     def start(self, interval = 1):
         """@SLURMY
         Spawn subprocess which continuously collects information by configurable mechanism and match any updates in the output to a state change decision of jobs.
 
         * `interval` Interval at which information is collected by subprocess.
-        """
+        """ 
         args = (self._results, interval)
-        self._process = mp.Process(target = self._listen_func, args = args)
+        self._process = multiprocessing.Process(target = self._listen_func, args = args)
         self._process.start()
 
     def update_jobs(self):
@@ -61,18 +60,21 @@ class Listener(object):
             ## If job is in ACTIVE mode, skip
             if job.mode == Mode.ACTIVE: continue
             ## Get result key relevant for this job
-            key = self._map(job, map_property)
+            key = getattr(job, self._map_property)
             ## Count attempt, if required
             if self._max_attempts is not None:
                 if key not in self._attempts: self._attempts[key] = 0
                 self._attempts[key] += 1
+                log.debug('(Listener {}) Job "{}" is now at {} attempts'.format(self._listen_status.name, job.name, self._attempts[key]))
             update_dict = None
             if key in results:
                 ## If key is in results, set update_dict to results
+                log.debug('(Listener {}) Found results for job "{}"'.format(self._listen_status.name, job.name))
                 update_dict = results[key]
             elif (self._max_attempts is not None) and (self._attempts[key] >= self._max_attempts):
                 ## Else if maximum number of attempts is reached, set update_dict to fail results
-                udpate_dict = self._fail_results
+                log.debug('(Listener {}) Job "{}" reached maximum amount of attempts, setting fail results'.format(self._listen_status.name, job.name))
+                update_dict = self._fail_results
             ## If we have results, update job properties
             if update_dict is not None:
                 for up_key, up_val in update_dict.items():

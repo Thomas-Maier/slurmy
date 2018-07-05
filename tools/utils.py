@@ -40,11 +40,21 @@ class SuccessTrigger:
 
         return False
 
-def get_listen_files(file_list, status):
+def get_listen_files(file_list, folder_list, status):
+    import logging
+    log = logging.getLogger('slurmy')
     def listen_files(results, interval = 1):
-        import os, time
+        import os, time, subprocess
         from slurmy import Status
         while True:
+            ## Make an explicit ls on the folders where the output files are written to
+            ## This avoids problems with delayed updates in the underlying file system
+            for folder in folder_list:
+                try:
+                    subprocess.check_output(['ls', folder], universal_newlines = True, stderr = subprocess.STDOUT)
+                except subprocess.CalledProcessError:
+                    log.debug('Output folder {} does not exist, please check'.format(folder))
+            ## Collect the information and put in results
             res_dict = {}
             for file_name in file_list:
                 if not os.path.isfile(file_name): continue

@@ -227,6 +227,7 @@ class JobHandler(object):
 
         return job
 
+    ## TODO: ensure that output is an absolute path
     def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None, job_type = Type.BATCH):
         """@SLURMY
         Add a job to the list of jobs to be processed by the JobHandler.
@@ -425,7 +426,9 @@ class JobHandler(object):
         ## Set up output file listener, if any are defined
         if file_list:
             from .utils import get_listen_files
-            listen_success = get_listen_files(file_list, Status.SUCCESS)
+            ### Get list of associated folders
+            folder_list = set([f.rsplit('/', 1)[0] for f in file_list])
+            listen_success = get_listen_files(file_list, folder_list, Status.SUCCESS)
             listener_success = Listener(self, listen_success, Status.FINISHED, 'output', max_attempts = self.config.output_max_attempts, fail_results = {'status': Status.FAILED})
             listeners.append(listener_success)
 
