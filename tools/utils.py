@@ -3,21 +3,7 @@ import logging
 log = logging.getLogger('slurmy')
 
 
-def get_listen_files(file_list, status):
-    def listen_files(results, interval = 1):
-        import os, time
-        from slurmy import Status
-        while True:
-            res_dict = {}
-            for file_name in file_list:
-                if not os.path.isfile(file_name): continue
-                res_dict[file_name] = {'status': status}
-            results.put(res_dict)
-            time.sleep(interval)
-
-    return listen_files
-
-## Success classes
+## Success classes/functions
 class SuccessOutputFile:
     """@SLURMY
     Callable class which can be used as success_func of a slurmy job. It checks if the output file that is associated to the job is present in the underlying file system.
@@ -35,27 +21,38 @@ class SuccessOutputFile:
 
 class SuccessTrigger:
     """@SLURMY
-    Callable class which can be used as success_func of a slurmy job. It continuously checks if either the success_file or the failure_file is present in the underlying file system.
+    Callable class which can be used as success_func of a slurmy job. It checks if the success_file is present in the underlying file system, once a second. If the maximum number of attempts are reached without finding the file, it returns FAILED.
 
     * `success_file` The file which is created if the job is successful.
-    * `failure_file` The file which is created if the job failed.
+    * `max_attempts` Maximum number of attempts that will be tried to find the success_file.
     """
-    def __init__(self, success_file, failure_file):
+    def __init__(self, success_file, max_attempts):
         self._success_file = success_file
-        self._failure_file = failure_file
+        self._max_attempts = max_attempts
 
     def __call__(self, config):
         import os, time
-        while True:
-            if not (os.path.isfile(self._success_file) or os.path.isfile(self._failure_file)):
-                time.sleep(0.5)
-                continue
+        for i in range(self._max_attempts):
             if os.path.isfile(self._success_file):
                 os.remove(self._success_file)
                 return True
-            else:
-                os.remove(self._failure_file)
-                return False
+            time.sleep(1)
+
+        return False
+
+def get_listen_files(file_list, status):
+    def listen_files(results, interval = 1):
+        import os, time
+        from slurmy import Status
+        while True:
+            res_dict = {}
+            for file_name in file_list:
+                if not os.path.isfile(file_name): continue
+                res_dict[file_name] = {'status': status}
+            results.put(res_dict)
+            time.sleep(interval)
+
+    return listen_files
 
 ## Finished classes
 class FinishedTrigger:

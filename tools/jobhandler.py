@@ -30,9 +30,9 @@ class JobHandlerConfig(object):
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
                    '_success_func', '_finished_func', '_verbosity', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
-                   '_wrapper', '_job_config_paths', '_listens']
+                   '_wrapper', '_job_config_paths', '_listens', '_output_max_attempts']
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
         self._name = self._name_gen.name
@@ -52,6 +52,7 @@ class JobHandlerConfig(object):
         self._do_snapshot = do_snapshot
         self._wrapper = wrapper
         self._listens = listens
+        self._output_max_attempts = output_max_attempts
         ## Dynamic variables
         self._job_config_paths = []
 
@@ -107,7 +108,7 @@ class JobHandler(object):
     * `profiler` Profiler to be used for profiling.
     """
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
@@ -141,7 +142,7 @@ class JobHandler(object):
             ## Set default backend configuration
             backend.load_default_config()
             ## Make new JobHandler config
-            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, verbosity = verbosity, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens)
+            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, verbosity = verbosity, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens, output_max_attempts = output_max_attempts)
             self.reset(skip_jobs = True)
             ## Add this session to the slurmy bookkeeping only if snapshot making is activated
             if do_snapshot:
@@ -272,10 +273,14 @@ class JobHandler(object):
         label_success_func = None
         if job_label[Status.FINISHED] is not None:
             label_finished_func = FinishedTrigger(job_label[Status.FINISHED])
-        ##TODO: reimplement to only success file needed which is set to the output, at which point the output file listener takes over
         ##TODO: this needs examples in the documentation
-        if (job_label[Status.SUCCESS] is not None) and (job_label[Status.FAILED] is not None):
-            label_success_func = SuccessTrigger(job_label[Status.SUCCESS], job_label[Status.FAILED])
+        if job_label[Status.SUCCESS] is not None:
+            if output is None:
+                ## Set output if none is defined
+                output = job_label[Status.SUCCESS]
+            else:
+                ## Else set success_func
+                label_success_func = SuccessTrigger(job_label[Status.SUCCESS], self.config.output_max_attempts)
         job_finished_func = finished_func or label_finished_func or self.config.finished_func
         job_success_func = success_func or label_success_func or self.config.success_func
         ## Parse variables
@@ -413,7 +418,7 @@ class JobHandler(object):
             from ..backends.slurm import Slurm
             ## This one also sets the exitcode of the job, so the success evaluation can be done by itself.
             listen_slurm = Slurm.get_listen_func()
-            listener_slurm = Listener(self, listen_slurm, Status.RUNNING)
+            listener_slurm = Listener(self, listen_slurm, Status.RUNNING, 'id')
             listeners.append(listener_slurm)
         ## Get list of defined output files
         file_list = [l.output for l in self.jobs.values() if l.output is not None]
@@ -421,7 +426,7 @@ class JobHandler(object):
         if file_list:
             from .utils import get_listen_files
             listen_success = get_listen_files(file_list, Status.SUCCESS)
-            listener_success = Listener(self, listen_success, Status.FINISHED, map_property = 'output')
+            listener_success = Listener(self, listen_success, Status.FINISHED, 'output', max_attempts = self.config.output_max_attempts, fail_results = {'status': Status.FAILED})
             listeners.append(listener_success)
 
         return listeners
