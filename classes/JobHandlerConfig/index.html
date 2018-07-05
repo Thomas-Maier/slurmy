@@ -199,6 +199,17 @@
   
 </li>
     
+      
+<li class=" toctree-l1">
+  <a href="../Listener/" title="Listener"
+      class="">
+    Listener
+  </a>
+
+  
+  
+</li>
+    
 </ul>
 
 <!--
@@ -316,7 +327,7 @@
             <div class="section">
               
                 <h1 id="jobhandlerconfig">JobHandlerConfig</h1>
-<pre><code class="python">JobHandlerConfig(name=None, backend=None, work_dir='', local_max=0, is_verbose=False, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, wrapper=None)
+<pre><code class="python">JobHandlerConfig(name=None, backend=None, work_dir='', local_max=0, verbosity=1, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, wrapper=None, listens=True, output_max_attempts=5)
 </code></pre>
 
 <p>Config class for the <a href="../JobHandler/#JobHandler">JobHandler</a> class. Stores all necessary information to load the <a href="../JobHandler/#JobHandler">JobHandler</a> session at a later time. All properties are assigned with a custom getter function, which keeps track of updates to the respective property (tracked with the "update" variable).</p>

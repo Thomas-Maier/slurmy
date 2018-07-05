@@ -176,6 +176,17 @@
   
 </li>
     
+      
+<li class=" toctree-l1">
+  <a href="../../classes/Listener/" title="Listener"
+      class="">
+    Listener
+  </a>
+
+  
+  
+</li>
+    
 </ul>
 
 <!--
@@ -316,13 +327,13 @@
             <div class="section">
               
                 <h1 id="successtrigger">SuccessTrigger</h1>
-<pre><code class="python">SuccessTrigger(success_file, failure_file)
+<pre><code class="python">SuccessTrigger(success_file, max_attempts)
 </code></pre>
 
-<p>Callable class which can be used as success_func of a slurmy job. It continuously checks if either the success_file or the failure_file is present in the underlying file system.</p>
+<p>Callable class which can be used as success_func of a slurmy job. It checks if the success_file is present in the underlying file system, once a second. If the maximum number of attempts are reached without finding the file, it returns FAILED.</p>
 <ul>
 <li><code>success_file</code> The file which is created if the job is successful.</li>
-<li><code>failure_file</code> The file which is created if the job failed.</li>
+<li><code>max_attempts</code> Maximum number of attempts that will be tried to find the success_file.</li>
 </ul>
               
             </div>

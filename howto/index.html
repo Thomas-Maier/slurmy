@@ -93,6 +93,7 @@
   
   
   
+  
   <ul class="current subnav">
     
       
@@ -178,6 +179,58 @@
 
   <li class="toctree-l2 toc-item">
     <a href="#chaining-jobs-with-tags" title="HowTo">Chaining Jobs with Tags</a>
+  </li>
+
+    
+      
+
+  
+  
+
+
+  <li class=" toctree-l2">
+    
+      <a href="#steering-evaluation-of-jobs-processing-status" title="HowTo"
+          class="">
+        Steering evaluation of jobs processing status
+      </a>
+    
+    <ul class=" subnav">
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#job-listener" title="HowTo">Job listener</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#define-output-file-for-success-evaluation" title="HowTo">Define output file for success evaluation</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#finished-and-success-trigger-in-the-run_script" title="HowTo">FINISHED and SUCCESS trigger in the run_script</a>
+  </li>
+
+      
+    </ul>
   </li>
 
     
@@ -303,6 +356,17 @@
   <a href="../classes/JobConfig/" title="JobConfig"
       class="">
     JobConfig
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../classes/Listener/" title="Listener"
+      class="">
+    Listener
   </a>
 
   
@@ -524,27 +588,69 @@ jh.add_job(run_script = run_script_2, parent_tags = 'horst')
 jh.run_jobs()
 </code></pre>
 
-<h2 id="custom-evaluations-for-success-finished-and-post-execution">Custom evaluations for success, finished, and post-execution</h2>
-<p>By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it was successful or not. However, you can define a custom success condition by creating a dedicated class with __call__ defined. The function has to have exactly one argument, which is the config instance of the job. If <code>success_func</code> was defined during add_job, the custom definition will be used instead of the default one during the success evaluation.</p>
-<p>This example uses the predefined <a href="../utils/SuccessOutputFile/">SuccessOutputFile</a> class, which checks if the output associated to job exists on disk in order to evaluate whether if it succeeded or not.</p>
-<pre><code class="python">from slurmy import JobHandler, SuccessOutputFile
+<h2 id="steering-evaluation-of-jobs-processing-status">Steering evaluation of jobs processing status</h2>
+<p>By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it finished and was successful or not. However, you can change how slurmy will evaluate whether the job is finished or was successful.</p>
+<h3 id="job-listener">Job listener</h3>
+<p>First a word on what the default evaluation setup of slurmy is. In general, jobs are designed to do their status evaluations themselves, i.e. the <a href="../classes/JobHandler/">JobHandler</a> asks the job for it's status. This can get very performance heavy if this is connected to a request to the batch system accounting/bookkeeping. By default, slurmy runs a <a href="../classes/Listener/">Listener</a> to collect the job information from the batch system and set it's exitcode when it's finished. Keep in mind that setting a <code>finished_func</code> (see below) will deactivate the listener and possibly slow down the job submission cycle (if you do something processing intensive for the evaluation).</p>
+<h3 id="define-output-file-for-success-evaluation">Define output file for success evaluation</h3>
+<p>You can define the <code>output</code> of each job explicitly to change the success evaluation to check for the output to be present. From a technical side, this sets up a <a href="../classes/Listener/">Listener</a> which checks if the defined output files exist and sets the associated jobs status to SUCCESS if it finds them.</p>
+<pre><code class="python">from slurmy import JobHandler
 
-## Set up success evaluation class which checks if the job's output exists or not
-sf = SuccessOutputFile()
 ## Set up the JobHandler
-jh = JobHandler(success_func = sf)
+jh = JobHandler(output_max_attempts = 5)
 ## Define the run script content
 run_script = &quot;&quot;&quot;
 touch ~/hans.txt
 &quot;&quot;&quot;
 ## Add a job, specifying the output of the job.
-##The success evaluation class can be specified for each job separately.
-jh.add_job(run_script = run_script, output = '~/hans.txt', success_func = sf)
+jh.add_job(run_script = run_script, output = '~/hans.txt')
 ## Run all jobs
 jh.run_jobs()
 </code></pre>
 
-<p>In the same way as <code>success_func</code>, you can also define <code>finished_func</code>, to evaluate if a job is finished, or <code>post_func</code>, to define a post-processing which will be done locally after the job's success evaluation was done.</p>
+<p>The <code>output_max_attempts</code> argument of the <a href="../classes/JobHandler/">JobHandler</a> defines how many attempts are made to find the output file for a given job that is in FINISHED state. By default it is set to 5, in order to avoid delayed availablity of the output file in the underlying file system.</p>
+<h3 id="finished-and-success-trigger-in-the-run_script">FINISHED and SUCCESS trigger in the run_script</h3>
+<p>You can also set triggers in the run_script to indicate at which point in the job processing it should be considered as FINISHED and/or SUCCESS.</p>
+<pre><code class="python">from slurmy import JobHandler
+
+## Set up the JobHandler
+jh = JobHandler()
+## Define the run script content
+run_script = &quot;&quot;&quot;
+echo &quot;hans&quot;
+@SLURMY.FINISHED
+echo &quot;horst&quot;
+@SLURMY.SUCCESS
+&quot;&quot;&quot;
+## Add a job
+jh.add_job(run_script = run_script)
+## Run all jobs
+jh.run_jobs()
+</code></pre>
+
+<p>From a technical point, <code>@SLURMY.FINISHED</code> and <code>@SLURMY.SUCCESS</code> are substituted by temporary files, which are created at these points in the script. The FINISHED/SUCCESS evaluation is then checking if these files exist. The file name associated to <code>@SLURMY.SUCCESS</code> is also set as <code>output</code>, if it's not already specified as <code>add_job</code> argument.</p>
+<h2 id="custom-evaluations-for-success-finished-and-post-execution">Custom evaluations for success, finished, and post-execution</h2>
+<p>You can define a custom finished condition by creating a dedicated class with __call__ defined. The function has to have exactly one argument, which is the config instance of the job. If <code>finished_func</code> is defined during add_job, the custom definition will be used instead of the default one during the finished evaluation.</p>
+<p>This example uses the predefined <a href="../utils/FinishedTrigger/">FinishedTrigger</a> class, which checks if the specified file exists on disk in order to evaluate whether if the job finished or not.</p>
+<pre><code class="python">from slurmy import JobHandler, FinishedTrigger
+
+## Set up finished evaluation class
+finished_file = '~/hans.txt'
+ft = FinishedTrigger(finished_file)
+## Set up the JobHandler
+jh = JobHandler()
+## Define the run script content
+run_script = &quot;&quot;&quot;
+touch {}
+&quot;&quot;&quot;.format(finished_file)
+## Add a job
+jh.add_job(run_script = run_script, finished_func = ft)
+## Run all jobs
+jh.run_jobs()
+</code></pre>
+
+<p>This will actually do the same as the <code>@SLURM.FINISHED</code> example above.</p>
+<p>In the same way as <code>finished_func</code>, you can also define <code>success_func</code>, to evaluate if a job is successful, or <code>post_func</code>, to define a post-processing which will be done locally after the job's success evaluation was done.</p>
 <h3 id="regarding-class-definitions">Regarding class definitions</h3>
 <p>Due to technically reasons connected to the <a href="./#snapshots">snapshot feature</a>, your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.</p>
               

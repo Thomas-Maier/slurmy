@@ -318,6 +318,17 @@
   
 </li>
     
+      
+<li class=" toctree-l1">
+  <a href="../Listener/" title="Listener"
+      class="">
+    Listener
+  </a>
+
+  
+  
+</li>
+    
 </ul>
 
 <!--
@@ -435,7 +446,7 @@
             <div class="section">
               
                 <h1 id="jobhandler">JobHandler</h1>
-<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, is_verbose=False, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None, profiler=None)
+<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, verbosity=1, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None, profiler=None, listens=True, output_max_attempts=5)
 </code></pre>
 
 <p>Main handle to setup and submit jobs. Internally stores most information in the <a href="../JobHandlerConfig/#JobHandlerConfig">JobHandlerConfig</a> class, which is stored on disk as a snapshot of the <a href="./#JobHandler">JobHandler</a> session.</p>
@@ -444,7 +455,7 @@
 <li><code>backend</code> Default backend instance used for the job setup.</li>
 <li><code>work_dir</code> Path where the base directory is created.</li>
 <li><code>local_max</code> Maximum number of local jobs that will be submitted at a time.</li>
-<li><code>is_verbose</code> Increase verbosity of shell output.</li>
+<li><code>verbosity</code> Verbosity of the shell output.</li>
 <li><code>success_func</code> Default success function used for the job setup.</li>
 <li><code>finished_func</code> Default finished function used for the job setup.</li>
 <li><code>max_retries</code> Maximum number of retries that are attempted for failing jobs.</li>
@@ -470,7 +481,7 @@
 <li><code>finished_func</code> Finished function used for the job setup.</li>
 <li><code>post_func</code> Post execution function used for the job setup.</li>
 <li><code>max_retries</code> Maximum number of retries that are attempted when job is failing.</li>
-<li><code>output</code> Output file of the job.</li>
+<li><code>output</code> Output file of the job. This <strong>must</strong> be an absolute path.</li>
 <li><code>tags</code> List of tags attached to the job.</li>
 <li><code>parent_tags</code> List of parent tags attached to the job.</li>
 <li><code>name</code> Name of the job. This must be a string that conforms with the restrictions on class property names. Slurmy will make sure that job names stay unique, even if the same job name is set multiple times.</li>
@@ -489,7 +500,7 @@
 <li><code>make_snapshot</code> Make a snapshot after cancelling jobs.</li>
 </ul>
 <h2 id="check">check</h2>
-<pre><code class="python">JobHandler.check(self, force_success_check=False, print_summary=True)
+<pre><code class="python">JobHandler.check(self, force_success_check=False, skip_eval=False, print_summary=True)
 </code></pre>
 
 <p>Check the status and tags of the jobs.</p>
@@ -511,7 +522,7 @@
 <li><code>skip_jobs</code> Skip job reset.</li>
 </ul>
 <h2 id="run_jobs">run_jobs</h2>
-<pre><code class="python">JobHandler.run_jobs(self, interval=5, retry=False)
+<pre><code class="python">JobHandler.run_jobs(self, interval=1, retry=False)
 </code></pre>
 
 <p>Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.</p>
@@ -531,7 +542,7 @@
 <li><code>states</code> Set of job states which the jobs have to match to.</li>
 </ul>
 <h2 id="submit_jobs">submit_jobs</h2>
-<pre><code class="python">JobHandler.submit_jobs(self, tags=None, make_snapshot=True, wait=True, retry=False)
+<pre><code class="python">JobHandler.submit_jobs(self, tags=None, make_snapshot=True, wait=True, retry=False, skip_eval=False)
 </code></pre>
 
 <p>Submit jobs according to the <a href="./#JobHandler">JobHandler</a> configuration.</p>
@@ -540,6 +551,7 @@
 <li><code>make_snapshot</code> Make a snapshot of the jobs and the <a href="./#JobHandler">JobHandler</a> after the submission cycle.</li>
 <li><code>wait</code> Wait for locally submitted job.</li>
 <li><code>retry</code> Retry jobs in status FAILED or CANCELLED. This circumvents the automatic retry routine.</li>
+<li><code>skip_eval</code> Skip job status evaluation everywhere.</li>
 </ul>
 <h2 id="update_snapshot">update_snapshot</h2>
 <pre><code class="python">JobHandler.update_snapshot(self, skip_jobs=False)

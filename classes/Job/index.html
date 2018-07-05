@@ -206,6 +206,28 @@
 
 
   <li class="toctree-l2 toc-item">
+    <a href="#exitcode" title="Job">exitcode</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#id" title="Job">id</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
     <a href="#log" title="Job">log</a>
   </li>
 
@@ -217,7 +239,29 @@
 
 
   <li class="toctree-l2 toc-item">
+    <a href="#mode" title="Job">mode</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
     <a href="#name" title="Job">name</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#output" title="Job">output</a>
   </li>
 
       
@@ -240,6 +284,17 @@
 
   <li class="toctree-l2 toc-item">
     <a href="#script" title="Job">script</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#status" title="Job">status</a>
   </li>
 
       
@@ -335,6 +390,17 @@
 
 
   <li class="toctree-l2 toc-item">
+    <a href="#get_mode" title="Job">get_mode</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
     <a href="#get_status" title="Job">get_status</a>
   </li>
 
@@ -390,6 +456,17 @@
 
 
   <li class="toctree-l2 toc-item">
+    <a href="#set_mode" title="Job">set_mode</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
     <a href="#submit" title="Job">submit</a>
   </li>
 
@@ -431,6 +508,17 @@
   <a href="../JobConfig/" title="JobConfig"
       class="">
     JobConfig
+  </a>
+
+  
+  
+</li>
+    
+      
+<li class=" toctree-l1">
+  <a href="../Listener/" title="Listener"
+      class="">
+    Listener
   </a>
 
   
@@ -562,16 +650,26 @@
 <li><code>config</code> The <a href="../JobConfig/#JobConfig">JobConfig</a> instance that defines the initial job setup.</li>
 </ul>
 <h1 id="properties">Properties</h1>
+<h2 id="exitcode">exitcode</h2>
+<p>Returns the exitcode of the job (str or int).</p>
+<h2 id="id">id</h2>
+<p>Returns the ID of the job (int).</p>
 <h2 id="log">log</h2>
 <p>Open the job log file with less.</p>
 <p>Returns the log file path (str).</p>
+<h2 id="mode">mode</h2>
+<p>Returns the mode the job is currently in (Mode). The job can either be ACTIVE or PASSIVE. If it is ACTIVE, status update is done by the job itself, otherwise it's done externally.</p>
 <h2 id="name">name</h2>
 <p>Returns the name of the job (str).</p>
+<h2 id="output">output</h2>
+<p>Returns the output path of the job (str).</p>
 <h2 id="parent_tags">parent_tags</h2>
 <p>Returns the list of parent tags associated to this job ([str]).</p>
 <h2 id="script">script</h2>
 <p>Open the job script file with less.</p>
 <p>Returns the script file path (str).</p>
+<h2 id="status">status</h2>
+<p>Returns the status of the job (Status).</p>
 <h2 id="tags">tags</h2>
 <p>Returns the list of tags associated to this job ([str]).</p>
 <h2 id="type">type</h2>
@@ -611,6 +709,14 @@
 <p>Open the job's run script in an editor.</p>
 <ul>
 <li><code>editor</code> Command line editor to use. If none is specified, the default editor according to the slurmy config is used.</li>
+</ul>
+<h2 id="get_mode">get_mode</h2>
+<pre><code class="python">Job.get_mode(self, status)
+</code></pre>
+
+<p>Returns the mode the job is in while being in the specified status (Mode).</p>
+<ul>
+<li><code>status</code> Status to return the job mode for.</li>
 </ul>
 <h2 id="get_status">get_status</h2>
 <pre><code class="python">Job.get_status(self, skip_eval=False, force_success_check=False)
@@ -652,6 +758,15 @@
 <p>Reset the job.</p>
 <ul>
 <li><code>reset_retries</code> Also reset number of retries attempted so far.</li>
+</ul>
+<h2 id="set_mode">set_mode</h2>
+<pre><code class="python">Job.set_mode(self, status, mode)
+</code></pre>
+
+<p>Set the mode the job will be in while being in the specified status.</p>
+<ul>
+<li><code>status</code> Status for which the mode is set.</li>
+<li><code>mode</code> Mode that the job is set to for the given status.</li>
 </ul>
 <h2 id="submit">submit</h2>
 <pre><code class="python">Job.submit(self)

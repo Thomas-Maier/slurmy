@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>JobContainer - Slurmy</title>
+  <title>Listener - Slurmy</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
   <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 
@@ -18,9 +18,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "JobContainer";
-    var mkdocs_page_input_path = "classes/JobContainer.md";
-    var mkdocs_page_url = "/classes/JobContainer/";
+    var mkdocs_page_name = "Listener";
+    var mkdocs_page_input_path = "classes/Listener.md";
+    var mkdocs_page_url = "/classes/Listener/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -144,164 +144,13 @@
 </li>
     
       
-<li class="current toctree-l1">
-  <a href="./" title="JobContainer"
-      class="current">
+<li class=" toctree-l1">
+  <a href="../JobContainer/" title="JobContainer"
+      class="">
     JobContainer
   </a>
 
   
-  
-    
-    
-      
-  
-  
-  
-  
-  <ul class="current subnav">
-    
-      
-
-  
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#jobcontainer" title="JobContainer">JobContainer</a>
-  </li>
-
-    
-      
-
-  
-  
-
-
-  <li class=" toctree-l2">
-    
-      <a href="#properties" title="JobContainer"
-          class="">
-        Properties
-      </a>
-    
-    <ul class=" subnav">
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#status_cancelled" title="JobContainer">status_CANCELLED</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#status_configured" title="JobContainer">status_CONFIGURED</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#status_failed" title="JobContainer">status_FAILED</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#status_finished" title="JobContainer">status_FINISHED</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#status_running" title="JobContainer">status_RUNNING</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#status_success" title="JobContainer">status_SUCCESS</a>
-  </li>
-
-      
-    </ul>
-  </li>
-
-    
-      
-
-  
-  
-
-
-  <li class=" toctree-l2">
-    
-      <a href="#member-functions" title="JobContainer"
-          class="">
-        Member functions
-      </a>
-    
-    <ul class=" subnav">
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#get" title="JobContainer">get</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#print" title="JobContainer">print</a>
-  </li>
-
-      
-    </ul>
-  </li>
-
-    
-  </ul>
-
-    
   
 </li>
     
@@ -328,13 +177,89 @@
 </li>
     
       
-<li class=" toctree-l1">
-  <a href="../Listener/" title="Listener"
-      class="">
+<li class="current toctree-l1">
+  <a href="./" title="Listener"
+      class="current">
     Listener
   </a>
 
   
+  
+    
+    
+      
+  
+  
+  
+  <ul class="current subnav">
+    
+      
+
+  
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#listener" title="Listener">Listener</a>
+  </li>
+
+    
+      
+
+  
+  
+
+
+  <li class=" toctree-l2">
+    
+      <a href="#member-functions" title="Listener"
+          class="">
+        Member functions
+      </a>
+    
+    <ul class=" subnav">
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#start" title="Listener">start</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#stop" title="Listener">stop</a>
+  </li>
+
+      
+        
+
+  
+  
+
+
+  <li class="toctree-l2 toc-item">
+    <a href="#update_jobs" title="Listener">update_jobs</a>
+  </li>
+
+      
+    </ul>
+  </li>
+
+    
+  </ul>
+
+    
   
 </li>
     
@@ -444,7 +369,7 @@
         
       
     
-    <li>JobContainer</li>
+    <li>Listener</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -454,45 +379,38 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="jobcontainer">JobContainer</h1>
-<pre><code class="python">JobContainer()
+                <h1 id="listener">Listener</h1>
+<pre><code class="python">Listener(parent, listen_func, listen_status, map_property, max_attempts=None, fail_results=None)
 </code></pre>
 
-<p>Container class which holds the jobs associated to a <a href="../JobHandler/#JobHandler">JobHandler</a> session. Jobs are attached as properties to allow for easy access in interactive slurmy.</p>
-<h1 id="properties">Properties</h1>
-<h2 id="status_cancelled">status_CANCELLED</h2>
-<p>List jobs in status CANCELLED.</p>
-<h2 id="status_configured">status_CONFIGURED</h2>
-<p>List jobs in status CONFIGURED.</p>
-<h2 id="status_failed">status_FAILED</h2>
-<p>List jobs in status FAILED.</p>
-<h2 id="status_finished">status_FINISHED</h2>
-<p>List jobs in status FINISHED.</p>
-<h2 id="status_running">status_RUNNING</h2>
-<p>List jobs in status RUNNING.</p>
-<h2 id="status_success">status_SUCCESS</h2>
-<p>List jobs in status SUCCESS.</p>
+<p><a href="./#Listener">Listener</a> class which is running in the background and collects state change information of jobs attached to the parent <a href="../JobHandler/#JobHandler">JobHandler</a> instance.</p>
+<ul>
+<li><code>parent</code> Parent <a href="../JobHandler/#JobHandler">JobHandler</a> instance.</li>
+<li><code>listen_func</code> The function definition used to collect the state change information. Results are collected in self._results as a dictionary with the keys being the defined map_property of the jobs.</li>
+<li><code>listen_status</code> The job status the listener will consider.</li>
+<li><code>map_property</code> Property name of jobs to which the respective job name is mapped to. The choice of the property name is driven by the definition of the listen_func.</li>
+<li><code>max_attempts</code> Maximum number of attempts that the information collection will be executed.</li>
+<li><code>fail_results</code> The results the job properties should be set to in case the max_attempts limit is reached.</li>
+</ul>
 <h1 id="member-functions">Member functions</h1>
-<h2 id="get">get</h2>
-<pre><code class="python">JobContainer.get(self, tags=None, states=None)
+<h2 id="start">start</h2>
+<pre><code class="python">Listener.start(self, interval=1)
 </code></pre>
 
-<p>Get the list of jobs.</p>
+<p>Spawn subprocess which continuously collects information by configurable mechanism and match any updates in the output to a state change decision of jobs.</p>
 <ul>
-<li><code>tags</code> Tags that the jobs must match to.</li>
-<li><code>states</code> <a href="../Job/#Job">Job</a> states that the jobs must match to.</li>
+<li><code>interval</code> Interval at which information is collected by subprocess.</li>
 </ul>
-<p>Returns list of jobs ([Job]).</p>
-<h2 id="print">print</h2>
-<pre><code class="python">JobContainer.print(self, tags=None, states=None, print_summary=True)
+<h2 id="stop">stop</h2>
+<pre><code class="python">Listener.stop(self)
 </code></pre>
 
-<p>Print the list of jobs and their current status.</p>
-<ul>
-<li><code>tags</code> Tags that jobs should match with (single string or list of strings). If a job has any of the provided tags it will be printed.</li>
-<li><code>states</code> States that jobs should match with (single string or list of strings). If a job is in any of the provided states it will be printed.</li>
-<li><code>print_summary</code> Print overall summary as well.</li>
-</ul>
+<p>Stop listening subprocess.</p>
+<h2 id="update_jobs">update_jobs</h2>
+<pre><code class="python">Listener.update_jobs(self)
+</code></pre>
+
+<p>Update jobs associated to parent <a href="../JobHandler/#JobHandler">JobHandler</a> with the collected information.</p>
               
             </div>
           </div>
@@ -500,10 +418,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../Job/" class="btn btn-neutral float-right" title="Job">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../utils/SuccessOutputFile/" class="btn btn-neutral float-right" title="SuccessOutputFile">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../JobHandlerConfig/" class="btn btn-neutral" title="JobHandlerConfig"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../JobConfig/" class="btn btn-neutral" title="JobConfig"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -529,10 +447,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../JobHandlerConfig/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../JobConfig/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../Job/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../../utils/SuccessOutputFile/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
