@@ -4,6 +4,7 @@
 import unittest
 import argparse
 import sys
+import os
 
 import logging
 
@@ -23,7 +24,7 @@ def get_test_names(discover_list, test_dict):
             test_dict[test_class_module].append(test_name)
             
 ## Get discovery start directory via __file__
-start_dir = __file__.rsplit('/', 1)[0]
+start_dir = os.path.dirname(__file__)
 discover_list = unittest.defaultTestLoader.discover(start_dir, pattern = '*.py')
 ## Remove empty test suites
 discover_list = [t for t in discover_list if t.countTestCases()]
