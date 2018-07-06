@@ -3,6 +3,7 @@ import time
 from sys import stdout
 from collections import OrderedDict
 from .defs import Status, Type
+from tqdm import tqdm
 
 
 class Printer(object):
@@ -12,13 +13,15 @@ class Printer(object):
     * `parent` Parent JobHandler instance.
     * `verbosity` Verbosity of the printer's output.
     """
-    def __init__(self, parent, verbosity = 1):
+    def __init__(self, parent, verbosity = 1, bar_mode = False):
         ## Parent JobHandler
         self._parent = parent
         ## Printing verbosity
         self._verbosity = verbosity
         ## Running in manual submission mode?
-        self._manual = False
+        self._manual_mode = False
+        ## Running in progress bar mode?
+        self._bar_mode = bar_mode
         ## Time
         self._time = None
 
@@ -26,32 +29,75 @@ class Printer(object):
         """@SLURMY
         Set printer to manual mode.
         """
-        self._manual = True
+        self._manual_mode = True
+
+    def _setup_bars(self):
+        bars = OrderedDict()
+        ## Add bar for all jobs
+        n_jobs = len(self._parent.jobs)
+        bars['all'] = tqdm(total = n_jobs)
+        bars['all'].set_description('all')
+        for tag in self._parent.jobs._tags:
+            ## Skip the non-string tags (e.g. Status.LOCAL)
+            if not isinstance(tag, str): continue
+            n_jobs_tag = len(self._parent.jobs._tags[tag])
+            bars[tag] = tqdm(total = n_jobs_tag)
+            bars[tag].set_description(tag)
+
+        return bars
+
+    def _update_bars(self):
+        n_all = len(self._parent.jobs._states[Status.SUCCESS])
+        n_update_all = n_all - self._bars['all'].n
+        self._bars['all'].update(n_update_all)
+        for tag in self._bars:
+            if tag == 'all': continue
+            n_tag = len(self._parent.jobs.get(tags = set([tag]), states = set([Status.SUCCESS])))
+            n_update_tag = n_tag - self._bars[tag].n
+            self._bars[tag].update(n_update_tag)
 
     def start(self):
         """@SLURMY
         Start printer.
         """
         self._time = time.time()
-        self._print_simple()
+        if self._bar_mode:
+            ## Set up bars
+            self._bars = self._setup_bars()
+            ## Bring bars to up to speed
+            n_all = len(self._parent.jobs._states[Status.SUCCESS])
+            self._bars['all'].update(n_all)
+            for tag in self._bars:
+                if tag == 'all': continue
+                n_tag = len(self._parent.jobs.get(tags = set([tag]), states = set([Status.SUCCESS])))
+                self._bars[tag].update(n_tag)
+        else:
+            self._print_simple()
 
     def update(self):
         """@SLURMY
         Update printer output.
         """
-        self._print_simple()
+        if self._bar_mode:
+            self._update_bars()
+        else:
+            self._print_simple()
 
     def stop(self):
         """@SLURMY
         Stop printer.
         """
         self._time = time.time() - self._time
+        if self._bar_mode:
+            ## Close bars
+            for bar in self._bars.values():
+                bar.close()
         stdout.write('\n')
         self.print_summary()
 
     def _print_simple(self):
         print_string = self._get_print_string()
-        if self._manual:
+        if self._manual_mode:
             print_string += ' - press enter to update status'
         stdout.write('\r'+print_string)
         stdout.flush()

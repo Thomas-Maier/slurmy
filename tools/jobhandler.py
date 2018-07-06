@@ -151,7 +151,7 @@ class JobHandler(object):
         ## Set profiler
         self._profiler = profiler
         ## Set up printer
-        self._printer = Printer(self, verbosity = verbosity)
+        self._printer = Printer(self, verbosity = verbosity, bar_mode = True)
 
     def __getitem__(self, key):
         return self.jobs[key]
