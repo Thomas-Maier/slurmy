@@ -24,6 +24,8 @@ class Printer(object):
         self._bar_mode = bar_mode
         ## Time
         self._time = None
+        ## Tags which are tracked (set during bars setup)
+        self._tags = []
 
     def set_manual(self):
         """@SLURMY
@@ -31,30 +33,47 @@ class Printer(object):
         """
         self._manual_mode = True
 
+    ##TODO: how to deal with negative increments (i.e. when jobs are retried), currently this is just ignored
     def _setup_bars(self):
         bars = OrderedDict()
         ## Add bar for all jobs
         n_jobs = len(self._parent.jobs)
-        bars['all'] = tqdm(total = n_jobs)
-        bars['all'].set_description('all')
-        for tag in self._parent.jobs._tags:
-            ## Skip the non-string tags (e.g. Status.LOCAL)
-            if not isinstance(tag, str): continue
+        bar_format = '{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{postfix}]'
+        bars['all'] = tqdm(total = n_jobs, desc = 'all', unit = 'job', bar_format = bar_format)
+        ## Set tags that printer tracks (skip non-string tags)
+        self._tags = [tag for tag in self._parent.jobs._tags if isinstance(tag, str)]
+        for tag in self._tags:
             n_jobs_tag = len(self._parent.jobs._tags[tag])
-            bars[tag] = tqdm(total = n_jobs_tag)
-            bars[tag].set_description(tag)
+            bars[tag] = tqdm(total = n_jobs_tag, desc = tag, unit = 'job', bar_format = bar_format)
 
         return bars
 
+    def _get_updates(self):
+        update_dict = OrderedDict()        
+        ## Entry for all jobs
+        update_dict['all'] = OrderedDict()
+        for status in [Status.SUCCESS, Status.FAILED]:
+            update_dict['all'][status.name] = len(self._parent.jobs._states[status])
+        ## Entries for tracked tags
+        for tag in self._tags:
+            update_dict[tag] = OrderedDict()
+            for status in [Status.SUCCESS, Status.FAILED]:
+                update_dict[tag][status.name] = len(self._parent.jobs.get(tags = set([tag]), states = set([status])))
+
+        return update_dict
+
     def _update_bars(self):
-        n_all = len(self._parent.jobs._states[Status.SUCCESS])
-        n_update_all = n_all - self._bars['all'].n
-        self._bars['all'].update(n_update_all)
-        for tag in self._bars:
-            if tag == 'all': continue
-            n_tag = len(self._parent.jobs.get(tags = set([tag]), states = set([Status.SUCCESS])))
-            n_update_tag = n_tag - self._bars[tag].n
-            self._bars[tag].update(n_update_tag)
+        ## Get updates
+        updates = self._get_updates()
+        ## Update bars
+        for tag in updates:
+            n_jobs = updates[tag][Status.SUCCESS.name] + updates[tag][Status.FAILED.name]
+            n_update_jobs = n_jobs - self._bars[tag].n
+            ## Update only if value is not negative
+            if n_update_jobs > 0:
+                self._bars[tag].update(n_update_jobs)
+            ### Set postfix to number of success/failed jobs
+            self._bars[tag].set_postfix(updates[tag])
 
     def start(self):
         """@SLURMY
@@ -87,6 +106,8 @@ class Printer(object):
         """@SLURMY
         Stop printer.
         """
+        ## Final update before we stop
+        self.update()
         self._time = time.time() - self._time
         if self._bar_mode:
             ## Close bars
