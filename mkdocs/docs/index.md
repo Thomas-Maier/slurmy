@@ -6,14 +6,24 @@ Slurmy is a general batch submission module, which allows to define very general
 
 Clone the latest stable tag or master branch locally:
 
+```shell
 git clone https://github.com/Thomas-Maier/slurmy.git
+```
 
-Make sure to add the directory in which you cloned slurmy to PYTHONPATH, and the slurmy folder to PATH:
+Make sure to add the directory in which you cloned slurmy to `PYTHONPATH`, and the slurmy folder to `PATH`:
 
+```shell
 export PYTHONPATH=$PWD:$PYTHONPATH
-
 export PATH=$PWD/slurmy:$PATH
+```
 
 This will make python aware of the slurmy module and you'll be able to execute the slurmy executable.
+
+Furthermode, in order to use the bar mode of the output printer, install the [tqdm](https://github.com/tqdm/tqdm) module:
+
+```shell
+pip install --user tqdm
+pip3 install --user tqdm   # Depending on your setup "pip" points to pip2 or pip3
+```
 
 Also, take a look at the [slurmy config setup](howto.md#slurmyconfig).

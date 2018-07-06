@@ -105,9 +105,10 @@ class JobHandler(object):
     * `description` Description of jobhandler that is stored in the bookkeeping.
     * `wrapper` Default run script wrapper used for the job setup.
     * `profiler` Profiler to be used for profiling.
+    * `printer_bar_mode` Turn bar mode of the printer on/off.
     """
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5, printer_bar_mode = True):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
@@ -150,8 +151,16 @@ class JobHandler(object):
         self._parser = Parser(self.config)
         ## Set profiler
         self._profiler = profiler
+        ### Check if tqmd is available if printer_bar_mode is set to true:
+        if printer_bar_mode:
+            try:
+                from tqdm import tqdm
+            except ImportError:
+                log.warning('printer_bar_mode is activated but the tqdm is not available')
+                log.warning('Please install tqdm to use the bar mode')
+                printer_bar_mode = False
         ## Set up printer
-        self._printer = Printer(self, verbosity = verbosity, bar_mode = True)
+        self._printer = Printer(self, verbosity = verbosity, bar_mode = printer_bar_mode)
 
     def __getitem__(self, key):
         return self.jobs[key]
