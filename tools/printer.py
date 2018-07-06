@@ -22,6 +22,7 @@ class Printer(object):
         self._manual_mode = False
         ## Running in progress bar mode?
         self._bar_mode = bar_mode
+        self._bar_format = '{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{postfix}]'
         ## Time
         self._time = None
         ## Tags which are tracked (set during bars setup)
@@ -35,16 +36,23 @@ class Printer(object):
 
     ##TODO: how to deal with negative increments (i.e. when jobs are retried), currently this is just ignored
     def _setup_bars(self):
-        bars = OrderedDict()
-        ## Add bar for all jobs
-        n_jobs = len(self._parent.jobs)
-        bar_format = '{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{postfix}]'
-        bars['all'] = tqdm(total = n_jobs, desc = 'all', unit = 'job', bar_format = bar_format)
         ## Set tags that printer tracks (skip non-string tags)
         self._tags = [tag for tag in self._parent.jobs._tags if isinstance(tag, str)]
+        ## Get updates for the initial bar values
+        updates = self._get_updates()
+        ## Create bars
+        bars = OrderedDict()
+        ### Add bar for all jobs
+        n_jobs = len(self._parent.jobs)
+        #### Initial number of success/failed jobs
+        n_initial = updates['all'][Status.SUCCESS.name] + updates['all'][Status.FAILED.name]
+        bars['all'] = tqdm(total = n_jobs, initial = n_initial, desc = 'all', unit = 'job', bar_format = self._bar_format)
+        bars['all'].set_postfix(updates['all'])
         for tag in self._tags:
             n_jobs_tag = len(self._parent.jobs._tags[tag])
-            bars[tag] = tqdm(total = n_jobs_tag, desc = tag, unit = 'job', bar_format = bar_format)
+            n_initial_tag = updates[tag][Status.SUCCESS.name] + updates[tag][Status.FAILED.name]
+            bars[tag] = tqdm(total = n_jobs_tag, initial = n_initial_tag, desc = tag, unit = 'job', bar_format = self._bar_format)
+            bars[tag].set_postfix(updates[tag])
 
         return bars
 
@@ -83,13 +91,6 @@ class Printer(object):
         if self._bar_mode:
             ## Set up bars
             self._bars = self._setup_bars()
-            ## Bring bars to up to speed
-            n_all = len(self._parent.jobs._states[Status.SUCCESS])
-            self._bars['all'].update(n_all)
-            for tag in self._bars:
-                if tag == 'all': continue
-                n_tag = len(self._parent.jobs.get(tags = set([tag]), states = set([Status.SUCCESS])))
-                self._bars[tag].update(n_tag)
         else:
             self._print_simple()
 
