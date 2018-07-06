@@ -650,6 +650,7 @@ jh.run_jobs()
 </code></pre>
 
 <p>This will actually do the same as the <code>@SLURM.FINISHED</code> example above.</p>
+<p><strong>PLEASE NOTE:</strong> If you only specify <code>finished_func</code> with a simple(fast) evaluation, it's likely that your job will fail. This is simply because by default, slurmy will still ask the batch system accounting for the exitcode of the job and it's very likely that it's not updated in time. The same is true if you only put <code>@SLURM.FINISHED</code> and not <code>@SLURM.SUCCESS</code> in your <code>run_script</code>. Only specifying a custom <code>success_func</code> (or only <code>@SLURM.SUCCESS</code>) is generally fine, though.</p>
 <p>In the same way as <code>finished_func</code>, you can also define <code>success_func</code>, to evaluate if a job is successful, or <code>post_func</code>, to define a post-processing which will be done locally after the job's success evaluation was done.</p>
 <h3 id="regarding-class-definitions">Regarding class definitions</h3>
 <p>Due to technically reasons connected to the <a href="./#snapshots">snapshot feature</a>, your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.</p>
