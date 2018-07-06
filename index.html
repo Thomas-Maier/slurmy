@@ -344,11 +344,20 @@
 <p>Slurmy is a general batch submission module, which allows to define very general jobs to be run on batch system setups on linux computing clusters. Currently, only slurm is supported as backend, but further backends can easily be added. The definition of the job execution is done with a general shell execution script, as is used by most batch systems. In addition to the batch definition, jobs can also be dynamically executed locally, which allows for an arbitrary combination of batch and local jobs.</p>
 <h2 id="recommended-setup">Recommended Setup</h2>
 <p>Clone the latest stable tag or master branch locally:</p>
-<p>git clone https://github.com/Thomas-Maier/slurmy.git</p>
-<p>Make sure to add the directory in which you cloned slurmy to PYTHONPATH, and the slurmy folder to PATH:</p>
-<p>export PYTHONPATH=$PWD:$PYTHONPATH</p>
-<p>export PATH=$PWD/slurmy:$PATH</p>
+<pre><code class="shell">git clone https://github.com/Thomas-Maier/slurmy.git
+</code></pre>
+
+<p>Make sure to add the directory in which you cloned slurmy to <code>PYTHONPATH</code>, and the slurmy folder to <code>PATH</code>:</p>
+<pre><code class="shell">export PYTHONPATH=$PWD:$PYTHONPATH
+export PATH=$PWD/slurmy:$PATH
+</code></pre>
+
 <p>This will make python aware of the slurmy module and you'll be able to execute the slurmy executable.</p>
+<p>Furthermode, in order to use the bar mode of the output printer, install the <a href="https://github.com/tqdm/tqdm">tqdm</a> module:</p>
+<pre><code class="shell">pip install --user tqdm
+pip3 install --user tqdm   # Depending on your setup &quot;pip&quot; points to pip2 or pip3
+</code></pre>
+
 <p>Also, take a look at the <a href="howto/#slurmyconfig">slurmy config setup</a>.</p>
               
             </div>
@@ -399,5 +408,5 @@
 
 <!--
 MkDocs version : 0.17.4
-Build Date UTC : 2018-07-05 19:59:21
+Build Date UTC : 2018-07-06 11:23:32
 -->

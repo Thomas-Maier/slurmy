@@ -205,17 +205,6 @@
 
 
   <li class="toctree-l2 toc-item">
-    <a href="#print_summary" title="JobHandler">print_summary</a>
-  </li>
-
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
     <a href="#reset" title="JobHandler">reset</a>
   </li>
 
@@ -446,7 +435,7 @@
             <div class="section">
               
                 <h1 id="jobhandler">JobHandler</h1>
-<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, verbosity=1, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None, profiler=None, listens=True, output_max_attempts=5)
+<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, verbosity=1, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None, profiler=None, listens=True, output_max_attempts=5, printer_bar_mode=True)
 </code></pre>
 
 <p>Main handle to setup and submit jobs. Internally stores most information in the <a href="../JobHandlerConfig/#JobHandlerConfig">JobHandlerConfig</a> class, which is stored on disk as a snapshot of the <a href="./#JobHandler">JobHandler</a> session.</p>
@@ -466,6 +455,7 @@
 <li><code>description</code> Description of jobhandler that is stored in the bookkeeping.</li>
 <li><code>wrapper</code> Default run script wrapper used for the job setup.</li>
 <li><code>profiler</code> Profiler to be used for profiling.</li>
+<li><code>printer_bar_mode</code> Turn bar mode of the printer on/off.</li>
 </ul>
 <h1 id="member-functions">Member functions</h1>
 <h2 id="add_job">add_job</h2>
@@ -508,11 +498,6 @@
 <li><code>force_success_check</code> Force the success routine to be run, even if the job is already in a post-finished state.</li>
 <li><code>print_summary</code> Print the job processing summary.</li>
 </ul>
-<h2 id="print_summary">print_summary</h2>
-<pre><code class="python">JobHandler.print_summary(self, time_spent=None)
-</code></pre>
-
-<p>Print a summary of the job processing.</p>
 <h2 id="reset">reset</h2>
 <pre><code class="python">JobHandler.reset(self, skip_jobs=False)
 </code></pre>
