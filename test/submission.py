@@ -13,6 +13,8 @@ class Test(unittest.TestCase):
         self.run_script_touch_file = '#!/bin/bash\ntouch {0}; sleep 2;'.format(self.output_file)
         self.run_script_ls_file = '#!/bin/bash\nls {};'.format(self.output_file)
         self.run_script_trigger = '#!/bin/bash\necho "test"; @SLURMY.FINISHED; @SLURMY.SUCCESS;'
+        self.run_script_trigger_finished = '#!/bin/bash\necho "test"; @SLURMY.FINISHED;'
+        self.run_script_trigger_success = '#!/bin/bash\necho "test"; @SLURMY.SUCCESS;'
         script_path = os.path.abspath(os.path.join(self.test_dir, 'run_script_success.sh'))
         with open(script_path, 'w') as out_file:
             out_file.write(self.run_script)
@@ -176,10 +178,38 @@ class Test(unittest.TestCase):
         jh.run_jobs()
         self.assertIs(jh.jobs.test.status, Status.FAILED)
 
+    def test_trigger(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_trigger', listens = False)
+        jh.add_job(run_script = self.run_script_trigger, name = 'test')
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test.status, Status.SUCCESS)
+
     def test_trigger_listener(self):
         from slurmy import JobHandler, Status
         jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_trigger_listener')
         jh.add_job(run_script = self.run_script_trigger, name = 'test')
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test.status, Status.SUCCESS)
+
+    def test_trigger_finished(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_trigger_finished')
+        jh.add_job(run_script = self.run_script_trigger_finished, name = 'test')
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test.status, Status.SUCCESS)
+
+    def test_trigger_success(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_trigger_success', listens = False)
+        jh.add_job(run_script = self.run_script_trigger_success, name = 'test')
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test.status, Status.SUCCESS)
+
+    def test_trigger_success_listener(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_trigger_success_listener')
+        jh.add_job(run_script = self.run_script_trigger_success, name = 'test')
         jh.run_jobs()
         self.assertIs(jh.jobs.test.status, Status.SUCCESS)
 

@@ -285,8 +285,8 @@ class JobHandler(object):
             label_finished_func = FinishedTrigger(job_label[Status.FINISHED])
         ##TODO: this needs examples in the documentation
         if job_label[Status.SUCCESS] is not None:
-            if output is None:
-                ## Set output if none is defined
+            if self.config.listens and output is None:
+                ## If JobHandler is in listen mode and no output is defined, set output
                 output = job_label[Status.SUCCESS]
             else:
                 ## Else set success_func
@@ -377,7 +377,7 @@ class JobHandler(object):
         if file_list:
             from .utils import get_listen_files
             ### Get list of associated folders
-            folder_list = set([f.rsplit('/', 1)[0] for f in file_list])
+            folder_list = set([os.path.dirname(f) for f in file_list])
             listen_success = get_listen_files(file_list, folder_list, Status.SUCCESS)
             listener_success = Listener(self, listen_success, Status.FINISHED, 'output', max_attempts = self.config.output_max_attempts, fail_results = {'status': Status.FAILED})
             listeners.append(listener_success)

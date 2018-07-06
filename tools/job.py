@@ -354,9 +354,6 @@ class Job(object):
             if self.type == Type.LOCAL:
                 success = (self.exitcode == 0)
             else:
-                ## If exitcode is None, get it from underlying backend
-                if self.exitcode is None:
-                    self.exitcode = self.config.backend.exitcode()
                 success = (self.exitcode == self.config.backend._successcode)
         else:
             success = self.config.success_func(self.config)
@@ -481,8 +478,11 @@ class Job(object):
     @property
     def exitcode(self):
         """@SLURMY
-        Returns the exitcode of the job (str or int).
+        Returns the exitcode of the job (str or int). If the exitcode in the config is still None, will get it from the backend first.
         """
+        ## In case we have a batch job and exitcode is None, get it from underlying backend
+        if self.type == Type.BATCH and self.config.exitcode is None:
+            self.config.exitcode = self.config.backend.exitcode()
 
         return self.config.exitcode
 

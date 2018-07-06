@@ -14,9 +14,16 @@ class SuccessOutputFile:
         self._delay = delay
         
     def __call__(self, config):
-        import os, time
+        import os, time, subprocess
         time.sleep(self._delay)
-
+        ## Make an explicit ls on the folders where the output files are written to
+        ## This avoids problems with delayed updates in the underlying file system
+        folder = os.path.dirname(config.output)
+        try:
+            subprocess.check_output(['ls', folder], universal_newlines = True, stderr = subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            log.debug('Output folder {} does not exist, please check'.format(folder))
+            
         return os.path.isfile(config.output)
 
 class SuccessTrigger:
@@ -31,7 +38,15 @@ class SuccessTrigger:
         self._max_attempts = max_attempts
 
     def __call__(self, config):
-        import os, time
+        import os, time, subprocess
+        ## Make an explicit ls on the folders where the output files are written to
+        ## This avoids problems with delayed updates in the underlying file system
+        folder = os.path.dirname(self._success_file)
+        try:
+            subprocess.check_output(['ls', folder], universal_newlines = True, stderr = subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            log.debug('Output folder {} does not exist, please check'.format(folder))
+        ## Atempt to find success file
         for i in range(self._max_attempts):
             if os.path.isfile(self._success_file):
                 os.remove(self._success_file)
@@ -75,9 +90,16 @@ class FinishedTrigger:
         self._finished_file = finished_file
 
     def __call__(self, config):
-        import os
+        import os, subprocess
+        ## Make an explicit ls on the folders where the output files are written to
+        ## This avoids problems with delayed updates in the underlying file system
+        folder = os.path.dirname(self._finished_file)
+        try:
+            subprocess.check_output(['ls', folder], universal_newlines = True, stderr = subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            log.debug('Output folder {} does not exist, please check'.format(folder))
+            
         finished = os.path.isfile(self._finished_file)
-        if finished: os.remove(self._finished_file)
 
         return finished
 

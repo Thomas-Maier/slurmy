@@ -196,6 +196,8 @@ jh.run_jobs()
 
 This will actually do the same as the `@SLURM.FINISHED` example above.
 
+**PLEASE NOTE:** If you only specify `finished_func` with a simple(fast) evaluation, it's likely that your job will fail. This is simply because by default, slurmy will still ask the batch system accounting for the exitcode of the job and it's very likely that it's not updated in time. The same is true if you only put `@SLURM.FINISHED` and not `@SLURM.SUCCESS` in your `run_script`. Only specifying a custom `success_func` (or only `@SLURM.SUCCESS`) is generally fine, though.
+
 In the same way as `finished_func`, you can also define `success_func`, to evaluate if a job is successful, or `post_func`, to define a post-processing which will be done locally after the job's success evaluation was done.
 
 ### Regarding class definitions

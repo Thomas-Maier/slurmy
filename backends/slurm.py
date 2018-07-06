@@ -109,10 +109,14 @@ class Slurm(Base):
 
     def exitcode(self):
         """@SLURMY
-        Get the exitcode of slurm job from sacct entry. Evaluation is actually done by Slurm.status(), Slurm.exitcode() only returns the value.
+        Get the exitcode of slurm job from sacct entry. Evaluation is actually done by Slurm.status(), Slurm.exitcode() only returns the value. If exitcode at this stage is None, execute Slurm.status() beforehand.
 
         Returns the job exitcode (str).
         """
+        ## If exitcode is not set yet, run status evaluation
+        if self._exitcode is None:
+            self.status()
+            
         return self._exitcode
 
     def _get_sacct_entry(self, column):
