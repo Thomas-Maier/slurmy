@@ -88,6 +88,8 @@ class Printer(object):
         Start printer.
         """
         self._time = time.time()
+        ## If verbosity is 0, do nothing
+        if self._verbosity == 0: return
         if self._bar_mode:
             ## Set up bars
             self._bars = self._setup_bars()
@@ -98,6 +100,8 @@ class Printer(object):
         """@SLURMY
         Update printer output.
         """
+        ## If verbosity is 0, do nothing
+        if self._verbosity == 0: return
         if self._bar_mode:
             self._update_bars()
         else:
@@ -110,6 +114,8 @@ class Printer(object):
         ## Final update before we stop
         self.update()
         self._time = time.time() - self._time
+        ## If verbosity is 0, stop here
+        if self._verbosity == 0: return
         if self._bar_mode:
             ## Close bars
             for bar in self._bars.values():
