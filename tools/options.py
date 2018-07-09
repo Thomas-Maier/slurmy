@@ -13,10 +13,10 @@ class Options(object):
     _options_file = '{}/.slurmy'.format(os.environ['HOME'])
 
     def __init__(self):
-        ## General options (as defined in _options_file)
-        self.bookkeeping = None
-        self.workdir = None
-        self.backend = None
+        ## General options. Set defaults here, which are overwritten by values set in _options_file.
+        self.bookkeeping = '{}/.slurmy_bookkeeping'.format(os.environ['HOME'])
+        self.workdir = './'
+        self.backend = 'Slurm'
         self.editor = None
         ## Additional options
         self.test_mode = False
@@ -114,9 +114,6 @@ class Options(object):
                 ## Set general options
                 if option not in self:
                     log.warning('Unknown general option "{}"'.format(option))
-                    continue
-                if self[option] is not None:
-                    log.warning('Trying to set a general option twice, ignoring duplicate')
                     continue
                 self[option] = val
             else:

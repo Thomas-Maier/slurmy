@@ -1,4 +1,6 @@
 
+## This is needed so that we can define JobContainer.print in python2
+from __future__ import print_function
 from .defs import Status, Type
 
 
