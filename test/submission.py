@@ -1,6 +1,15 @@
 
 import unittest
 import os
+import time
+
+
+class TestPostFunction:
+    def __init__(self, file_name):
+        self._file_name = file_name
+        
+    def __call__(self, config):
+        os.system('touch {}'.format(self._file_name))
 
 
 class Test(unittest.TestCase):
@@ -212,6 +221,17 @@ class Test(unittest.TestCase):
         jh.add_job(run_script = self.run_script_trigger_success, name = 'test')
         jh.run_jobs()
         self.assertIs(jh.jobs.test.status, Status.SUCCESS)
+
+    def test_post_process(self):
+        from slurmy import JobHandler, Status, test_mode
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_post_process', local_max = 1)
+        output_file = os.path.join(jh.config.output_dir, 'test')
+        post_func = TestPostFunction(output_file)
+        jh.add_job(run_script = self.run_script, name = 'test', post_func = post_func)
+        jh.run_jobs()
+        time.sleep(1)
+        self.assertIs(jh.jobs.test.status, Status.SUCCESS)
+        self.assertTrue(os.path.isfile(output_file))
 
 if __name__ == '__main__':
     unittest.main()

@@ -335,10 +335,6 @@ class Job(object):
                 self.status = Status.SUCCESS
             else:
                 self.status = Status.FAILED
-            ## Finish the job
-            ##TODO: maybe let the jobhandler trigger this instead?
-            ##TODO: this is not executed if the success check is done externally
-            self._finish()
 
         return self.status
 
@@ -360,7 +356,10 @@ class Job(object):
 
         return success
 
-    def _finish(self):
+    def complete(self):
+        """@SLURMY
+        Run the completion routine of the job.
+        """
         if self.config.post_func is not None:
             self.config.post_func(self.config)
         ## Write local job log
@@ -469,10 +468,14 @@ class Job(object):
     @status.setter
     def status(self, status):
         """@SLURMY
-        Set the status of the job.
+        Set the status of the job. If the job status changes to a completed state (SUCCESS, FAILED, CANCELLED), execute the job completion routine as well.
 
         * `status` Status to set the job status to.
         """
+        ## If status changes from pre-completion state to SUCCESS/FAILED/CANCELLED, execute the completion routine as well
+        if self.status.value < Status.SUCCESS.value and status.value >= Status.SUCCESS.value:
+            self.complete()
+        ## Set status
         self.config.status = status
 
     @property

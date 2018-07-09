@@ -45,6 +45,11 @@ class Test(unittest.TestCase):
         self.assertIs(job.get_mode(Status.FINISHED), Mode.ACTIVE)
         self.assertTrue(job.config.success_func(True))
 
+    def test_post_func(self):
+        from slurmy import Status
+        job = self.jh.add_job(run_script = self.run_script, post_func = lambda x: x)
+        self.assertTrue(job.config.post_func(True))
+
     def test_output(self):
         from slurmy import Status, Mode
         job = self.jh.add_job(run_script = self.run_script, output = 'test')
