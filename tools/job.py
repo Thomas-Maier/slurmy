@@ -371,9 +371,9 @@ class Job(object):
         """@SLURMY
         Open the job's run script in an editor.
 
-        * `editor` Command line editor to use. If none is specified, the default editor according to the slurmy config is used.
+        * `editor` Command line editor to use. If none is specified, the editor specified in $EDITOR is used and if this is not set, the default editor according to the slurmy config is used.
         """
-        editor = editor or options.Main.editor
+        editor = editor or os.environ['EDITOR'] or options.Main.editor
         if editor:
             os.system('{} {}'.format(editor, self.config.backend.run_script))
         else:
