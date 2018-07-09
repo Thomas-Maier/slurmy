@@ -114,7 +114,7 @@ class JobHandler(object):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
-        ##
+        ## Check if local_max was set to >0 if local_dynamic was set to True
         if local_dynamic and local_max == 0:
             log.warning('Dynamic local job allocation activated but local_max is set to 0. Setting local_max to 1.')
             local_max = 1

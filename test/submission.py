@@ -49,7 +49,7 @@ class Test(unittest.TestCase):
     def test_local(self):
         from slurmy import JobHandler, Status, Type, test_mode
         test_mode(True)
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local', listens = False)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local', listens = False, local_max = 1)
         jh.add_job(run_script = self.run_script_fail, name = 'test', job_type = Type.LOCAL)
         jh.run_jobs()
         status_fail = jh.jobs.test.status
@@ -93,7 +93,7 @@ class Test(unittest.TestCase):
 
     def test_mix(self):
         from slurmy import JobHandler, Status
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix', local_max = 1, local_dynamic, listens = False)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix', local_max = 1, local_dynamic = True, listens = False)
         jh.add_job(run_script = self.run_script_fail, name = 'test_1')
         jh.add_job(run_script = self.run_script_fail, name = 'test_2')
         jh.run_jobs()
@@ -109,7 +109,7 @@ class Test(unittest.TestCase):
     def test_local_listener(self):
         from slurmy import JobHandler, Status, Type, test_mode
         test_mode(True)
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local_listener')
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local_listener', local_max = 1)
         jh.add_job(run_script = self.run_script_fail, name = 'test', job_type = Type.LOCAL)
         jh.run_jobs()
         status_fail = jh.jobs.test.status
