@@ -289,7 +289,6 @@ class JobHandler(object):
         label_success_func = None
         if job_label[Status.FINISHED] is not None:
             label_finished_func = FinishedTrigger(job_label[Status.FINISHED])
-        ##TODO: this needs examples in the documentation
         if job_label[Status.SUCCESS] is not None:
             if self.config.listens and output is None:
                 ## If JobHandler is in listen mode and no output is defined, set output
