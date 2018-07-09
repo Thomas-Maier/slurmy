@@ -29,10 +29,10 @@ class JobHandlerConfig(object):
     
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
-                   '_success_func', '_finished_func', '_local_max', '_max_retries', '_run_max', '_backend', '_do_snapshot',
-                   '_wrapper', '_job_config_paths', '_listens', '_output_max_attempts']
+                   '_success_func', '_finished_func', '_local_max', '_local_dynamic', '_max_retries', '_run_max', '_backend',
+                   '_do_snapshot', '_wrapper', '_job_config_paths', '_listens', '_output_max_attempts']
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, local_dynamic = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
         self._name = self._name_gen.name
@@ -45,6 +45,7 @@ class JobHandlerConfig(object):
         self._success_func = success_func
         self._finished_func = finished_func
         self._local_max = local_max
+        self._local_dynamic = local_dynamic
         self._max_retries = max_retries
         self._run_max = run_max
         self._backend = backend
@@ -94,6 +95,7 @@ class JobHandler(object):
     * `backend` Default backend instance used for the job setup.
     * `work_dir` Path where the base directory is created.
     * `local_max` Maximum number of local jobs that will be submitted at a time.
+    * `local_dynamic` Switch to dynamically allocate jobs to run locally, up to the local_max maximum.
     * `verbosity` Verbosity of the shell output.
     * `success_func` Default success function used for the job setup.
     * `finished_func` Default finished function used for the job setup.
@@ -108,14 +110,19 @@ class JobHandler(object):
     * `printer_bar_mode` Turn bar mode of the printer on/off.
     """
     
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5, printer_bar_mode = True):
+    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, local_dynamic = False, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5, printer_bar_mode = True):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
+        ##
+        if local_dynamic and local_max == 0:
+            log.warning('Dynamic local job allocation activated but local_max is set to 0. Setting local_max to 1.')
+            local_max = 1
         ## Local jobs not supported in python 2
         if local_max > 0 and version_info.major == 2:
             log.warning('Local job processing not supported in python 2, switched off')
             local_max = 0
+            local_dynamic = False
         ## Variables that are not picklable
         self.jobs = JobContainer()
         ## Snapshot loading
@@ -142,7 +149,7 @@ class JobHandler(object):
             ## Set default backend configuration
             backend.load_default_config()
             ## Make new JobHandler config
-            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens, output_max_attempts = output_max_attempts)
+            self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, local_dynamic = local_dynamic, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens, output_max_attempts = output_max_attempts)
             self.reset(skip_jobs = True)
             ## Add this session to the slurmy bookkeeping only if snapshot making is activated
             if do_snapshot:
@@ -256,11 +263,10 @@ class JobHandler(object):
 
         Returns the job (Job).
         """
-        ##TODO: rethink how this should be handled
-        # ## If job type is LOCAL but maximum number of local jobs is 0, set to 1
-        # if job_type == Type.LOCAL and self.config.local_max == 0:
-        #     log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
-        #     self.config.local_max = 1
+        ## If job type is LOCAL but maximum number of local jobs is 0, set to 1
+        if job_type == Type.LOCAL and self.config.local_max == 0:
+            log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
+            self.config.local_max = 1
         if backend is None and options.Main.backend is not None:
             backend = get_backend(options.Main.backend)
         if backend is None:
@@ -490,9 +496,14 @@ class JobHandler(object):
                 if status != Status.CONFIGURED: continue
                 ## Check if job is ready to be submitted
                 if not self._job_ready(job): continue
-                ## Dynamically set job type to LOCAL, if local job queue is not full
-                if len(self.jobs._local) < self.config.local_max:
-                    job.type = Type.LOCAL
+                ## Check if maximum number of local jobs is reached
+                if len(self.jobs._local) >= self.config.local_max:
+                    ## If job is a local one, skip submission
+                    if job.type == Type.LOCAL: continue
+                else:
+                    ## Else if dynamic local job allocation is active, set job type to local
+                    if self.config.local_dynamic:
+                        job.type = Type.LOCAL
                 ## If job is type LOCAL, add job name to list of currently running local jobs
                 if job.type == Type.LOCAL:
                     self.jobs._local.add(job.name)

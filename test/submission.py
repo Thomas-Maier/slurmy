@@ -63,7 +63,7 @@ class Test(unittest.TestCase):
     def test_local_dynamic(self):
         from slurmy import JobHandler, Status, Type, test_mode
         test_mode(True)
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local_dynamic', local_max = 1, listens = False)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local_dynamic', local_max = 1, local_dynamic = True, listens = False)
         jh.add_job(run_script = self.run_script_fail, name = 'test')
         jh.run_jobs()
         type_first = jh.jobs.test.type
@@ -93,7 +93,7 @@ class Test(unittest.TestCase):
 
     def test_mix(self):
         from slurmy import JobHandler, Status
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix', local_max = 1, listens = False)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix', local_max = 1, local_dynamic, listens = False)
         jh.add_job(run_script = self.run_script_fail, name = 'test_1')
         jh.add_job(run_script = self.run_script_fail, name = 'test_2')
         jh.run_jobs()
@@ -123,7 +123,7 @@ class Test(unittest.TestCase):
     def test_local_dynamic_listener(self):
         from slurmy import JobHandler, Status, Type, test_mode
         test_mode(True)
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local_dynamic_listener', local_max = 1)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_local_dynamic_listener', local_max = 1, local_dynamic = True)
         jh.add_job(run_script = self.run_script_fail, name = 'test')
         jh.run_jobs()
         type_first = jh.jobs.test.type
@@ -153,7 +153,7 @@ class Test(unittest.TestCase):
 
     def test_mix_listener(self):
         from slurmy import JobHandler, Status
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix_listener', local_max = 1)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix_listener', local_max = 1, local_dynamic = True)
         jh.add_job(run_script = self.run_script_fail, name = 'test_1')
         jh.add_job(run_script = self.run_script_fail, name = 'test_2')
         jh.run_jobs()
@@ -223,8 +223,8 @@ class Test(unittest.TestCase):
         self.assertIs(jh.jobs.test.status, Status.SUCCESS)
 
     def test_post_process(self):
-        from slurmy import JobHandler, Status, test_mode
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_post_process', local_max = 1)
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_post_process')
         output_file = os.path.join(jh.config.output_dir, 'test')
         post_func = TestPostFunction(output_file)
         jh.add_job(run_script = self.run_script, name = 'test', post_func = post_func)
