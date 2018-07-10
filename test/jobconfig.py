@@ -31,7 +31,7 @@ class Test(unittest.TestCase):
     def test_type(self):
         from slurmy import JobHandler, Type
         jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_jobconfig_type', do_snapshot = False, local_max = 1)
-        job = self.jh.add_job(run_script = self.run_script, job_type = Type.LOCAL)
+        job = jh.add_job(run_script = self.run_script, job_type = Type.LOCAL)
         self.assertIs(job.type, Type.LOCAL)
 
     def test_finished_func(self):
