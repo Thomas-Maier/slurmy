@@ -77,7 +77,7 @@ class Listener(object):
             ## If we have results, update job properties
             if update_dict is not None:
                 for up_key, up_val in update_dict.items():
-                    log.debug('(Listener {}) Update {} of job "{}" from {} to {}'.format(self._listen_status.name, up_key, job.name, getattr(job, up_key), up_val))
+                    log.debug('(Listener {}) Update {} of job "{}" to {}'.format(self._listen_status.name, up_key, job.name, up_val))
                     setattr(job, up_key, up_val)
 
     def stop(self):

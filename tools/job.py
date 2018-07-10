@@ -485,6 +485,7 @@ class Job(object):
         """
         ## In case we have a batch job and exitcode is None, get it from underlying backend
         if self.type == Type.BATCH and self.config.exitcode is None:
+            log.debug('({}) Exitcode not set yet, fetching from backend'.format(self.name))
             self.config.exitcode = self.config.backend.exitcode()
 
         return self.config.exitcode

@@ -242,8 +242,9 @@ def _get_update_property(name):
         return getattr(self, name)
     
     def setter(self, val):
-        log.debug('Set attribute "{}" of class "{}" to value "{}"'.format(name, self, val))
-        if getattr(self, name) != val:
+        val_old = getattr(self, name)
+        log.debug('Set attribute "{}" of class "{}" from value "{}" to "{}"'.format(name, self, val_old, val))
+        if val_old != val:
             log.debug('Value changed, tag for update')
             self.update = True
         setattr(self, name, val)
