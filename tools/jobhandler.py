@@ -263,10 +263,10 @@ class JobHandler(object):
 
         Returns the job (Job).
         """
-        ## If job type is LOCAL but maximum number of local jobs is 0, set to 1
+        ## If job type is LOCAL but maximum number of local jobs is 0, abort
         if job_type == Type.LOCAL and self.config.local_max == 0:
-            log.warning('Job is created as Type.LOCAL but local_max is set to 0. Setting local_max to 1.')
-            self.config.local_max = 1
+            log.error('Job is created as Type.LOCAL but local_max is set to 0. Please set local_max of the JobHandler to a non-zero value.')
+            raise Exception
         if backend is None and options.Main.backend is not None:
             backend = get_backend(options.Main.backend)
         if backend is None:
