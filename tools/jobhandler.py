@@ -514,7 +514,7 @@ class JobHandler(object):
                 ## Check job status and tags again, skip status evaluation since this was already done
                 self._check_job(job, skip_eval = True)
             if wait: self._wait_for_jobs(tags)
-            ## Make JobHandler snapshot update, skip jobs since we already did them
+            ## Make JobHandler snapshot update
             if make_snapshot: self.update_snapshot()
         ## In case of a keyboard interrupt we just want to stop slurmy processing but keep current batch jobs running
         except KeyboardInterrupt:
