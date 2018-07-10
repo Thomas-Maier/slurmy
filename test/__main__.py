@@ -5,7 +5,6 @@ import unittest
 import argparse
 import sys
 import os
-
 import logging
 
 log = logging.getLogger('slurmy')
@@ -50,7 +49,12 @@ else:
 if args.tests:
     tests = args.tests
 else:
-    tests = test_dict.keys()
+    tests = []
+    for test_names in test_dict.values():
+        for test_name in test_names:
+            ## If this is python2, skip all "local" tests
+            if sys.version_info.major == 2 and 'local' in test_name: continue
+            tests.append(test_name)
 
 if args.list:
     print("Possible test modules and methods:")

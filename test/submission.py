@@ -91,9 +91,9 @@ class Test(unittest.TestCase):
         self.assertIs(status_fail, Status.FAILED)
         self.assertIs(status_success, Status.SUCCESS)
 
-    def test_mix(self):
+    def test_mix_batch_local(self):
         from slurmy import JobHandler, Status
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix', local_max = 1, local_dynamic = True, listens = False)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix_batch_local', local_max = 1, local_dynamic = True, listens = False)
         jh.add_job(run_script = self.run_script_fail, name = 'test_1')
         jh.add_job(run_script = self.run_script_fail, name = 'test_2')
         jh.run_jobs()
@@ -151,9 +151,9 @@ class Test(unittest.TestCase):
         self.assertIs(status_fail, Status.FAILED)
         self.assertIs(status_success, Status.SUCCESS)
 
-    def test_mix_listener(self):
+    def test_mix_batch_local_listener(self):
         from slurmy import JobHandler, Status
-        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix_listener', local_max = 1, local_dynamic = True)
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_mix_batch_local_listener', local_max = 1, local_dynamic = True)
         jh.add_job(run_script = self.run_script_fail, name = 'test_1')
         jh.add_job(run_script = self.run_script_fail, name = 'test_2')
         jh.run_jobs()
