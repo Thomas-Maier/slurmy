@@ -435,7 +435,7 @@
             <div class="section">
               
                 <h1 id="jobhandler">JobHandler</h1>
-<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, verbosity=1, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None, profiler=None, listens=True, output_max_attempts=5, printer_bar_mode=True)
+<pre><code class="python">JobHandler(name=None, backend=None, work_dir='', local_max=0, local_dynamic=False, verbosity=1, success_func=None, finished_func=None, max_retries=0, theme=&lt;Theme.Lovecraft: 1&gt;, run_max=None, do_snapshot=True, use_snapshot=False, description=None, wrapper=None, profiler=None, listens=True, output_max_attempts=5, printer_bar_mode=True)
 </code></pre>
 
 <p>Main handle to setup and submit jobs. Internally stores most information in the <a href="../JobHandlerConfig/#JobHandlerConfig">JobHandlerConfig</a> class, which is stored on disk as a snapshot of the <a href="./#JobHandler">JobHandler</a> session.</p>
@@ -444,6 +444,7 @@
 <li><code>backend</code> Default backend instance used for the job setup.</li>
 <li><code>work_dir</code> Path where the base directory is created.</li>
 <li><code>local_max</code> Maximum number of local jobs that will be submitted at a time.</li>
+<li><code>local_dynamic</code> Switch to dynamically allocate jobs to run locally, up to the local_max maximum.</li>
 <li><code>verbosity</code> Verbosity of the shell output.</li>
 <li><code>success_func</code> Default success function used for the job setup.</li>
 <li><code>finished_func</code> Default finished function used for the job setup.</li>
