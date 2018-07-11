@@ -192,7 +192,7 @@ class Job(object):
 
         Returns if job has the tag (bool).
         """
-        if tag in set(self.tags):
+        if tag in self.tags:
             return True
         else:
             return False
@@ -206,7 +206,7 @@ class Job(object):
         Returns if job has any of the tags (bool).
         """
 
-        return bool(set(self.tags) & tags)
+        return bool(self.tags & tags)
 
     def submit(self):
         """@SLURMY

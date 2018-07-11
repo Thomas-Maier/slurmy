@@ -66,7 +66,7 @@ class Printer(object):
         for tag in self._tags:
             update_dict[tag] = OrderedDict()
             for status in [Status.SUCCESS, Status.FAILED]:
-                update_dict[tag][status.name] = len(self._parent.jobs.get(tags = set([tag]), states = set([status])))
+                update_dict[tag][status.name] = len(self._parent.jobs.get(tags = tag, states = status))
 
         return update_dict
 

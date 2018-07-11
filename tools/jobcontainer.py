@@ -22,11 +22,21 @@ class JobContainer(dict, object):
         """@SLURMY
         Get the list of jobs.
 
-        * `tags` Tags that the jobs must match to.
-        * `states` Job states that the jobs must match to.
+        * `tags` Tags that the jobs must match to (single string or list of strings).
+        * `states` Job states that the jobs must match to (single Status object or list of Status objects).
 
         Returns list of jobs ([Job]).
         """
+        if tags is not None:
+            if not (isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set)):
+                tags = [tags]
+            if not isinstance(tags, set):
+                tags = set(tags)
+        if states is not None:
+            if not (isinstance(states, list) or isinstance(states, tuple) or isinstance(states, set)):
+                states = [states]
+            if not isinstance(states, set):
+                states = set(states)
         job_list = []
         for job in self.values():
             if tags is not None and not job.has_tags(tags): continue
@@ -75,14 +85,6 @@ class JobContainer(dict, object):
         * `states` States that jobs should match with (single string or list of strings). If a job is in any of the provided states it will be printed.
         * `print_summary` Print overall summary as well.
         """
-        if tags is not None:
-            if not (isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set)):
-                tags = [tags]
-            tags = set(tags)
-        if states is not None:
-            if not (isinstance(states, list) or isinstance(states, tuple) or isinstance(states, set)):
-                states = [states]
-            states = set(states)
 
         print(self._jobs_printlist(tags = tags, states = states, print_summary = print_summary))
 
