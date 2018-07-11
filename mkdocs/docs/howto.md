@@ -119,6 +119,12 @@ jh.add_job(run_script = run_script_2, parent_tags = 'hans')
 jh.run_jobs()
 ```
 
+### Additional uses of tags
+
+Tags can also be used to just organise jobs. In [interactive slurmy](interactive_slurmy.md) you can easily print out only jobs which have a specified tag via [JobContainer.get()](classes/JobContainer.md#get) (i.e. `jh.jobs.get()`).
+
+Also, if you properly installed the tqdm module (see the [recommended setup](index.md#Recommended Setup)), slurmy will keep track of the job progress for each tag separately in addition to the overall progress.
+
 ## Steering evaluation of jobs processing status
 
 By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it finished and was successful or not. However, you can change how slurmy will evaluate whether the job is finished or was successful.
