@@ -302,19 +302,20 @@ class Job(object):
         Get the status of the job.
 
         * `skip_eval` Skip the status evaluation and just return the stored value.
-        * `force_success_check` Force the success routine to be run, even if the job is already in a post-finished state.
+        * `force_success_check` Force the success routine to be run, even if the job is already in a post-finished state. This will not work if job is in PASSIVE mode (i.e. relies on a Listener to set it's status).
 
         Returns the job status (Status).
         """
         ## Just return current status and skip status evaluation
         if skip_eval:
             return self.status
-        ## If the job is not LOCAL and in PASSIVE mode, just return current status
-        if self.type != Type.LOCAL and self.mode == Mode.PASSIVE:
-            log.debug('({}) Batch job in PASSIVE mode, return current status'.format(self.name))
-            return self.status
-        ## Evaluate if job is finished
+        ## Evaluate if the job is finished
         if self.status == Status.RUNNING:
+            ## If the job is not LOCAL and in PASSIVE mode, just return current status
+            if self.type != Type.LOCAL and self.mode == Mode.PASSIVE:
+                log.debug('({}) Batch job in PASSIVE mode, skip RUNNING evaluation and return current status'.format(self.name))
+                return self.status
+            ## Finished evaluation, differently for local and batch jobs
             if self.type == Type.LOCAL:
                 self._get_local_status()
             else:
@@ -325,12 +326,13 @@ class Job(object):
                         self.status = Status.RUNNING
                 else:
                     self.status = self.config.backend.status()
-        ## Need to check again before moving on with the evaluation
-        if self.mode == Mode.PASSIVE:
-            log.debug('({}) Job in PASSIVE mode, return current status'.format(self.name))
-            return self.status
-        ## Evaluate if job was successful
+        ## Evaluate if the job was successful
         if self.status == Status.FINISHED or force_success_check:
+            ## If the job is in PASSIVE mode, just return current status
+            if self.mode == Mode.PASSIVE:
+                log.debug('({}) Job in PASSIVE mode, skip FINISHED evaluation and return current status'.format(self.name))
+                return self.status
+            ## Success evaluation
             if self._is_success():
                 self.status = Status.SUCCESS
             else:
@@ -382,14 +384,14 @@ class Job(object):
     @property
     def tags(self):
         """@SLURMY
-        Returns the list of tags associated to this job ([str]).
+        Returns the list of tags associated to this job (set(str)).
         """
         return self.config.tags
 
     @property
     def parent_tags(self):
         """@SLURMY
-        Returns the list of parent tags associated to this job ([str]).
+        Returns the list of parent tags associated to this job (set(str)).
         """
         return self.config.parent_tags
 

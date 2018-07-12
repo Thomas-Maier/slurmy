@@ -303,12 +303,15 @@ class JobHandler(object):
         ## Set modes
         ### If JobHandler listens, set the mode for RUNNING to PASSIVE by default
         if self.config.listens:
+            log.debug('JobHandler is in listener mode, set mode for RUNNING of job "{}" to PASSIVE'.format(name))
             job_config.set_mode(Status.RUNNING, Mode.PASSIVE)
         ### If we have a custom finished_func, set the mode for RUNNING to ACTIVE
         if job_finished_func:
+            log.debug('Finished_func is defined, set mode for RUNNING of job "{}" to ACTIVE'.format(name))
             job_config.set_mode(Status.RUNNING, Mode.ACTIVE)
         ### If we have an output file, but no custom success_function, set the mode for FINISHED to PASSIVE
         if output and not job_success_func:
+            log.debug('Output is defined and success_func is NOT defined, set mode for FINISHED of job "{}" to PASSIVE'.format(name))
             job_config.set_mode(Status.FINISHED, Mode.PASSIVE)
         ## Add job config snapshot path to list in JobHandlerConfig
         self.config.add_job_path(config_path)
@@ -327,21 +330,25 @@ class JobHandler(object):
         """
         ## Check if parent jobs are finished
         parent_tags = job.parent_tags
-        if not parent_tags:
-            return True
         for tag in parent_tags:
             if tag not in self.jobs._tags:
                 log.error('Parent tag is not registered in jobs list!')
-                continue
+                raise Exception
             for tagged_job in self.jobs._tags[tag]:
                 status = tagged_job.get_status()
-                if status == Status.SUCCESS: continue
+                if status == Status.SUCCESS:
+                    log.debug('Parent job "{0}" of job "{1}" is in SUCCESS, all good'.format(tagged_job.name, job.name))
+                    continue
                 ## If a parent job is unrecoverably failed/cancelled, cancel this job as well
-                if (status == Status.FAILED or status == Status.CANCELLED) and not tagged_job._do_retry(): job.cancel(clear_retry = True)
+                if (status == Status.FAILED or status == Status.CANCELLED) and not tagged_job._do_retry():
+                    log.warning('Parent job "{0}" of job "{1}" unrecoverably failed, cancelling job "{1}"'.format(tagged_job.name, job.name))
+                    job.cancel(clear_retry = True)
+                log.debug('Parent job "{0}" of job "{1}" is NOT in SUCCESS, wait for next submission cycle'.format(tagged_job.name, job.name))
                 return False
         ## Check if local job queue is full
         if job.type == Type.LOCAL:
             if len(self.jobs._local) >= self.config.local_max:
+                log.debug('Maximum number of local jobs running reached, wait for next submission cycle for local job "{}"'.format(job.name))
                 return False
 
         return True
@@ -485,16 +492,11 @@ class JobHandler(object):
                     status = job._retry(submit = False, ignore_max_retries = retry)
                 ## If job is not in Configured state there is nothing to do
                 if status != Status.CONFIGURED: continue
-                ## Check if job is ready to be submitted
+                ## Check if job is ready to be submitted --> parent jobs succeeded? local job and local_max is reached?
                 if not self._job_ready(job): continue
-                ## Check if maximum number of local jobs is reached
-                if len(self.jobs._local) >= self.config.local_max:
-                    ## If job is a local one, skip submission
-                    if job.type == Type.LOCAL: continue
-                else:
-                    ## Else if dynamic local job allocation is active, set job type to local
-                    if self.config.local_dynamic:
-                        job.type = Type.LOCAL
+                ## If dynamic local job allocation is active, set job type to local  if maximum number of local jobs is not reached yet
+                if self.config.local_dynamic and len(self.jobs._local) < self.config.local_max:
+                    job.type = Type.LOCAL
                 ## If job is type LOCAL, add job name to list of currently running local jobs
                 if job.type == Type.LOCAL:
                     self.jobs._local.add(job.name)
