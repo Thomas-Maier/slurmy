@@ -226,16 +226,8 @@ class JobHandler(object):
     def _add_job_with_config(self, job_config):
         log.debug('Add job {}'.format(job_config.name))
         job = Job(config = job_config)
-        self.jobs[job.name] = job
-        tags = job_config.tags
-        if tags is not None:
-            if isinstance(tags, list) or isinstance(tags, tuple) or isinstance(tags, set):
-                for tag in tags:
-                    if tag not in self.jobs._tags: self.jobs._tags[tag] = []
-                    self.jobs._tags[tag].append(job)
-            else:
-                if tags not in self.jobs._tags: self.jobs._tags[tags] = []
-                self.jobs._tags[tags].append(job)
+        ## Add the job to the JobContainer
+        self.jobs.add(job)
         ## Ensure that a first snapshot is made
         if self.config.do_snapshot: job.update_snapshot()
         ## If job is a batch job, store job id if it already has one

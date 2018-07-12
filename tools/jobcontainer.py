@@ -18,6 +18,17 @@ class JobContainer(dict, object):
     def add_id(self, job_id, job_name):
         self._ids[job_id] = job_name
 
+    def add(self, job):
+        ## Add job to respective tag list
+        tags = job.tags
+        for tag in tags:
+            if tag not in self._tags:
+                ## Add tag entry in tags dictionary
+                self._tags[tag] = []
+            self._tags[tag].append(job)
+        ## Add job to internal dictionary and as a property
+        self[job.name] = job
+
     def get(self, tags = None, states = None):
         """@SLURMY
         Get the list of jobs.
@@ -93,9 +104,7 @@ class JobContainer(dict, object):
         summary = {}
         for job in self.get(tags = tags, states = states):
             job_name = job.name
-            job_status = job.get_status()
-            if tags and job.has_tags(tags): continue
-            if states and job_status not in states: continue
+            job_status = job.status
             printlist.append('Job "{}": {}'.format(job_name, job_status.name))
             if job_status.name not in summary:
                 summary[job_status.name] = 0
