@@ -43,7 +43,8 @@ class Listener(object):
         Spawn subprocess which continuously collects information by configurable mechanism and match any updates in the output to a state change decision of jobs.
 
         * `interval` Interval at which information is collected by subprocess.
-        """ 
+        """
+        log.debug('(Listener {}) Start listening'.format(self._listen_status.name))
         args = (self._results, interval)
         self._process = multiprocessing.Process(target = self._listen_func, args = args)
         self._process.start()
@@ -52,6 +53,7 @@ class Listener(object):
         """@SLURMY
         Update jobs associated to parent JobHandler with the collected information.
         """
+        log.debug('(Listener {}) Update jobs'.format(self._listen_status.name))
         results = self._results.get()
         for job in self._parent.jobs.values():
             ## If job is not in status which the listener should consider, skip
@@ -84,4 +86,5 @@ class Listener(object):
         """@SLURMY
         Stop listening subprocess.
         """
+        log.debug('(Listener {}) Stop listening'.format(self._listen_status.name))
         self._process.terminate()

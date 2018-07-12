@@ -77,6 +77,7 @@ class Test(unittest.TestCase):
         output = os.path.join(self.jh.config.output_dir, 'test')
         self.assertTrue(job.output == output)
 
+    ##TODO: rework to be compatible with new logic
     def test_trigger(self):
         from slurmy import Status, Mode
         job = self.jh.add_job(run_script = self.run_script_trigger)

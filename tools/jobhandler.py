@@ -278,23 +278,32 @@ class JobHandler(object):
         for status in job_label:
             backend.run_script, job_label[status] = self._parser.set_status_label(backend.run_script, name, status)
         label_finished_func = None
-        label_success_func = None
         if job_label[Status.FINISHED] is not None:
             label_finished_func = FinishedTrigger(job_label[Status.FINISHED])
         if job_label[Status.SUCCESS] is not None:
-            if self.config.listens and output is None:
-                ## If JobHandler is in listen mode and no output is defined, set output
+            ## If no output is defined yet, set as output. This triggers that the output success evaluation is done on this file
+            if output is None:
                 output = job_label[Status.SUCCESS]
             else:
-                ## Else set success_func
-                label_success_func = SuccessTrigger(job_label[Status.SUCCESS], self.config.output_max_attempts)
-        job_finished_func = finished_func or label_finished_func or self.config.finished_func
-        job_success_func = success_func or label_success_func or self.config.success_func
+                ## If output is already set, then the success label is redundant and will be effectively ignored
+                log.warning('@SLURMY.SUCCESS is defined in run_script together with an output, this is redundant')
+                log.warning('Job will ignore @SLURMY.SUCCESS label')
         ## Parse variables
         backend.run_script = self._parser.replace(backend.run_script)
         if output: output = self._parser.replace(output)
+        ## Set output success trigger
+        output_success_func = None
+        if output:
+            output_success_func = SuccessTrigger(output, self.config.output_max_attempts)
+        ## Set finished_func of the job, priority: custom to job - from FINISHED label - custom to JobHandler
+        job_finished_func = finished_func or label_finished_func or self.config.finished_func
+        ## Set success_func of the job, priority: custom to job - from output trigger - custom to JobHandler
+        job_success_func = success_func or output_success_func or self.config.success_func
+        ## Write run_script
         backend.write_script(self.config.script_dir)
+        ## Set log name
         backend.log = os.path.join(self.config.log_dir, name)
+        ## Synchronise backend
         backend.sync(self.config.backend)
         job_max_retries = max_retries or self.config.max_retries
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
@@ -309,10 +318,12 @@ class JobHandler(object):
         if job_finished_func:
             log.debug('Finished_func is defined, set mode for RUNNING of job "{}" to ACTIVE'.format(name))
             job_config.set_mode(Status.RUNNING, Mode.ACTIVE)
-        ### If we have an output file, but no custom success_function, set the mode for FINISHED to PASSIVE
-        if output and not job_success_func:
-            log.debug('Output is defined and success_func is NOT defined, set mode for FINISHED of job "{}" to PASSIVE'.format(name))
-            job_config.set_mode(Status.FINISHED, Mode.PASSIVE)
+        ### Output file is defined
+        if output:
+            ### If JobHandler is in listener mode and no custom success_function is defined, set the mode for FINISHED to PASSIVE
+            if self.config.listens and not success_func:
+                log.debug('Output is defined and success_func is NOT defined, set mode for FINISHED of job "{}" to PASSIVE'.format(name))
+                job_config.set_mode(Status.FINISHED, Mode.PASSIVE)
         ## Add job config snapshot path to list in JobHandlerConfig
         self.config.add_job_path(config_path)
         ## Update snapshot to make sure job config paths list is properly updated

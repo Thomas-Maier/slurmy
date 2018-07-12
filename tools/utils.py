@@ -4,28 +4,6 @@ log = logging.getLogger('slurmy')
 
 
 ## Success classes/functions
-class SuccessOutputFile:
-    """@SLURMY
-    Callable class which can be used as success_func of a slurmy job. It checks if the output file that is associated to the job is present in the underlying file system.
-
-    * `delay` Time (in seconds) that the job should wait before making the success evaluation.
-    """
-    def __init__(self, delay = 1):
-        self._delay = delay
-        
-    def __call__(self, config):
-        import os, time, subprocess
-        time.sleep(self._delay)
-        ## Make an explicit ls on the folders where the output files are written to
-        ## This avoids problems with delayed updates in the underlying file system
-        folder = os.path.dirname(config.output)
-        try:
-            subprocess.check_output(['ls', folder], universal_newlines = True, stderr = subprocess.STDOUT)
-        except subprocess.CalledProcessError:
-            log.debug('Output folder {} does not exist, please check'.format(folder))
-            
-        return os.path.isfile(config.output)
-
 class SuccessTrigger:
     """@SLURMY
     Callable class which can be used as success_func of a slurmy job. It checks if the success_file is present in the underlying file system, once a second. If the maximum number of attempts are reached without finding the file, it returns FAILED.
@@ -48,8 +26,8 @@ class SuccessTrigger:
             log.debug('Output folder {} does not exist, please check'.format(folder))
         ## Atempt to find success file
         for i in range(self._max_attempts):
+            log.debug('Checking success file, attempt #{}'.format(i))
             if os.path.isfile(self._success_file):
-                os.remove(self._success_file)
                 return True
             time.sleep(1)
 

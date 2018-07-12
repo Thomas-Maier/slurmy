@@ -175,6 +175,34 @@ class Test(unittest.TestCase):
         self.assertIs(jh.jobs.test_parent.status, Status.SUCCESS)
         self.assertIs(jh.jobs.test_child.status, Status.SUCCESS)
 
+    def test_chain_multiparent(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_chain_multiparent', listens = False)
+        output1 = '@SLURMY.output_dir/parent1'
+        run_script1 = '#!/bin/bash\ntouch {}; sleep 2;'.format(output1)
+        jh.add_job(run_script = run_script1, name = 'test_parent1', tags = 'parent1', output = output1)
+        output2 = '@SLURMY.output_dir/parent2'
+        run_script2 = '#!/bin/bash\ntouch {}; sleep 2;'.format(output2)
+        jh.add_job(run_script = run_script2, name = 'test_parent2', tags = 'parent2', output = output2)
+        run_script3 = '#!/bin/bash\nls {} {};'.format(output1, output2)
+        jh.add_job(run_script = run_script3, name = 'test_child', parent_tags = ['parent1', 'parent2'])
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test_parent1.status, Status.SUCCESS)
+        self.assertIs(jh.jobs.test_parent2.status, Status.SUCCESS)
+        self.assertIs(jh.jobs.test_child.status, Status.SUCCESS)
+
+    def test_output(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_output', listens = False)
+        jh.add_job(run_script = self.run_script_touch_file, name = 'test', output = self.output_file)
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test.status, Status.SUCCESS)
+        jh.reset()
+        jh.jobs.test.config.backend.run_script = self.run_script_success
+        jh.jobs.test.config.output = 'jwoigjwoijegoijwoijegoiwoeg'
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test.status, Status.FAILED)
+
     def test_output_listener(self):
         from slurmy import JobHandler, Status
         jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_output_listener')
