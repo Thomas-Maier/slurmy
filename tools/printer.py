@@ -120,7 +120,12 @@ class Printer(object):
             ## Close bars
             for bar in self._bars.values():
                 bar.close()
-        stdout.write('\n')
+        n_newlines = 1
+        if self._bar_mode:
+            n_bars = len(self._bars)
+            if n_bars > 1:
+                n_newlines = n_bars-1
+        stdout.write(n_newlines*'\n')
         self.print_summary()
 
     def _print_simple(self):
