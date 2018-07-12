@@ -93,7 +93,7 @@ class JobContainer(dict, object):
         Print the list of jobs and their current status.
 
         * `tags` Tags that jobs should match with (single string or list of strings). If a job has any of the provided tags it will be printed.
-        * `states` States that jobs should match with (single string or list of strings). If a job is in any of the provided states it will be printed.
+        * `states` States that jobs should match with (single Status object or list of Status objects). If a job is in any of the provided states it will be printed.
         * `print_summary` Print overall summary as well.
         """
 

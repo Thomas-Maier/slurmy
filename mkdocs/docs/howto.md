@@ -119,9 +119,11 @@ jh.add_job(run_script = run_script_2, parent_tags = 'hans')
 jh.run_jobs()
 ```
 
+The `tags` and `parent_tags` arguments of `jh.add_job()` can also be a list of tags, in order to assign multiple tags to a job at once.
+
 ### Additional uses of tags
 
-Tags can also be used to just organise jobs. In [interactive slurmy](interactive_slurmy.md) you can easily print out only jobs which have a specified tag via [JobContainer.get()](classes/JobContainer.md#get) (i.e. `jh.jobs.get()`).
+Tags can also be used to just organise jobs. In [interactive slurmy](interactive_slurmy.md) you can easily print out only jobs which have a specified tag via [JobContainer.print()](classes/JobContainer.md#print) (i.e. `jh.jobs.print(tags = 'hans')` for the example above).
 
 Also, if you properly installed the tqdm module (see the [recommended setup](index.md#Recommended Setup)), slurmy will keep track of the job progress for each tag separately in addition to the overall progress.
 
@@ -151,7 +153,7 @@ jh.add_job(run_script = run_script, output = '~/hans.txt')
 jh.run_jobs()
 ```
 
-The `output_max_attempts` argument of the [JobHandler](classes/JobHandler.md) defines how many attempts are made to find the output file for a given job that is in FINISHED state. By default it is set to 5, in order to avoid delayed availablity of the output file in the underlying file system.
+The `output_max_attempts` argument of the [JobHandler](classes/JobHandler.md) defines how many attempts are made to find the output file for a given job that is in FINISHED state. By default it is set to 5, in order to avoid delayed availability of the output file in the underlying file system.
 
 ### FINISHED and SUCCESS trigger in the run_script
 You can also set triggers in the run_script to indicate at which point in the job processing it should be considered as FINISHED and/or SUCCESS.
