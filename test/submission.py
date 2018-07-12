@@ -175,6 +175,15 @@ class Test(unittest.TestCase):
         self.assertIs(jh.jobs.test_parent.status, Status.SUCCESS)
         self.assertIs(jh.jobs.test_child.status, Status.SUCCESS)
 
+    def test_chain_fail(self):
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_chain', listens = False)
+        jh.add_job(run_script = self.run_script_fail, name = 'test_parent', tags = 'parent')
+        jh.add_job(run_script = self.run_script_success, name = 'test_child', parent_tags = 'parent')
+        jh.run_jobs()
+        self.assertIs(jh.jobs.test_parent.status, Status.FAILED)
+        self.assertIs(jh.jobs.test_child.status, Status.CANCELLED)
+
     def test_chain_multiparent(self):
         from slurmy import JobHandler, Status
         jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_chain_multiparent', listens = False)
