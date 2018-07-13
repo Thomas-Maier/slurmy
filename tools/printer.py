@@ -3,6 +3,7 @@ import time
 from sys import stdout
 from collections import OrderedDict
 from .defs import Status, Type
+from .tags import Tags
 from tqdm import tqdm
 
 
@@ -26,7 +27,7 @@ class Printer(object):
         ## Time
         self._time = None
         ## Tags which are tracked (set during bars setup)
-        self._tags = []
+        self._tags = Tags()
 
     def set_manual(self):
         """@SLURMY
@@ -36,8 +37,14 @@ class Printer(object):
 
     ##TODO: how to deal with negative increments (i.e. when jobs are retried), currently this is just ignored
     def _setup_bars(self):
-        ## Set tags that printer tracks (skip non-string tags)
-        self._tags = [tag for tag in self._parent.jobs._tags if isinstance(tag, str)]
+        ## Recursive function to add tags
+        def add(tags, prefix = ''):
+            for tag in tags:
+                n_jobs_tag = len(self._parent.jobs._tags[tag])
+                n_initial_tag = updates[tag][Status.SUCCESS.name] + updates[tag][Status.FAILED.name]
+                bars[tag] = tqdm(total = n_jobs_tag, initial = n_initial_tag, desc = tag, unit = 'job', bar_format = prefix+self._bar_format)
+                bars[tag].set_postfix(updates[tag])
+                add(tags[tag], prefix+'-')
         ## Get updates for the initial bar values
         updates = self._get_updates()
         ## Create bars
@@ -48,11 +55,7 @@ class Printer(object):
         n_initial = updates['all'][Status.SUCCESS.name] + updates['all'][Status.FAILED.name]
         bars['all'] = tqdm(total = n_jobs, initial = n_initial, desc = 'all', unit = 'job', bar_format = self._bar_format)
         bars['all'].set_postfix(updates['all'])
-        for tag in self._tags:
-            n_jobs_tag = len(self._parent.jobs._tags[tag])
-            n_initial_tag = updates[tag][Status.SUCCESS.name] + updates[tag][Status.FAILED.name]
-            bars[tag] = tqdm(total = n_jobs_tag, initial = n_initial_tag, desc = tag, unit = 'job', bar_format = self._bar_format)
-            bars[tag].set_postfix(updates[tag])
+        add(self._tags.tree)
 
         return bars
 
@@ -63,7 +66,7 @@ class Printer(object):
         for status in [Status.SUCCESS, Status.FAILED]:
             update_dict['all'][status.name] = len(self._parent.jobs._states[status])
         ## Entries for tracked tags
-        for tag in self._tags:
+        for tag in self._tags.tags:
             update_dict[tag] = OrderedDict()
             for status in [Status.SUCCESS, Status.FAILED]:
                 update_dict[tag][status.name] = len(self._parent.jobs.get(tags = tag, states = status))
@@ -90,6 +93,8 @@ class Printer(object):
         self._time = time.time()
         ## If verbosity is 0, do nothing
         if self._verbosity == 0: return
+        ## Set up tags
+        self._tags.setup(self._parent.jobs.values())
         if self._bar_mode:
             ## Set up bars
             self._bars = self._setup_bars()
