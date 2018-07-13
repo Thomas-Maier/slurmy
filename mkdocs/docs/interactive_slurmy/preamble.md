@@ -27,7 +27,7 @@ In general you can do everything in interactive slurmy that you can also do in p
 
 ```python
 In [1]: jh
-Out[1]: Azathoth_1530051215
+Out[1]: MyAnalysis_1531405633
 ```
 
 Every [JobHandler](classes/JobHandler.md) has a member `jobs` which keeps track of all it's attached jobs:
@@ -35,40 +35,48 @@ Every [JobHandler](classes/JobHandler.md) has a member `jobs` which keeps track 
 ```python
 In [2]: jh.jobs
 Out[2]: 
-Job "hans": CONFIGURED
+Job "ttbar": CONFIGURED
+Job "wjets": CONFIGURED
+Job "ww": CONFIGURED
+Job "data": CONFIGURED
 ------------
-CONFIGURED(1)
+CONFIGURED(4)
 ```
 
-As you can see, the [JobHandler](classes/JobHandler.md) in this case has one job named "hans", which is in the CONFIGURED state. Every job is attached as property to [JobHandler](classes/JobHandler.md).jobs, which provides a direct handle to access them:
+As you can see, the [JobHandler](classes/JobHandler.md) in this case has four jobs named "data", "ttbar", "wjets", and "ww", which is in the CONFIGURED state. Every job is attached as property to [JobHandler](classes/JobHandler.md).jobs, which provides a direct handle to access them:
 
 ```python
-In [3]: jh.jobs.hans
+In [3]: jh.jobs.ww
 Out[3]: 
-Job "hans"
-Local: False
+Job "ww"
+Type: BATCH
 Backend: Slurm
-Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
 Status: CONFIGURED
+Tags: {'bkg', 'ww'}
 ```
 
 Alternatively, jobs can be accessed directly by name via the [JobHandler](classes/JobHandler.md) itself:
 
 ```python
-In [4]: jh['hans']
+In [4]: jh['ww']
 Out[4]: 
-Job "hans"
-Local: False
+Job "ww"
+Type: BATCH
 Backend: Slurm
-Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
 Status: CONFIGURED
+Tags: {'bkg', 'ww'}
 ```
 
 [JobHandler](classes/JobHandler.md).jobs also has a `status_` property for every possible job status, which will print all jobs which currently are in this status:
 
 ```python
 In [5]: jh.jobs.status_CONFIGURED
-Job "hans": CONFIGURED
+Job "wjets": CONFIGURED
+Job "data": CONFIGURED
+Job "ww": CONFIGURED
+Job "ttbar": CONFIGURED
 
 In [6]: jh.jobs.status_RUNNING
 
@@ -76,90 +84,110 @@ In [6]: jh.jobs.status_RUNNING
 In [7]:
 ```
 
-In this example, job "hans" is in CONFIGURED state so we can run the job submission (`run_jobs` for continuous submission until finished or `submit_jobs` for a single submission cycle):
+As you've seen above, the job "ww" (and "ttbar" and "wjets" for that matter) has a tag "bkg", which was attached to the job via the `tags` option of [JobHandler.add_job()](classes/JobHandler.md#add_job). You can get the printout for jobs only tagged with "bkg" by calling the [JobContainer.print()](classes/JobContainer.md#print) method:
 
 ```python
-In [7]: jh.run_jobs()
-Jobs processed (batch/local/all): (1/0/1)
-     successful (batch/local/all): (0/0/0)
-     failed (batch/local/all): (1/0/1)
-Time spent: 5.4 s
-```
-
-(Note: the submission interval of `run_jobs` is set to 5 seconds by default)
-
-The job "hans" is now in FAILED state:
-
-```python
-In [8]: jh.jobs
-Out[8]: 
-Job "hans": FAILED
+In [7]: jh.jobs.print(tags='bkg')
+Job "wjets": CONFIGURED
+Job "ww": CONFIGURED
+Job "ttbar": CONFIGURED
 ------------
-FAILED(1)
+CONFIGURED(3)
 ```
 
-We can access the log file of the job directly via it's dedicated property (which opens the log with less), in order to find out what went wrong:
+In this example, all jobs are in the CONFIGURED state so we can run the job submission with [JobHandler.run_jobs()](classes/JobHandler.md#run_jobs):
 
 ```python
-In [9]: jh.jobs.hans.log
+In [8]: jh.run_jobs()
+all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=3, FAILED=1]
+data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=2, FAILED=1]
+ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=0, FAILED=1]
+
+Jobs processed (batch/local/all): (4/0/4)
+     successful (batch/local/all): (3/0/3)
+     failed (batch/local/all): (1/0/1)
+Time spent: 12.4 s
+```
+
+You can see that this produces two different printouts. During the processing you'll get progress bars which indicate how many jobs are completed. On the very right of these progess bars you can also see how many jobs ended up successful or failed. You can also see that for each tag that is introduced with [JobHandler.add_job()](classes/JobHandler.md#add_job) one progress bar is displayed, which keeps track of the jobs assigned with this tag. In this example, each job has it's own name as tag and "ww", "ttbar", and "wjets" have "bkg" as an additional tag.
+
+As you can see from the printout above, job "ww" ended up in FAILED state.
+
+```python
+In [9]: jh.jobs.ww
+Out[9]: 
+Job "ww"
+Type: BATCH
+Backend: Slurm
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
+Status: FAILED
+Tags: {'bkg', 'ww'}
+```
+
+We can access the log file of the job directly with [Job.log](classes/Job.md#log) (which opens the log file with `less`), in order to find out what went wrong:
+
+```python
+In [10]: jh.jobs.ww.log
 ```
 
 Usually, you probably want to fix your job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:
 
 ```python
-In [10]: jh.jobs.hans.edit_script()
+In [11]: jh.jobs.ww.edit_script()
 ```
 
-If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by passing `retry = True` to `run_jobs` or `submit_jobs`:
+If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by passing `retry = True` to `run_jobs`:
 
 ```python
-In [11]: jh.run_jobs(retry = True)
-Jobs processed (batch/local/all): (1/0/1)
-     successful (batch/local/all): (1/0/1)
-Time spent: 5.3 s
+In [12]: jh.run_jobs(retry = True)
+all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=4, FAILED=0]
+data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=3, FAILED=0]
+ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+
+Jobs processed (batch/local/all): (4/0/4)
+     successful (batch/local/all): (4/0/4)
+Time spent: 2.5 s
 ```
 
-The job "hans" is now in SUCCESS state (from fixing the run script before retrying the job):
+The job "ww" is now in SUCCESS state (from fixing the run script before retrying the job):
 
 ```python
-In [12]: jh.jobs
-Out[12]: 
-Job "hans": SUCCESS
-------------
-SUCCESS(1)
+In [13]: jh.jobs.ww
+Out[13]: 
+Job "ww"
+Type: BATCH
+Backend: Slurm
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
+Status: SUCCESS
+Tags: {'bkg', 'ww'}
 ```
-
-While the job management should be handled by the [JobHandler](classes/JobHandler.md), you can also run job commands directly:
-
-```python
-In [13]: jh.jobs.hans.rerun()
-
-In [14]: jh.jobs.hans.get_status()
-Out[14]: <Status.SUCCESS: 3>
-```
-
-You should also run `jh.check()` to update the [JobHandler](classes/JobHandler.md) job bookkeeping:
-
-```python
-In [15]: jh.check()
-Jobs (success/fail/all): (1/0/1)
-```
-
-However, it's likely that running jobs directly screws up the bookkeeping.
 
 Finally, if you want to start from a clean slate you can reset the [JobHandler](classes/JobHandler.md) completely:
 
 ```python
-In [16]: jh.reset()
-In [17]: jh.run_jobs()
-Jobs processed (batch/local/all): (1/0/1)
-     successful (batch/local/all): (1/0/1)
-Time spent: 5.4 s
+In [14]: jh.reset()
+In [15]: jh.run_jobs()
+all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=4, FAILED=0]
+ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=3, FAILED=0]
+data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+
+Jobs processed (batch/local/all): (4/0/4)
+     successful (batch/local/all): (4/0/4)
+Time spent: 11.3 s
 ```
 
 In this case you actually might want to start again from the job configuration script that you wrote for your job submission.
 
-Have a look at the [JobHandler](classes/JobHandler.md) and [Job](classes/Job.md) documentation to see what you execute in interactive slurmy.
+Have a look at the [JobHandler](classes/JobHandler.md) and [Job](classes/Job.md) documentation to see what you can execute in interactive slurmy.
 
 # Job configuration file
 
