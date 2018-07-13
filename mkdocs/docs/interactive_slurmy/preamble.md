@@ -99,12 +99,12 @@ In this example, all jobs are in the CONFIGURED state so we can run the job subm
 
 ```python
 In [8]: jh.run_jobs()
-all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=3, FAILED=1]
-data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=2, FAILED=1]
-ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=0, FAILED=1]
+all: 100%|██████████████████████████████████████████████████████████████| 4/4 [, S=3, F=1, C=0]
+data: 100%|█████████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+bkg: 100%|██████████████████████████████████████████████████████████████| 3/3 [, S=2, F=1, C=0]
+-ttbar: 100%|███████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+-wjets: 100%|███████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+-ww: 100%|██████████████████████████████████████████████████████████████| 1/1 [, S=0, F=1, C=0]
 
 Jobs processed (batch/local/all): (4/0/4)
      successful (batch/local/all): (3/0/3)
@@ -112,7 +112,7 @@ Jobs processed (batch/local/all): (4/0/4)
 Time spent: 12.4 s
 ```
 
-You can see that this produces two different printouts. During the processing you'll get progress bars which indicate how many jobs are completed. On the very right of these progess bars you can also see how many jobs ended up successful or failed. You can also see that for each tag that is introduced with [JobHandler.add_job()](classes/JobHandler.md#add_job) one progress bar is displayed, which keeps track of the jobs assigned with this tag. In this example, each job has it's own name as tag and "ww", "ttbar", and "wjets" have "bkg" as an additional tag.
+You can see that this produces two different printouts. During the processing you'll get progress bars which indicate how many jobs are completed. On the very right of these progess bars you can also see how many jobs ended up in the SUCCESS(S), FAILED(F), or CANCELLED(C) state. You can also see that for each tag that is introduced with [JobHandler.add_job()](classes/JobHandler.md#add_job) one progress bar is displayed, which keeps track of the jobs assigned with this tag. Slurmy will also evaluate the tag hierarchy dependent on how tags were assigned to jobs and order them accordingly in this printout. In this example, each job has it's own name as tag and "ww", "ttbar", and "wjets" have "bkg" as an additional tag.
 
 As you can see from the printout above, job "ww" ended up in FAILED state.
 
@@ -143,12 +143,12 @@ If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by
 
 ```python
 In [12]: jh.run_jobs(retry = True)
-all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=4, FAILED=0]
-data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=3, FAILED=0]
-ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+all: 100%|██████████████████████████████████████████████████████████████| 4/4 [, S=4, F=0, C=0]
+data: 100%|█████████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+bkg: 100%|██████████████████████████████████████████████████████████████| 3/3 [, S=3, F=0, C=0]
+-ttbar: 100%|███████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+-wjets: 100%|███████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+-ww: 100%|██████████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
 
 Jobs processed (batch/local/all): (4/0/4)
      successful (batch/local/all): (4/0/4)
@@ -173,12 +173,12 @@ Finally, if you want to start from a clean slate you can reset the [JobHandler](
 ```python
 In [14]: jh.reset()
 In [15]: jh.run_jobs()
-all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=4, FAILED=0]
-ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=3, FAILED=0]
-data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
-ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+all: 100%|██████████████████████████████████████████████████████████████| 4/4 [, S=4, F=0, C=0]
+data: 100%|█████████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+bkg: 100%|██████████████████████████████████████████████████████████████| 3/3 [, S=3, F=0, C=0]
+-ttbar: 100%|███████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+-wjets: 100%|███████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
+-ww: 100%|██████████████████████████████████████████████████████████████| 1/1 [, S=1, F=0, C=0]
 
 Jobs processed (batch/local/all): (4/0/4)
      successful (batch/local/all): (4/0/4)
