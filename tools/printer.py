@@ -41,7 +41,7 @@ class Printer(object):
         def add(tags, prefix = ''):
             for tag in tags:
                 n_jobs_tag = len(self._parent.jobs._tags[tag])
-                n_initial_tag = updates[tag][Status.SUCCESS.name] + updates[tag][Status.FAILED.name]
+                n_initial_tag = sum(updates[tag].values())
                 bars[tag] = tqdm(total = n_jobs_tag, initial = n_initial_tag, desc = tag, unit = 'job', bar_format = prefix+self._bar_format)
                 bars[tag].set_postfix(updates[tag])
                 add(tags[tag], prefix+'-')
@@ -52,7 +52,7 @@ class Printer(object):
         ### Add bar for all jobs
         n_jobs = len(self._parent.jobs)
         #### Initial number of success/failed jobs
-        n_initial = updates['all'][Status.SUCCESS.name] + updates['all'][Status.FAILED.name]
+        n_initial = sum(updates['all'].values())
         bars['all'] = tqdm(total = n_jobs, initial = n_initial, desc = 'all', unit = 'job', bar_format = self._bar_format)
         bars['all'].set_postfix(updates['all'])
         add(self._tags.tree)
@@ -63,13 +63,13 @@ class Printer(object):
         update_dict = OrderedDict()        
         ## Entry for all jobs
         update_dict['all'] = OrderedDict()
-        for status in [Status.SUCCESS, Status.FAILED]:
-            update_dict['all'][status.name] = len(self._parent.jobs._states[status])
+        for status_label, status in zip(['S', 'F', 'C'], [Status.SUCCESS, Status.FAILED, Status.CANCELLED]):
+            update_dict['all'][status_label] = len(self._parent.jobs._states[status])
         ## Entries for tracked tags
         for tag in self._tags.tags:
             update_dict[tag] = OrderedDict()
-            for status in [Status.SUCCESS, Status.FAILED]:
-                update_dict[tag][status.name] = len(self._parent.jobs.get(tags = tag, states = status))
+            for status_label, status in zip(['S', 'F', 'C'], [Status.SUCCESS, Status.FAILED, Status.CANCELLED]):
+                update_dict[tag][status_label] = len(self._parent.jobs.get(tags = tag, states = status))
 
         return update_dict
 
@@ -78,12 +78,12 @@ class Printer(object):
         updates = self._get_updates()
         ## Update bars
         for tag in updates:
-            n_jobs = updates[tag][Status.SUCCESS.name] + updates[tag][Status.FAILED.name]
+            n_jobs = sum(updates[tag].values())
             n_update_jobs = n_jobs - self._bars[tag].n
             ## Update only if value is not negative
             if n_update_jobs > 0:
                 self._bars[tag].update(n_update_jobs)
-            ### Set postfix to number of success/failed jobs
+            ### Set postfix to number of success/failed/cancelled jobs
             self._bars[tag].set_postfix(updates[tag])
 
     def start(self):
