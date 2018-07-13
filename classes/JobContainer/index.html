@@ -479,8 +479,8 @@
 
 <p>Get the list of jobs.</p>
 <ul>
-<li><code>tags</code> Tags that the jobs must match to.</li>
-<li><code>states</code> <a href="../Job/#Job">Job</a> states that the jobs must match to.</li>
+<li><code>tags</code> Tags that the jobs must match to (single string or list of strings).</li>
+<li><code>states</code> <a href="../Job/#Job">Job</a> states that the jobs must match to (single Status object or list of Status objects).</li>
 </ul>
 <p>Returns list of jobs ([Job]).</p>
 <h2 id="print">print</h2>
@@ -490,7 +490,7 @@
 <p>Print the list of jobs and their current status.</p>
 <ul>
 <li><code>tags</code> Tags that jobs should match with (single string or list of strings). If a job has any of the provided tags it will be printed.</li>
-<li><code>states</code> States that jobs should match with (single string or list of strings). If a job is in any of the provided states it will be printed.</li>
+<li><code>states</code> States that jobs should match with (single Status object or list of Status objects). If a job is in any of the provided states it will be printed.</li>
 <li><code>print_summary</code> Print overall summary as well.</li>
 </ul>
               

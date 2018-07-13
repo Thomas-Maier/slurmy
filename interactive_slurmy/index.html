@@ -423,40 +423,48 @@ optional arguments:
 <h1 id="example-usage">Example usage</h1>
 <p>In general you can do everything in interactive slurmy that you can also do in python file which handles your job definition. On top of that you can easily inspect and manipulate an already existing <a href="../classes/JobHandler/">JobHandler</a> session. Just executing <code>slurmy</code> will bring up the latest <a href="../classes/JobHandler/">JobHandler</a> session:</p>
 <pre><code class="python">In [1]: jh
-Out[1]: Azathoth_1530051215
+Out[1]: MyAnalysis_1531405633
 </code></pre>
 
 <p>Every <a href="../classes/JobHandler/">JobHandler</a> has a member <code>jobs</code> which keeps track of all it's attached jobs:</p>
 <pre><code class="python">In [2]: jh.jobs
 Out[2]: 
-Job &quot;hans&quot;: CONFIGURED
+Job &quot;ttbar&quot;: CONFIGURED
+Job &quot;wjets&quot;: CONFIGURED
+Job &quot;ww&quot;: CONFIGURED
+Job &quot;data&quot;: CONFIGURED
 ------------
-CONFIGURED(1)
+CONFIGURED(4)
 </code></pre>
 
-<p>As you can see, the <a href="../classes/JobHandler/">JobHandler</a> in this case has one job named "hans", which is in the CONFIGURED state. Every job is attached as property to <a href="../classes/JobHandler/">JobHandler</a>.jobs, which provides a direct handle to access them:</p>
-<pre><code class="python">In [3]: jh.jobs.hans
+<p>As you can see, the <a href="../classes/JobHandler/">JobHandler</a> in this case has four jobs named "data", "ttbar", "wjets", and "ww", which is in the CONFIGURED state. Every job is attached as property to <a href="../classes/JobHandler/">JobHandler</a>.jobs, which provides a direct handle to access them:</p>
+<pre><code class="python">In [3]: jh.jobs.ww
 Out[3]: 
-Job &quot;hans&quot;
-Local: False
+Job &quot;ww&quot;
+Type: BATCH
 Backend: Slurm
-Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
 Status: CONFIGURED
+Tags: {'bkg', 'ww'}
 </code></pre>
 
 <p>Alternatively, jobs can be accessed directly by name via the <a href="../classes/JobHandler/">JobHandler</a> itself:</p>
-<pre><code class="python">In [4]: jh['hans']
+<pre><code class="python">In [4]: jh['ww']
 Out[4]: 
-Job &quot;hans&quot;
-Local: False
+Job &quot;ww&quot;
+Type: BATCH
 Backend: Slurm
-Script: /home/t/Thomas.Maier/testSlurmy/Azathoth_1530051215/scripts/hans
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
 Status: CONFIGURED
+Tags: {'bkg', 'ww'}
 </code></pre>
 
 <p><a href="../classes/JobHandler/">JobHandler</a>.jobs also has a <code>status_</code> property for every possible job status, which will print all jobs which currently are in this status:</p>
 <pre><code class="python">In [5]: jh.jobs.status_CONFIGURED
-Job &quot;hans&quot;: CONFIGURED
+Job &quot;wjets&quot;: CONFIGURED
+Job &quot;data&quot;: CONFIGURED
+Job &quot;ww&quot;: CONFIGURED
+Job &quot;ttbar&quot;: CONFIGURED
 
 In [6]: jh.jobs.status_RUNNING
 
@@ -464,69 +472,92 @@ In [6]: jh.jobs.status_RUNNING
 In [7]:
 </code></pre>
 
-<p>In this example, job "hans" is in CONFIGURED state so we can run the job submission (<code>run_jobs</code> for continuous submission until finished or <code>submit_jobs</code> for a single submission cycle):</p>
-<pre><code class="python">In [7]: jh.run_jobs()
-Jobs processed (batch/local/all): (1/0/1)
-     successful (batch/local/all): (0/0/0)
-     failed (batch/local/all): (1/0/1)
-Time spent: 5.4 s
-</code></pre>
-
-<p>(Note: the submission interval of <code>run_jobs</code> is set to 5 seconds by default)</p>
-<p>The job "hans" is now in FAILED state:</p>
-<pre><code class="python">In [8]: jh.jobs
-Out[8]: 
-Job &quot;hans&quot;: FAILED
+<p>As you've seen above, the job "ww" (and "ttbar" and "wjets" for that matter) has a tag "bkg", which was attached to the job via the <code>tags</code> option of <a href="../classes/JobHandler/#add_job">JobHandler.add_job()</a>. You can get the printout for jobs only tagged with "bkg" by calling the <a href="../classes/JobContainer/#print">JobContainer.print()</a> method:</p>
+<pre><code class="python">In [7]: jh.jobs.print(tags='bkg')
+Job &quot;wjets&quot;: CONFIGURED
+Job &quot;ww&quot;: CONFIGURED
+Job &quot;ttbar&quot;: CONFIGURED
 ------------
-FAILED(1)
+CONFIGURED(3)
 </code></pre>
 
-<p>We can access the log file of the job directly via it's dedicated property (which opens the log with less), in order to find out what went wrong:</p>
-<pre><code class="python">In [9]: jh.jobs.hans.log
+<p>In this example, all jobs are in the CONFIGURED state so we can run the job submission with <a href="../classes/JobHandler/#run_jobs">JobHandler.run_jobs()</a>:</p>
+<pre><code class="python">In [8]: jh.run_jobs()
+all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=3, FAILED=1]
+data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=2, FAILED=1]
+ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=0, FAILED=1]
+
+Jobs processed (batch/local/all): (4/0/4)
+     successful (batch/local/all): (3/0/3)
+     failed (batch/local/all): (1/0/1)
+Time spent: 12.4 s
+</code></pre>
+
+<p>You can see that this produces two different printouts. During the processing you'll get progress bars which indicate how many jobs are completed. On the very right of these progess bars you can also see how many jobs ended up successful or failed. You can also see that for each tag that is introduced with <a href="../classes/JobHandler/#add_job">JobHandler.add_job()</a> one progress bar is displayed, which keeps track of the jobs assigned with this tag. In this example, each job has it's own name as tag and "ww", "ttbar", and "wjets" have "bkg" as an additional tag.</p>
+<p>As you can see from the printout above, job "ww" ended up in FAILED state.</p>
+<pre><code class="python">In [9]: jh.jobs.ww
+Out[9]: 
+Job &quot;ww&quot;
+Type: BATCH
+Backend: Slurm
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
+Status: FAILED
+Tags: {'bkg', 'ww'}
+</code></pre>
+
+<p>We can access the log file of the job directly with <a href="../classes/Job/#log">Job.log</a> (which opens the log file with <code>less</code>), in order to find out what went wrong:</p>
+<pre><code class="python">In [10]: jh.jobs.ww.log
 </code></pre>
 
 <p>Usually, you probably want to fix your job configuration setup to fix a systematic problem in the job's run script creation. However, you can edit the run script directly:</p>
-<pre><code class="python">In [10]: jh.jobs.hans.edit_script()
+<pre><code class="python">In [11]: jh.jobs.ww.edit_script()
 </code></pre>
 
-<p>If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by passing <code>retry = True</code> to <code>run_jobs</code> or <code>submit_jobs</code>:</p>
-<pre><code class="python">In [11]: jh.run_jobs(retry = True)
-Jobs processed (batch/local/all): (1/0/1)
-     successful (batch/local/all): (1/0/1)
-Time spent: 5.3 s
+<p>If any of the jobs ended up in FAILED or CANCELLED state, they can be retried by passing <code>retry = True</code> to <code>run_jobs</code>:</p>
+<pre><code class="python">In [12]: jh.run_jobs(retry = True)
+all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=4, FAILED=0]
+data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=3, FAILED=0]
+ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+
+Jobs processed (batch/local/all): (4/0/4)
+     successful (batch/local/all): (4/0/4)
+Time spent: 2.5 s
 </code></pre>
 
-<p>The job "hans" is now in SUCCESS state (from fixing the run script before retrying the job):</p>
-<pre><code class="python">In [12]: jh.jobs
-Out[12]: 
-Job &quot;hans&quot;: SUCCESS
-------------
-SUCCESS(1)
+<p>The job "ww" is now in SUCCESS state (from fixing the run script before retrying the job):</p>
+<pre><code class="python">In [13]: jh.jobs.ww
+Out[13]: 
+Job &quot;ww&quot;
+Type: BATCH
+Backend: Slurm
+Script: /home/t/Thomas.Maier/testSlurmy/MyAnalysis_1531405633/scripts/ww
+Status: SUCCESS
+Tags: {'bkg', 'ww'}
 </code></pre>
 
-<p>While the job management should be handled by the <a href="../classes/JobHandler/">JobHandler</a>, you can also run job commands directly:</p>
-<pre><code class="python">In [13]: jh.jobs.hans.rerun()
-
-In [14]: jh.jobs.hans.get_status()
-Out[14]: &lt;Status.SUCCESS: 3&gt;
-</code></pre>
-
-<p>You should also run <code>jh.check()</code> to update the <a href="../classes/JobHandler/">JobHandler</a> job bookkeeping:</p>
-<pre><code class="python">In [15]: jh.check()
-Jobs (success/fail/all): (1/0/1)
-</code></pre>
-
-<p>However, it's likely that running jobs directly screws up the bookkeeping.</p>
 <p>Finally, if you want to start from a clean slate you can reset the <a href="../classes/JobHandler/">JobHandler</a> completely:</p>
-<pre><code class="python">In [16]: jh.reset()
-In [17]: jh.run_jobs()
-Jobs processed (batch/local/all): (1/0/1)
-     successful (batch/local/all): (1/0/1)
-Time spent: 5.4 s
+<pre><code class="python">In [14]: jh.reset()
+In [15]: jh.run_jobs()
+all: 100%|████████████████████████████████████████████████████████| 4/4 [, SUCCESS=4, FAILED=0]
+ttbar: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+wjets: 100%|██████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+bkg: 100%|████████████████████████████████████████████████████████| 3/3 [, SUCCESS=3, FAILED=0]
+data: 100%|███████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+ww: 100%|█████████████████████████████████████████████████████████| 1/1 [, SUCCESS=1, FAILED=0]
+
+Jobs processed (batch/local/all): (4/0/4)
+     successful (batch/local/all): (4/0/4)
+Time spent: 11.3 s
 </code></pre>
 
 <p>In this case you actually might want to start again from the job configuration script that you wrote for your job submission.</p>
-<p>Have a look at the <a href="../classes/JobHandler/">JobHandler</a> and <a href="../classes/Job/">Job</a> documentation to see what you execute in interactive slurmy.</p>
+<p>Have a look at the <a href="../classes/JobHandler/">JobHandler</a> and <a href="../classes/Job/">Job</a> documentation to see what you can execute in interactive slurmy.</p>
 <h1 id="job-configuration-file">Job configuration file</h1>
 <p>The job definition file passed with <code>-c</code> is a convenient way to make job definitions. Inside the slurmy session, all necessary imports, like JobHandler and the backend classes, are already provided. This allows for skimmed down JobHandler setups that then can be further interacted with (you can omit import statements). As long as your definition file is "flat" (no encapsulated definitions), i.e. like the examples given in the <a href="../howto/">HowTo</a> section, you can pass it to interactive slurmy.</p>
 <h1 id="interactive-slurmy-functions">Interactive slurmy functions</h1>

@@ -675,14 +675,14 @@
 <h2 id="output">output</h2>
 <p>Returns the output path of the job (str).</p>
 <h2 id="parent_tags">parent_tags</h2>
-<p>Returns the list of parent tags associated to this job ([str]).</p>
+<p>Returns the list of parent tags associated to this job (set(str)).</p>
 <h2 id="script">script</h2>
 <p>Open the job script file with less.</p>
 <p>Returns the script file path (str).</p>
 <h2 id="status">status</h2>
 <p>Returns the status of the job (Status).</p>
 <h2 id="tags">tags</h2>
-<p>Returns the list of tags associated to this job ([str]).</p>
+<p>Returns the list of tags associated to this job (set(str)).</p>
 <h2 id="type">type</h2>
 <p>Returns the type of the job (Type).</p>
 <h1 id="member-functions">Member functions</h1>
@@ -741,7 +741,7 @@
 <p>Get the status of the job.</p>
 <ul>
 <li><code>skip_eval</code> Skip the status evaluation and just return the stored value.</li>
-<li><code>force_success_check</code> Force the success routine to be run, even if the job is already in a post-finished state.</li>
+<li><code>force_success_check</code> Force the success routine to be run, even if the job is already in a post-finished state. This will not work if job is in PASSIVE mode (i.e. relies on a <a href="../Listener/#Listener">Listener</a> to set it's status).</li>
 </ul>
 <p>Returns the job status (Status).</p>
 <h2 id="has_tag">has_tag</h2>

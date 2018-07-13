@@ -177,8 +177,27 @@
   
 
 
+  <li class=" toctree-l2">
+    
+      <a href="#chaining-jobs-with-tags" title="HowTo"
+          class="">
+        Chaining Jobs with Tags
+      </a>
+    
+    <ul class=" subnav">
+      
+        
+
+  
+  
+
+
   <li class="toctree-l2 toc-item">
-    <a href="#chaining-jobs-with-tags" title="HowTo">Chaining Jobs with Tags</a>
+    <a href="#additional-uses-of-tags" title="HowTo">Additional uses of tags</a>
+  </li>
+
+      
+    </ul>
   </li>
 
     
@@ -588,6 +607,10 @@ jh.add_job(run_script = run_script_2, parent_tags = 'hans')
 jh.run_jobs()
 </code></pre>
 
+<p>The <code>tags</code> and <code>parent_tags</code> arguments of <code>jh.add_job()</code> can also be a list of tags, in order to assign multiple tags to a job at once.</p>
+<h3 id="additional-uses-of-tags">Additional uses of tags</h3>
+<p>Tags can also be used to just organise jobs. In <a href="../interactive_slurmy/">interactive slurmy</a> you can easily print out only jobs which have a specified tag via <a href="../classes/JobContainer/#print">JobContainer.print()</a> (i.e. <code>jh.jobs.print(tags = 'hans')</code> for the example above).</p>
+<p>Also, if you properly installed the tqdm module (see the <a href="..#Recommended Setup">recommended setup</a>), slurmy will keep track of the job progress for each tag separately in addition to the overall progress.</p>
 <h2 id="steering-evaluation-of-jobs-processing-status">Steering evaluation of jobs processing status</h2>
 <p>By default, the exitcode of the job (either taken from the local process or from the batch system bookkeeping) is taken to determine if it finished and was successful or not. However, you can change how slurmy will evaluate whether the job is finished or was successful.</p>
 <h3 id="job-listener">Job listener</h3>
@@ -608,7 +631,7 @@ jh.add_job(run_script = run_script, output = '~/hans.txt')
 jh.run_jobs()
 </code></pre>
 
-<p>The <code>output_max_attempts</code> argument of the <a href="../classes/JobHandler/">JobHandler</a> defines how many attempts are made to find the output file for a given job that is in FINISHED state. By default it is set to 5, in order to avoid delayed availablity of the output file in the underlying file system.</p>
+<p>The <code>output_max_attempts</code> argument of the <a href="../classes/JobHandler/">JobHandler</a> defines how many attempts are made to find the output file for a given job that is in FINISHED state. By default it is set to 5, in order to avoid delayed availability of the output file in the underlying file system.</p>
 <h3 id="finished-and-success-trigger-in-the-run_script">FINISHED and SUCCESS trigger in the run_script</h3>
 <p>You can also set triggers in the run_script to indicate at which point in the job processing it should be considered as FINISHED and/or SUCCESS.</p>
 <pre><code class="python">from slurmy import JobHandler
