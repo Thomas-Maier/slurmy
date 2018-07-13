@@ -556,8 +556,7 @@ class JobHandler(object):
         for job in self.jobs.values():
             self._check_job(job, force_success_check = force_success_check, skip_eval = skip_eval)
         if print_summary:
-            print_string = self._get_print_string()
-            print (print_string)
+            self._printer.print_summary()
 
     def _check_job(self, job, force_success_check = False, skip_eval = False):
         ## Update job status
