@@ -38,7 +38,7 @@ class Printer(object):
     ##TODO: how to deal with negative increments (i.e. when jobs are retried), currently this is just ignored
     def _setup_bars(self):
         ## Recursive function to add tags
-        def add(tags, prefix = ''):
+        def add(tags, prefix = '-'):
             for tag in tags:
                 n_jobs_tag = len(self._parent.jobs._tags[tag])
                 n_initial_tag = sum(updates[tag].values())
