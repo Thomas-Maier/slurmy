@@ -456,16 +456,6 @@
             "title": "update_jobs"
         },
         {
-            "location": "/utils/SuccessOutputFile/",
-            "text": "SuccessOutputFile\n\n\nSuccessOutputFile(delay=1)\n\n\n\n\nCallable class which can be used as success_func of a slurmy job. It checks if the output file that is associated to the job is present in the underlying file system.\n\n\n\n\ndelay\n Time (in seconds) that the job should wait before making the success evaluation.",
-            "title": "SuccessOutputFile"
-        },
-        {
-            "location": "/utils/SuccessOutputFile/#successoutputfile",
-            "text": "SuccessOutputFile(delay=1)  Callable class which can be used as success_func of a slurmy job. It checks if the output file that is associated to the job is present in the underlying file system.   delay  Time (in seconds) that the job should wait before making the success evaluation.",
-            "title": "SuccessOutputFile"
-        },
-        {
             "location": "/utils/SuccessTrigger/",
             "text": "SuccessTrigger\n\n\nSuccessTrigger(success_file, max_attempts)\n\n\n\n\nCallable class which can be used as success_func of a slurmy job. It checks if the success_file is present in the underlying file system, once a second. If the maximum number of attempts are reached without finding the file, it returns FAILED.\n\n\n\n\nsuccess_file\n The file which is created if the job is successful.\n\n\nmax_attempts\n Maximum number of attempts that will be tried to find the success_file.",
             "title": "SuccessTrigger"
