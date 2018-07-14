@@ -13,7 +13,6 @@ pages:
   - JobConfig: classes/JobConfig.md
   - Listener: classes/Listener.md
 - Utility:
-  - SuccessOutputFile: utils/SuccessOutputFile.md
   - SuccessTrigger: utils/SuccessTrigger.md
   - FinishedTrigger: utils/FinishedTrigger.md
   - LogMover: utils/LogMover.md
