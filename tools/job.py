@@ -289,13 +289,13 @@ class Job(object):
     def _do_retry(self):
         return (self.config.max_retries > 0 and (self.config.n_retries < self.config.max_retries))
 
-    def rerun(self, job_type = None):
-        """@SLURMY
-        Resets the job and submits it again.
+    # def rerun(self, job_type = None):
+    #     """@SLURMY
+    #     Resets the job and submits it again.
 
-        * `job_type` New job type the job should be processed as.
-        """
-        self._retry(force = True, ignore_max_retries = True, job_type = job_type)
+    #     * `job_type` New job type the job should be processed as.
+    #     """
+    #     self._retry(force = True, ignore_max_retries = True, job_type = job_type)
 
     def get_status(self, skip_eval = False, force_success_check = False):
         """@SLURMY
