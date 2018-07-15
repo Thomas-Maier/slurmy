@@ -380,6 +380,7 @@ class JobHandler(object):
             return listeners
         ## Set up backend specific FINISHED listeners (for now only SLURMY). TODO: dynamically assert which backends are used (one listener for each?)
         ## If we are in test mode (aka local mode), don't add batch listeners
+        ## TODO: In interactive slurmy, test_mode activation is not triggered unless a Slurm instance is created --> Listener is setup even though Slurm doesn't work
         if not options.Main.test_mode:
             from ..backends.slurm import Slurm
             ## This one also sets the exitcode of the job, so the success evaluation can be done by itself.

@@ -35,7 +35,6 @@ class Printer(object):
         """
         self._manual_mode = True
 
-    ##TODO: how to deal with negative increments (i.e. when jobs are retried), currently this is just ignored
     def _setup_bars(self):
         ## Recursive function to add tags
         def add(tags, prefix = '-'):
@@ -80,10 +79,14 @@ class Printer(object):
         for tag in updates:
             n_jobs = sum(updates[tag].values())
             n_update_jobs = n_jobs - self._bars[tag].n
-            ## Update only if value is not negative
             if n_update_jobs > 0:
+                ## If update number is positive, just update the bar
                 self._bars[tag].update(n_update_jobs)
+            elif n_update_jobs < 0:
+                ## Else if it's negative, set bar.n to n_jobs
+                self._bars[tag].n = n_jobs
             ### Set postfix to number of success/failed/cancelled jobs
+            ### This also forces a refresh
             self._bars[tag].set_postfix(updates[tag])
 
     def start(self):
