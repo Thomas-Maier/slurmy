@@ -236,7 +236,7 @@ class JobHandler(object):
 
         return job
 
-    def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None, job_type = Type.BATCH):
+    def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None, job_type = Type.BATCH, starttime = None):
         """@SLURMY
         Add a job to the list of jobs to be processed by the JobHandler.
 
@@ -252,6 +252,7 @@ class JobHandler(object):
         * `parent_tags` List of parent tags attached to the job.
         * `name` Name of the job. This must be a string that conforms with the restrictions on class property names. Slurmy will make sure that job names stay unique, even if the same job name is set multiple times.
         * `job_type` Type of the job. Can be set to Type.LOCAL to make it a local processing job.
+        * `starttime` Timestamp at which job is started by the JobHandler.
 
         Returns the job (Job).
         """
@@ -308,7 +309,7 @@ class JobHandler(object):
         job_max_retries = max_retries or self.config.max_retries
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
-        job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, job_type = job_type, output = output, tags = tags, parent_tags = parent_tags)
+        job_config = JobConfig(backend, path = config_path, success_func = job_success_func, finished_func = job_finished_func, post_func = post_func, max_retries = job_max_retries, job_type = job_type, output = output, tags = tags, parent_tags = parent_tags, starttime = starttime)
         ## Set modes
         ### If JobHandler listens, set the mode for RUNNING to PASSIVE by default
         if self.config.listens:
@@ -360,6 +361,11 @@ class JobHandler(object):
         if job.type == Type.LOCAL:
             if len(self.jobs._local) >= self.config.local_max:
                 log.debug('Maximum number of local jobs running reached, wait for next submission cycle for local job "{}"'.format(job.name))
+                return False
+        ## Check if the job starttime is reached
+        if job.starttime is not None:
+            if job.starttime > time.time():
+                log.debug('Starttime of job "{}" not reached yet, wait for next submission cycle'.format(job.name))
                 return False
 
         return True

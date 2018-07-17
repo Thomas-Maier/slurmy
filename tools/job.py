@@ -24,13 +24,14 @@ class JobConfig(object):
     * `parent_tags` List of parent tags attached to the job.
     * `job_type` Define the type of the job.
     * `output` Output file of the job.
+    * `starttime` Timestamp at which job is started by the JobHandler.
     """
     
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_backend', '_name', '_path', '_tags', '_parent_tags', '_success_func', '_finished_func', '_post_func',
-                   '_max_retries', '_output', '_type', '_modes', '_status', '_job_id', '_n_retries', '_exitcode']
+                   '_max_retries', '_output', '_type', '_starttime', '_modes', '_status', '_job_id', '_n_retries', '_exitcode']
     
-    def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, job_type = Type.BATCH, output = None):
+    def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, job_type = Type.BATCH, output = None, starttime = None):
         ## Static variables
         self._backend = backend
         self._name = self.backend.name
@@ -44,6 +45,7 @@ class JobConfig(object):
         self._post_func = post_func
         self._max_retries = max_retries
         self._output = output
+        self._starttime = starttime
         ## Dynamic variables
         self._type = job_type
         self._modes = {}
@@ -508,6 +510,23 @@ class Job(object):
         """
 
         return self.config.modes[self.status]
+
+    @property
+    def starttime(self):
+        """@SLURMY
+        Returns the timestamp at which the job is started by the JobHandler (int).
+        """
+
+        return self.config.starttime
+
+    @starttime.setter
+    def starttime(self, timestamp):
+        """@SLURMY
+        Set the starttime of the job.
+
+        * `timestamp` Timestamp at which the job is started by the JobHandler.
+        """
+        self.config.starttime = timestamp
 
     def set_mode(self, status, mode):
         """@SLURMY
