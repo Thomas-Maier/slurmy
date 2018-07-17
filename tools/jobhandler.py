@@ -410,7 +410,7 @@ class JobHandler(object):
         """@SLURMY
         Run the job submission routine. Jobs will be submitted continuously until all of them have been processed.
 
-        * `interval` The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually.
+        * `interval` The interval at which the job submission will be done (in seconds). Can also be set to -1 to start every submission cycle manually (will not work if Listeners are used).
         * `retry` Retry jobs in status FAILED or CANCELLED. This will attempt one cycle of job retrying.
         """
         ## If a profiler is set, start profiling
@@ -418,6 +418,10 @@ class JobHandler(object):
             self._profiler.start()
         ## Prepare listeners
         listeners = self._setup_listeners()
+        ## Failsafe if interval is set to -1 but Listeners are used for status evaluation
+        if listeners and interval == -1:
+            log.warning('Interval of run_jobs was set to -1 but Listeners are used for the job status evaluation, setting interval to 1')
+            interval = 1
         try:
             ## Start printer
             self._printer.start()
