@@ -55,6 +55,10 @@ class Listener(object):
         """
         log.debug('(Listener {}) Update jobs'.format(self._listen_status.name))
         results = self._results.get()
+        if self._parent._debug:
+            from pprint import pprint
+            ## Print the last 10 entries of the results OrderedDict
+            pprint(list(results.items())[-10:])
         for job in self._parent.jobs.values():
             ## If job is not in status which the listener should consider, skip
             if job.status != self._listen_status: continue

@@ -1,4 +1,4 @@
-
+\
 import logging
 log = logging.getLogger('slurmy')
 
@@ -39,6 +39,7 @@ def get_listen_files(file_list, folder_list, status):
     def listen_files(results, interval = 1):
         import os, time, subprocess
         from slurmy import Status
+        from collections import OrderedDict
         while True:
             ## Make an explicit ls on the folders where the output files are written to
             ## This avoids problems with delayed updates in the underlying file system
@@ -48,7 +49,7 @@ def get_listen_files(file_list, folder_list, status):
                 except subprocess.CalledProcessError:
                     log.debug('Output folder {} does not exist, please check'.format(folder))
             ## Collect the information and put in results
-            res_dict = {}
+            res_dict = OrderedDict()
             for file_name in file_list:
                 if not os.path.isfile(file_name): continue
                 res_dict[file_name] = {'status': status}

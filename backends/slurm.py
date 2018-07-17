@@ -146,9 +146,10 @@ class Slurm(Base):
         ## Define function for Listener
         def listen(results, interval = 1):
             import subprocess, time
+            from collections import OrderedDict
             while True:
                 result = subprocess.check_output(command, universal_newlines = True).rstrip('\n').split('\n')
-                res_dict = {}
+                res_dict = OrderedDict()
                 for res in result:
                     job_id_full, exitcode = res.split('|')
                     if not job_id_full.endswith('.batch'): continue

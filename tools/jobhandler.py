@@ -423,9 +423,10 @@ class JobHandler(object):
             self._printer.start()
             ### Set printer to manual after start, if interval is set to -1
             if interval == -1: self._printer.set_manual()
-            ## Start listeners
+            ## Start listeners, the interval of the listeners MUST be set to same interval as run_jobs
+            ##TODO: check if manual mode even works with listeners
             for listener in listeners:
-                listener.start()
+                listener.start(interval = interval)
             ## If retry is set to True, for the relevant jobs (FAILED and CANCELLED) set maximum number of retries to 1 and number of attempted retries to 0
             ## This will trigger the automatic retry routine for these jobs
             if retry:
