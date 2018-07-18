@@ -158,14 +158,6 @@ class JobHandler(object):
         self._parser = Parser(self.config)
         ## Set profiler
         self._profiler = profiler
-        ### Check if tqmd is available if printer_bar_mode is set to true:
-        if printer_bar_mode:
-            try:
-                from tqdm import tqdm
-            except ImportError:
-                log.warning('printer_bar_mode is activated but the tqdm is not available')
-                log.warning('Please install tqdm to use the bar mode')
-                printer_bar_mode = False
         ## Set up printer
         self._printer = Printer(self, verbosity = verbosity, bar_mode = printer_bar_mode)
 

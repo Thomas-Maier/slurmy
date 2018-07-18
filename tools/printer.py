@@ -2,9 +2,11 @@
 import time
 from sys import stdout
 from collections import OrderedDict
+import logging
 from .defs import Status, Type
 from .tags import Tags
-from tqdm import tqdm
+
+log = logging.getLogger('slurmy')
 
 
 class Printer(object):
@@ -23,6 +25,14 @@ class Printer(object):
         self._manual_mode = False
         ## Running in progress bar mode?
         self._bar_mode = bar_mode
+        ### Check if tqdm is available, otherwise disable bar mode
+        if self._bar_mode:
+            try:
+                from tqdm import tqdm
+            except ImportError:
+                log.warning('printer_bar_mode is activated but the tqdm module is not available')
+                log.warning('Please install tqdm to use the bar mode')
+                self._bar_mode = False
         self._bar_format = '{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{postfix}]'
         ## Time
         self._time = None
@@ -36,6 +46,7 @@ class Printer(object):
         self._manual_mode = True
 
     def _setup_bars(self):
+        from tqdm import tqdm
         ## Recursive function to add tags
         def add(tags, prefix = '-'):
             for tag in tags:
