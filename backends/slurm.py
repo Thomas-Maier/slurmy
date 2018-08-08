@@ -34,6 +34,7 @@ class Slurm(Base):
     _script_options_identifier = 'SBATCH'
     _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
     _successcode = '0:0'
+    _run_states = set(['PENDING', 'RUNNING'])
     
     def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None, mem = None, time = None, export = None):
         super(Slurm, self).__init__()
@@ -99,11 +100,13 @@ class Slurm(Base):
 
         Returns the job status (Status).
         """
-        sacct_list = self._get_sacct_entry('State,ExitCode')
+        sacct_return = self._get_sacct_entry('Job,State,ExitCode')
         status = Status.RUNNING
-        if sacct_list is not None:
-            status = Status.FINISHED
-            self._exitcode = sacct_list[-1]
+        if sacct_return is not None:
+            job_state = sacct_return['finished']
+            if job_state not in Slurm._run_states and 'success' in sacct_return:
+                status = Status.FINISHED
+                self._exitcode = sacct_return['success']
 
         return status
 
@@ -125,12 +128,19 @@ class Slurm(Base):
             sacct_list.extend(['-r', self.partition])
         if self.clusters:
             sacct_list.extend(['-M', self.clusters])
-        sacct_list.extend(['-j', '{}.batch'.format(self._job_id), '-P', '-o', column])
+        sacct_list.extend(['-j', '{}'.format(self._job_id), '-P', '-o', column])
         sacct_list = subprocess.check_output(sacct_list, universal_newlines = True).rstrip('\n').split('\n')
+        log.debug('({}) Return list from sacct: {}'.format(self.name, sacct_list))
         sacct_return = None
         if len(sacct_list) > 1:
-            sacct_return = sacct_list[1].split('|')
-            log.debug('({}) Column "{}" string from sacct: {}'.format(self.name, column, sacct_return))
+            sacct_return = {}
+            for entry in sacct_list[1:]:
+                job_string, state, exitcode = entry.split('|')
+                log.debug('({}) Column "{}" values from sacct: {} {} {}'.format(self.name, column, job_string, state, exitcode))
+                if '.batch' in job_string:
+                    sacct_return['success'] = exitcode
+                else:
+                    sacct_return['finished'] = state
 
         return sacct_return
 
@@ -142,19 +152,31 @@ class Slurm(Base):
         if clusters:
             command.extend(['-M', clusters])
         user = os.environ['USER']
-        command.extend(['-u', user, '-P', '-o', 'JobID,ExitCode'])
+        command.extend(['-u', user, '-P', '-o', 'JobID,State,ExitCode'])
         ## Define function for Listener
         def listen(results, interval = 1):
             import subprocess, time
             from collections import OrderedDict
             while True:
                 result = subprocess.check_output(command, universal_newlines = True).rstrip('\n').split('\n')
-                res_dict = OrderedDict()
+                sacct_returns = {}
+                job_ids = set()
+                ## Evaluate sacct return values
                 for res in result:
-                    job_id_full, exitcode = res.split('|')
-                    if not job_id_full.endswith('.batch'): continue
-                    job_id = int(job_id_full.split('.')[0])
-                    res_dict[job_id] = {'status': Status.FINISHED, 'exitcode': exitcode}
+                    job_id, state, exitcode = res.split('|')
+                    if job_id.endswith('.batch'):
+                        sacct_returns[job_id] = exitcode
+                    else:
+                        sacct_returns[job_id] = state
+                        job_ids.add(job_id)
+                ## Generate results dict
+                res_dict = OrderedDict()
+                for job_id in job_ids:
+                    if sacct_returns[job_id] in Slurm._run_states: continue
+                    batch_string = '{}.batch'.format(job_id)
+                    if batch_string not in sacct_returns: continue
+                    exitcode = sacct_returns[batch_string]
+                    res_dict[int(job_id)] = {'status': Status.FINISHED, 'exitcode': exitcode}
                 results.put(res_dict)
                 time.sleep(interval)
 
