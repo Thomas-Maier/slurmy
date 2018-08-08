@@ -336,7 +336,7 @@ class JobHandler(object):
         parent_tags = job.parent_tags
         for tag in parent_tags:
             if tag not in self.jobs._tags:
-                log.error('Parent tag is not registered in jobs list!')
+                log.error('Parent tag "{}" is not registered in jobs list!'.format(tag))
                 raise Exception
             for tagged_job in self.jobs._tags[tag]:
                 status = tagged_job.get_status()
@@ -392,6 +392,9 @@ class JobHandler(object):
             from .utils import get_listen_files
             ### Get list of associated folders
             folder_list = set([os.path.dirname(f) for f in file_list])
+            log.debug('Setup output listener')
+            log.debug('--folder list: {}'.format(folder_list))
+            log.debug('--file list: {}'.format(file_list))
             listen_success = get_listen_files(file_list, folder_list, Status.SUCCESS)
             listener_success = Listener(self, listen_success, Status.FINISHED, 'output', max_attempts = self.config.output_max_attempts, fail_results = {'status': Status.FAILED})
             listeners.append(listener_success)
