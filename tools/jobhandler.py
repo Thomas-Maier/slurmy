@@ -501,7 +501,8 @@ class JobHandler(object):
                 self._check_local_job(job, skip_eval = True)
                 ## Submit new jobs only if current number of running jobs is below maximum, if set
                 if self.config.run_max and not (len(self.jobs._states[Status.RUNNING]) < self.config.run_max):
-                    log.debug('Maximum number of running jobs reached, skip job submission')
+                    log.debug('Maximum number of running jobs ({}) reached, skip job submission'.format(self.config.run_max))
+                    log.debug('Jobs in RUNNING state: {}'.format(self.jobs._states[Status.RUNNING]))
                     break
                 ## Current job status
                 status = job.status
