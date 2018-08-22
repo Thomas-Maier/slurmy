@@ -503,7 +503,7 @@ class JobHandler(object):
                 if self.config.run_max and not (len(self.jobs._states[Status.RUNNING]) < self.config.run_max):
                     log.debug('Maximum number of running jobs ({}) reached, skip job submission'.format(self.config.run_max))
                     log.debug('Jobs in RUNNING state: {}'.format(self.jobs._states[Status.RUNNING]))
-                    break
+                    continue
                 ## Current job status
                 status = job.status
                 ## If jobs are in FAILED or CANCELLED state, do retry routine. Ignore maximum number of retries if requested.
