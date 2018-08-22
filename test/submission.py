@@ -270,5 +270,15 @@ class Test(unittest.TestCase):
         self.assertIs(jh.jobs.test.status, Status.SUCCESS)
         self.assertTrue(os.path.isfile(output_file))
 
+    def test_run_max(self):
+        ## This effectively only tests if run_jobs finishes or not
+        from slurmy import JobHandler, Status
+        jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_run_max', run_max = 1)
+        for i in range(3):
+            jh.add_job(run_script = self.run_script, name = 'test_{}'.format(i))
+        jh.run_jobs()
+        for i in range(3):
+            self.assertIs(jh['test_{}'.format(i)].status, Status.SUCCESS)
+
 if __name__ == '__main__':
     unittest.main()
