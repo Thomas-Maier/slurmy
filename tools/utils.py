@@ -254,3 +254,14 @@ def remove_content(folder):
     import os, glob
     for file_name in glob.glob(os.path.join(folder, '*')):
         os.remove(file_name)
+
+## String manipulation utils
+def find_between(s, first, last):
+    """Find substring between two substrings first and last in string s."""
+    try:
+        start = s.index(first) + len(first)
+        end = s.index(last, start)
+        return s[start:end]
+    except ValueError:
+        logging.error("String `{s}` does not contain a substring between `{first}` and `{last}`".format(s=s, first=first, last=last))
+        return ""

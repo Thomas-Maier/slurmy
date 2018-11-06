@@ -6,6 +6,7 @@ from .tools.defs import Status, Type, Theme, Mode
 from .tools import options
 from .tools.wrapper import SingularityWrapper
 from .backends.slurm import Slurm
+from .backends.htcondor import HTCondor
 from .tools.utils import SuccessTrigger, FinishedTrigger, LogMover
 from .tools.profiler import Profiler
 
