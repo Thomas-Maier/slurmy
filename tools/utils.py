@@ -1,4 +1,4 @@
-\
+import re
 import logging
 log = logging.getLogger('slurmy')
 
@@ -257,11 +257,10 @@ def remove_content(folder):
 
 ## String manipulation utils
 def find_between(s, first, last):
-    """Find substring between two substrings first and last in string s."""
+    """Find first substring between two substrings first and last in string s."""
     try:
-        start = s.index(first) + len(first)
-        end = s.index(last, start)
-        return s[start:end]
+        expression = '{}(.+?){}'.format(first, last)
+        return re.findall(expression, s)[0]
     except ValueError:
         logging.error("String `{s}` does not contain a substring between `{first}` and `{last}`".format(s=s, first=first, last=last))
         return ""

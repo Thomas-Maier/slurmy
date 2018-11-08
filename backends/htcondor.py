@@ -46,7 +46,7 @@ class HTCondor(Base):
         self._exitcode = None
 
 
-    def _writeSubmissionFile(self, script_folder):
+    def _write_submissionfile(self, script_folder):
         """@SLURMY
         Write submission file required for HTCondor to disk.
 
@@ -88,7 +88,7 @@ queue
         * `script_folder` Folder to store the script file in.
         """
         super(HTCondor, self).write_script(script_folder)
-        submission_file = self._writeSubmissionFile(script_folder)
+        submission_file = self._write_submissionfile(script_folder)
 
 
     def submit(self):
