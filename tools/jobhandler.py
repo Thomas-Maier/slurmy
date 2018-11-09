@@ -381,10 +381,17 @@ class JobHandler(object):
         ## TODO: In interactive slurmy, test_mode activation is not triggered unless a Slurm instance is created --> Listener is setup even though Slurm doesn't work
         if not options.Main.test_mode:
             from ..backends.slurm import Slurm
-            ## This one also sets the exitcode of the job, so the success evaluation can be done by itself.
-            listen_slurm = Slurm.get_listen_func()
-            listener_slurm = Listener(self, listen_slurm, Status.RUNNING, 'id')
-            listeners.append(listener_slurm)
+            from ..backends.htcondor import HTCondor
+            if isinstance(self.config.backend, Slurm):
+                ## This one also sets the exitcode of the job, so the success evaluation can be done by itself.
+                listen_slurm = Slurm.get_listen_func()
+                listener_slurm = Listener(self, listen_slurm, Status.RUNNING, 'id')
+                listeners.append(listener_slurm)
+            elif isinstance(self.config.backend, HTCondor):
+                listen_htcondor = HTCondor.get_listen_func()
+                listener_htcondor = Listener(self, listen_htcondor, Status.RUNNING, 'id')
+                listeners.append(listener_htcondor)
+            
         ## Get list of defined output files
         file_list = [l.output for l in self.jobs.values() if l.output is not None]
         ## Set up output file listener, if any are defined
