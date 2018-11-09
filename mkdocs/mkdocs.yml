@@ -17,4 +17,5 @@ pages:
   - FinishedTrigger: utils/FinishedTrigger.md
   - LogMover: utils/LogMover.md
         
-theme: rtd-dropdown
+# theme: rtd-dropdown
+theme: readthedocs
