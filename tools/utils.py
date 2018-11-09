@@ -96,6 +96,19 @@ class LogMover:
         import os
         os.system('cp {} {}'.format(config.backend.log, self._target_path))
 
+class CmdLineExec:
+    """@SLURMY
+    Callable class which can be used as post_func of a slurmy job. It executes an arbitrary command line statement.
+
+    * `command` Command line statement.
+    """
+    def __init__(self, command):
+        self._command = command
+
+    def __call__(self, config):
+        import os
+        os.system(self._command)
+
 ## Functions for interactive slurmy
 def _get_prompt():
     try:
