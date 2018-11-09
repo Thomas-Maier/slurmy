@@ -1,4 +1,5 @@
 
+name = 'slurmy'
 import logging
 logging.basicConfig(level = logging.INFO)
 from .tools.jobhandler import JobHandler
