@@ -281,20 +281,26 @@
 
 <p>This will install the slurmy module in <code>~/.local/lib/pythonX.Y/site-packages/</code> (<code>X.Y</code> indicates the version of your python installation) and the slurmy executables in <code>~/.local/bin/</code>. In order to ensure that python properly finds the module and you can run the executables, you should add the respective paths to <code>PYTHONPATH</code> and <code>PATH</code>:</p>
 <pre><code class="shell">MYPYTHONVERSION=python$(python3 -c &quot;from sys import version_info; print('{}.{}'.format(version_info.major, version_info.minor))&quot;)
+
 export PYTHONPATH=~/.local/lib/$MYPYTHONVERSION/site-packages:$PYTHONPATH
+
 export PATH=~/.local/bin:$PATH
 </code></pre>
 
 <h3 id="github">github</h3>
 <p>Clone the latest stable tag or (if you're brave) master branch locally:</p>
 <pre><code class="shell">git clone https://github.com/Thomas-Maier/slurmy.git
+
 LATESTTAG=$(git describe --abbrev=0 --tags)
+
 git co $LATESTTAG
 </code></pre>
 
 <p>Make sure to add the respository folder to <code>PYTHONPATH</code> and the <code>bin/</code> folder to <code>PATH</code>':</p>
 <pre><code class="shell">## Assuming that we are in the repository folder now
+
 export PYTHONPATH=$PWD:$PYTHONPATH
+
 export PATH=$PWD/bin:$PATH
 </code></pre>
 
