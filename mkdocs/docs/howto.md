@@ -211,3 +211,23 @@ In the same way as `finished_func`, you can also define `success_func`, to evalu
 ### Regarding class definitions
 
 Due to technically reasons connected to the [snapshot feature](howto.md#snapshots), your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.
+
+## Execute job payload in Singularity with run script wrappers
+
+It's not unlikely that you will need to run your code not in the OS of the batch system worker nodes, but rather in a singularity environment. Slurmy provides a wrapper that will ensure that the run script is executed inside singularity on the worker node. You only need to provide the path to the singularity image that should be used.
+
+```python
+from slurmy import JobHandler, SingularityWrapper
+
+## Set up the JobHandler
+sw = SingularityWrapper('/path/to/singularity/image.img')
+jh = JobHandler(wrapper = sw)
+## Define the run script content
+run_script = """
+echo "hans"
+"""
+## Add a job
+jh.add_job(run_script = run_script)
+## Run all jobs
+jh.run_jobs()
+```
