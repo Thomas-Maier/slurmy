@@ -166,7 +166,7 @@
             <div class="section">
               
                 <h1 id="slurmy-special-handler-for-universal-running-of-multiple-jobs-yes">SLURMY - Special handLer for Universal Running of Multiple jobs, Yes!</h1>
-<p>Slurmy is a general batch submission module, which allows to define very general jobs to be run on batch system setups on linux computing clusters. Currently, only slurm is supported as backend, but further backends can easily be added. The definition of the job execution is done with a general shell execution script, as is used by most batch systems. In addition to the batch definition, jobs can also be dynamically executed locally, which allows for an arbitrary combination of batch and local jobs.</p>
+<p>Slurmy is a general batch submission module, which allows to define very general jobs to be run on batch system setups on linux computing clusters. Currently, only Slurm and HTCondor are supported as backends, but further backends can easily be added. The definition of the job execution is done with a general shell execution script, as is used by most batch systems. In addition to the batch definition, jobs can also be dynamically executed locally, which allows for an arbitrary combination of batch and local jobs.</p>
 <h2 id="installation">Installation</h2>
 <p>First off, it is very much recommended to use slurmy in python3. While it is compatible with python2, some features only work (properly) in python3. You can either install slurmy using pip or directly check out the git repository.</p>
 <h3 id="pip">pip</h3>
@@ -179,21 +179,21 @@
 </code></pre>
 
 <p>This will install the slurmy module in <code>~/.local/lib/pythonX.Y/site-packages/</code> (<code>X.Y</code> indicates the version of your python installation) and the slurmy executables in <code>~/.local/bin/</code>. In order to ensure that python properly finds the module and you can run the executables, you should add the respective paths to <code>PYTHONPATH</code> and <code>PATH</code>:</p>
-<pre><code class="shell">MYPYTHONVERSION=python$(python3 -c &quot;from sys import version_info; print('{}.{}'.format(version_info.major, version_info.minor))&quot;)\
-export PYTHONPATH=~/.local/lib/$MYPYTHONVERSION/site-packages:$PYTHONPATH\
+<pre><code class="shell">MYPYTHONVERSION=python$(python3 -c &quot;from sys import version_info; print('{}.{}'.format(version_info.major, version_info.minor))&quot;)
+export PYTHONPATH=~/.local/lib/$MYPYTHONVERSION/site-packages:$PYTHONPATH
 export PATH=~/.local/bin:$PATH
 </code></pre>
 
 <h3 id="github">github</h3>
 <p>Clone the latest stable tag or (if you're brave) master branch locally:</p>
-<pre><code class="shell">git clone https://github.com/Thomas-Maier/slurmy.git\
-LATESTTAG=$(git describe --abbrev=0 --tags)\
+<pre><code class="shell">git clone https://github.com/Thomas-Maier/slurmy.git
+LATESTTAG=$(git describe --abbrev=0 --tags)
 git co $LATESTTAG
 </code></pre>
 
 <p>Make sure to add the respository folder to <code>PYTHONPATH</code> and the <code>bin/</code> folder to <code>PATH</code>':</p>
-<pre><code class="shell">## Assuming that we are in the repository folder now\
-export PYTHONPATH=$PWD:$PYTHONPATH\
+<pre><code class="shell">## Assuming that we are in the repository folder now
+export PYTHONPATH=$PWD:$PYTHONPATH
 export PATH=$PWD/bin:$PATH
 </code></pre>
 
