@@ -10,7 +10,6 @@
   <link rel="shortcut icon" href="../../img/favicon.ico">
   <title>Job - Slurmy</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
-  <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
@@ -46,312 +45,151 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-	<ul class="tocbase current">
-    
-    
-      
-  <li class="navtree toctree-l1 label">
-    <p class="caption">Slurmy</p>
-  </li>
-
-
-  
-
-  
-    <li class="navtree toctree-l1 group">
-      <ul class="navtree subnav-l1 current">
+	<ul class="current">
+	  
           
-
-
-  <li class="navtree toctree-l2 inactive">
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Slurmy</span>
+    <ul class="subnav">
+                <li class="">
+                    
     <a class="" href="../..">Slurmy</a>
-  </li>
-        
-          
-
-
-  <li class="navtree toctree-l2 inactive">
+                </li>
+                <li class="">
+                    
     <a class="" href="../../howto/">HowTo</a>
-  </li>
-        
-          
-
-
-  <li class="navtree toctree-l2 inactive">
+                </li>
+                <li class="">
+                    
     <a class="" href="../../interactive_slurmy/">Interactive Slurmy</a>
-  </li>
-        
-      </ul>
-    </li>
-    
-      
-  <li class="navtree toctree-l1 label">
-    <p class="caption">Classes</p>
-  </li>
-
-
-  
-
-  
-    <li class="navtree toctree-l1 group">
-      <ul class="navtree subnav-l1 current">
+                </li>
+    </ul>
+	    </li>
           
-
-
-  <li class="navtree toctree-l2 inactive">
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Classes</span>
+    <ul class="subnav">
+                <li class="">
+                    
     <a class="" href="../JobHandler/">JobHandler</a>
-  </li>
-        
-          
-
-
-  <li class="navtree toctree-l2 inactive">
+                </li>
+                <li class="">
+                    
     <a class="" href="../JobHandlerConfig/">JobHandlerConfig</a>
-  </li>
-        
-          
-
-
-  <li class="navtree toctree-l2 inactive">
+                </li>
+                <li class="">
+                    
     <a class="" href="../JobContainer/">JobContainer</a>
-  </li>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Job</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#job">Job</a></li>
+    
+
+    <li class="toctree-l3"><a href="#properties">Properties</a></li>
+    
+        <ul>
         
-          
-
-
-  
-    
-    <li class="navtree toctree-l2 page current">
-      <a class="current" href="./">
-        Job
-          <span class="toctree-expand"></span>
-      </a>
-    </li>
-    
-      
-
-
-
-      
-
-  <li class="toctree-l2">
-    <a href="#properties">
-      Properties
-      <span class="toctree-expand"></span>
-    </a>
-  </li>
-
-
-
-  <li class="toctree-l2">
-    <ul class="subnav-l2 toc-hidden">
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#exitcode">exitcode</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#id">id</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#log">log</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#mode">mode</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#name">name</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#output">output</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#parent_tags">parent_tags</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#script">script</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#starttime">starttime</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#status">status</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#tags">tags</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#type">type</a>
-        </li>
-    
-    </ul>
-  </li>
-
-      
-
-  <li class="toctree-l2">
-    <a href="#member-functions">
-      Member functions
-      <span class="toctree-expand"></span>
-    </a>
-  </li>
-
-
-
-  <li class="toctree-l2">
-    <ul class="subnav-l2 toc-hidden">
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#add_tag">add_tag</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#add_tags">add_tags</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#cancel">cancel</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#complete">complete</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#edit_script">edit_script</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#get_mode">get_mode</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#get_status">get_status</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#has_tag">has_tag</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#has_tags">has_tags</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#reset">reset</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#set_mode">set_mode</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#submit">submit</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#update_snapshot">update_snapshot</a>
-        </li>
-    
-      
-        <li class="toctree-l3">
-          <a class="toctree-l4" href="#wait">wait</a>
-        </li>
-    
-    </ul>
-  </li>
-
-
-  
+            <li><a class="toctree-l4" href="#exitcode">exitcode</a></li>
         
-          
+            <li><a class="toctree-l4" href="#id">id</a></li>
+        
+            <li><a class="toctree-l4" href="#log">log</a></li>
+        
+            <li><a class="toctree-l4" href="#mode">mode</a></li>
+        
+            <li><a class="toctree-l4" href="#name">name</a></li>
+        
+            <li><a class="toctree-l4" href="#output">output</a></li>
+        
+            <li><a class="toctree-l4" href="#parent_tags">parent_tags</a></li>
+        
+            <li><a class="toctree-l4" href="#script">script</a></li>
+        
+            <li><a class="toctree-l4" href="#starttime">starttime</a></li>
+        
+            <li><a class="toctree-l4" href="#status">status</a></li>
+        
+            <li><a class="toctree-l4" href="#tags">tags</a></li>
+        
+            <li><a class="toctree-l4" href="#type">type</a></li>
+        
+        </ul>
+    
 
+    <li class="toctree-l3"><a href="#member-functions">Member functions</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#add_tag">add_tag</a></li>
+        
+            <li><a class="toctree-l4" href="#add_tags">add_tags</a></li>
+        
+            <li><a class="toctree-l4" href="#cancel">cancel</a></li>
+        
+            <li><a class="toctree-l4" href="#complete">complete</a></li>
+        
+            <li><a class="toctree-l4" href="#edit_script">edit_script</a></li>
+        
+            <li><a class="toctree-l4" href="#get_mode">get_mode</a></li>
+        
+            <li><a class="toctree-l4" href="#get_status">get_status</a></li>
+        
+            <li><a class="toctree-l4" href="#has_tag">has_tag</a></li>
+        
+            <li><a class="toctree-l4" href="#has_tags">has_tags</a></li>
+        
+            <li><a class="toctree-l4" href="#reset">reset</a></li>
+        
+            <li><a class="toctree-l4" href="#set_mode">set_mode</a></li>
+        
+            <li><a class="toctree-l4" href="#submit">submit</a></li>
+        
+            <li><a class="toctree-l4" href="#update_snapshot">update_snapshot</a></li>
+        
+            <li><a class="toctree-l4" href="#wait">wait</a></li>
+        
+        </ul>
+    
 
-  <li class="navtree toctree-l2 inactive">
+    </ul>
+                </li>
+                <li class="">
+                    
     <a class="" href="../JobConfig/">JobConfig</a>
-  </li>
-        
-          
-
-
-  <li class="navtree toctree-l2 inactive">
+                </li>
+                <li class="">
+                    
     <a class="" href="../Listener/">Listener</a>
-  </li>
-        
-      </ul>
-    </li>
-    
-      
-  <li class="navtree toctree-l1 label">
-    <p class="caption">Utility</p>
-  </li>
-
-
-  
-
-  
-    <li class="navtree toctree-l1 group">
-      <ul class="navtree subnav-l1 current">
+                </li>
+    </ul>
+	    </li>
           
-
-
-  <li class="navtree toctree-l2 inactive">
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Utility</span>
+    <ul class="subnav">
+                <li class="">
+                    
     <a class="" href="../../utils/SuccessTrigger/">SuccessTrigger</a>
-  </li>
-        
-          
-
-
-  <li class="navtree toctree-l2 inactive">
+                </li>
+                <li class="">
+                    
     <a class="" href="../../utils/FinishedTrigger/">FinishedTrigger</a>
-  </li>
-        
-          
-
-
-  <li class="navtree toctree-l2 inactive">
+                </li>
+                <li class="">
+                    
     <a class="" href="../../utils/LogMover/">LogMover</a>
-  </li>
-        
-      </ul>
-    </li>
-    
-  </ul>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
       </div>
       &nbsp;
     </nav>
