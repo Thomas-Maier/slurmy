@@ -14,18 +14,19 @@
 
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
     var mkdocs_page_name = "HowTo";
     var mkdocs_page_input_path = "howto.md";
-    var mkdocs_page_url = "/howto/";
+    var mkdocs_page_url = null;
   </script>
   
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
   
 </head>
 
@@ -39,429 +40,303 @@
         <a href=".." class="icon icon-home"> Slurmy</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-      
-
-
-  
-    
-    
-    
-    
-    
-    
-
-  <p class="caption">Slurmy</p>
-
-
-<ul class="current" href="index">
-  
-    
-      
-<li class=" toctree-l1">
-  <a href=".." title="Slurmy"
-      class="">
-    Slurmy
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class="current toctree-l1">
-  <a href="./" title="HowTo"
-      class="current">
-    HowTo
-  </a>
-
-  
-  
+	<ul class="tocbase current">
     
     
       
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  <ul class="current subnav">
-    
-      
-
-  
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#general-usage" title="HowTo">General Usage</a>
+  <li class="navtree toctree-l1 label">
+    <p class="caption">Slurmy</p>
   </li>
 
-    
-      
 
   
+
   
+    <li class="navtree toctree-l1 group">
+      <ul class="navtree subnav-l1 current">
+          
 
 
-  <li class="toctree-l2 toc-item">
-    <a href="#what-you-want-to-do-before-doing-anything-else" title="HowTo">What you want to do before doing anything else</a>
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="..">Slurmy</a>
   </li>
-
-    
-      
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#snapshots" title="HowTo">Snapshots</a>
-  </li>
-
-    
-      
-
-  
-  
-
-
-  <li class=" toctree-l2">
-    
-      <a href="#simple-example" title="HowTo"
-          class="">
-        Simple example
-      </a>
-    
-    <ul class=" subnav">
-      
         
+          
+
 
   
-  
+    
+    <li class="navtree toctree-l2 page current">
+      <a class="current" href="./">
+        HowTo
+          <span class="toctree-expand"></span>
+      </a>
+    </li>
+    
+      
 
-
-  <li class="toctree-l2 toc-item">
-    <a href="#with-explicit-backend-definition" title="HowTo">With explicit backend definition</a>
+  <li class="toctree-l2 current with-children">
+    <a href="#general-usage">
+      General Usage
+      <span class="toctree-expand"></span>
+    </a>
   </li>
 
+
+
       
+
+  <li class="toctree-l2">
+    <a href="#what-you-want-to-do-before-doing-anything-else">
+      What you want to do before doing anything else
+      <span class="toctree-expand"></span>
+    </a>
+  </li>
+
+
+
+      
+
+  <li class="toctree-l2">
+    <a href="#snapshots">
+      Snapshots
+      <span class="toctree-expand"></span>
+    </a>
+  </li>
+
+
+
+      
+
+  <li class="toctree-l2">
+    <a href="#simple-example">
+      Simple example
+      <span class="toctree-expand"></span>
+    </a>
+  </li>
+
+
+
+  <li class="toctree-l2">
+    <ul class="subnav-l2 toc-hidden">
+    
+      
+        <li class="toctree-l3">
+          <a class="toctree-l4" href="#with-explicit-backend-definition">With explicit backend definition</a>
+        </li>
+    
     </ul>
   </li>
 
-    
       
 
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#using-an-already-existing-script-file-with-optional-arguments" title="HowTo">Using an already existing script file (with optional arguments)</a>
+  <li class="toctree-l2">
+    <a href="#using-an-already-existing-script-file-with-optional-arguments">
+      Using an already existing script file (with optional arguments)
+      <span class="toctree-expand"></span>
+    </a>
   </li>
 
-    
+
+
       
 
-  
-  
-
-
-  <li class=" toctree-l2">
-    
-      <a href="#chaining-jobs-with-tags" title="HowTo"
-          class="">
-        Chaining Jobs with Tags
-      </a>
-    
-    <ul class=" subnav">
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#additional-uses-of-tags" title="HowTo">Additional uses of tags</a>
+  <li class="toctree-l2">
+    <a href="#chaining-jobs-with-tags">
+      Chaining Jobs with Tags
+      <span class="toctree-expand"></span>
+    </a>
   </li>
 
+
+
+  <li class="toctree-l2">
+    <ul class="subnav-l2 toc-hidden">
+    
       
+        <li class="toctree-l3">
+          <a class="toctree-l4" href="#additional-uses-of-tags">Additional uses of tags</a>
+        </li>
+    
     </ul>
   </li>
 
-    
       
 
-  
-  
-
-
-  <li class=" toctree-l2">
-    
-      <a href="#steering-evaluation-of-jobs-processing-status" title="HowTo"
-          class="">
-        Steering evaluation of jobs processing status
-      </a>
-    
-    <ul class=" subnav">
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#job-listener" title="HowTo">Job listener</a>
+  <li class="toctree-l2">
+    <a href="#steering-evaluation-of-jobs-processing-status">
+      Steering evaluation of jobs processing status
+      <span class="toctree-expand"></span>
+    </a>
   </li>
 
+
+
+  <li class="toctree-l2">
+    <ul class="subnav-l2 toc-hidden">
+    
       
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#define-output-file-for-success-evaluation" title="HowTo">Define output file for success evaluation</a>
-  </li>
-
+        <li class="toctree-l3">
+          <a class="toctree-l4" href="#job-listener">Job listener</a>
+        </li>
+    
       
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#finished-and-success-trigger-in-the-run_script" title="HowTo">FINISHED and SUCCESS trigger in the run_script</a>
-  </li>
-
+        <li class="toctree-l3">
+          <a class="toctree-l4" href="#define-output-file-for-success-evaluation">Define output file for success evaluation</a>
+        </li>
+    
       
+        <li class="toctree-l3">
+          <a class="toctree-l4" href="#finished-and-success-trigger-in-the-run_script">FINISHED and SUCCESS trigger in the run_script</a>
+        </li>
+    
     </ul>
   </li>
 
-    
       
 
-  
-  
-
-
-  <li class=" toctree-l2">
-    
-      <a href="#custom-evaluations-for-success-finished-and-post-execution" title="HowTo"
-          class="">
-        Custom evaluations for success, finished, and post-execution
-      </a>
-    
-    <ul class=" subnav">
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#regarding-class-definitions" title="HowTo">Regarding class definitions</a>
+  <li class="toctree-l2">
+    <a href="#custom-evaluations-for-success-finished-and-post-execution">
+      Custom evaluations for success, finished, and post-execution
+      <span class="toctree-expand"></span>
+    </a>
   </li>
 
+
+
+  <li class="toctree-l2">
+    <ul class="subnav-l2 toc-hidden">
+    
       
+        <li class="toctree-l3">
+          <a class="toctree-l4" href="#regarding-class-definitions">Regarding class definitions</a>
+        </li>
+    
     </ul>
   </li>
 
+      
+
+  <li class="toctree-l2">
+    <a href="#execute-job-payload-in-singularity-with-run-script-wrappers">
+      Execute job payload in Singularity with run script wrappers
+      <span class="toctree-expand"></span>
+    </a>
+  </li>
+
+
+
+
+  
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../interactive_slurmy/">Interactive Slurmy</a>
+  </li>
+        
+      </ul>
+    </li>
+    
+      
+  <li class="navtree toctree-l1 label">
+    <p class="caption">Classes</p>
+  </li>
+
+
+  
+
+  
+    <li class="navtree toctree-l1 group">
+      <ul class="navtree subnav-l1 current">
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../classes/JobHandler/">JobHandler</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../classes/JobHandlerConfig/">JobHandlerConfig</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../classes/JobContainer/">JobContainer</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../classes/Job/">Job</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../classes/JobConfig/">JobConfig</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../classes/Listener/">Listener</a>
+  </li>
+        
+      </ul>
+    </li>
+    
+      
+  <li class="navtree toctree-l1 label">
+    <p class="caption">Utility</p>
+  </li>
+
+
+  
+
+  
+    <li class="navtree toctree-l1 group">
+      <ul class="navtree subnav-l1 current">
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../utils/SuccessTrigger/">SuccessTrigger</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../utils/FinishedTrigger/">FinishedTrigger</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="../utils/LogMover/">LogMover</a>
+  </li>
+        
+      </ul>
+    </li>
     
   </ul>
-
-    
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../interactive_slurmy/" title="Interactive Slurmy"
-      class="">
-    Interactive Slurmy
-  </a>
-
-  
-  
-</li>
-    
-</ul>
-
-<!--
- | This is a hacky way to pass setting from the template generator to the
- | javascript that drives the dropdown functionality
--->
-<div style="width: 1px; height: 1px; visibility: none;">
-
-</div>
-
-
-
-  
-    
-    
-    
-    
-    
-    
-
-  <p class="caption">Classes</p>
-
-
-<ul class="" href="classes/JobHandler">
-  
-    
-      
-<li class=" toctree-l1">
-  <a href="../classes/JobHandler/" title="JobHandler"
-      class="">
-    JobHandler
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../classes/JobHandlerConfig/" title="JobHandlerConfig"
-      class="">
-    JobHandlerConfig
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../classes/JobContainer/" title="JobContainer"
-      class="">
-    JobContainer
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../classes/Job/" title="Job"
-      class="">
-    Job
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../classes/JobConfig/" title="JobConfig"
-      class="">
-    JobConfig
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../classes/Listener/" title="Listener"
-      class="">
-    Listener
-  </a>
-
-  
-  
-</li>
-    
-</ul>
-
-<!--
- | This is a hacky way to pass setting from the template generator to the
- | javascript that drives the dropdown functionality
--->
-<div style="width: 1px; height: 1px; visibility: none;">
-
-</div>
-
-
-
-  
-    
-    
-    
-    
-    
-    
-
-  <p class="caption">Utility</p>
-
-
-<ul class="" href="utils/SuccessTrigger">
-  
-    
-      
-<li class=" toctree-l1">
-  <a href="../utils/SuccessTrigger/" title="SuccessTrigger"
-      class="">
-    SuccessTrigger
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../utils/FinishedTrigger/" title="FinishedTrigger"
-      class="">
-    FinishedTrigger
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="../utils/LogMover/" title="LogMover"
-      class="">
-    LogMover
-  </a>
-
-  
-  
-</li>
-    
-</ul>
-
-<!--
- | This is a hacky way to pass setting from the template generator to the
- | javascript that drives the dropdown functionality
--->
-<div style="width: 1px; height: 1px; visibility: none;">
-
-</div>
-
-
       </div>
       &nbsp;
     </nav>
@@ -666,6 +541,22 @@ jh.run_jobs()
 <p>In the same way as <code>finished_func</code>, you can also define <code>success_func</code>, to evaluate if a job is successful, or <code>post_func</code>, to define a post-processing which will be done locally after the job's success evaluation was done.</p>
 <h3 id="regarding-class-definitions">Regarding class definitions</h3>
 <p>Due to technically reasons connected to the <a href="./#snapshots">snapshot feature</a>, your custom class definition must be known to python on your machine. The best way to ensure that is to make the definition known to python via PYTHONPATH. In principle you can just use a local function definition instead of a callable class if you don't want to use the snapshot feature. However, it is highly recommended to make use of it.</p>
+<h2 id="execute-job-payload-in-singularity-with-run-script-wrappers">Execute job payload in Singularity with run script wrappers</h2>
+<p>It's not unlikely that you will need to run your code not in the OS of the batch system worker nodes, but rather in a singularity environment. Slurmy provides a wrapper that will ensure that the run script is executed inside singularity on the worker node. You only need to provide the path to the singularity image that should be used.</p>
+<pre><code class="python">from slurmy import JobHandler, SingularityWrapper
+
+## Set up the JobHandler
+sw = SingularityWrapper('/path/to/singularity/image.img')
+jh = JobHandler(wrapper = sw)
+## Define the run script content
+run_script = &quot;&quot;&quot;
+echo &quot;hans&quot;
+&quot;&quot;&quot;
+## Add a job
+jh.add_job(run_script = run_script)
+## Run all jobs
+jh.run_jobs()
+</code></pre>
               
             </div>
           </div>
@@ -710,9 +601,8 @@ jh.run_jobs()
     </span>
 </div>
     <script>var base_url = '..';</script>
-    <script src="../js/theme.js"></script>
-      <script src="../search/require.js"></script>
-      <script src="../search/search.js"></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
 
 </body>
 </html>

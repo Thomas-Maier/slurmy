@@ -5,27 +5,28 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="None">
   
-  <link rel="shortcut icon" href="./img/favicon.ico">
+  
+  <link rel="shortcut icon" href="img/favicon.ico">
   <title>Slurmy - Slurmy</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
   <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="./css/highlight.css">
+  <link rel="stylesheet" href="css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
     var mkdocs_page_name = "Slurmy";
     var mkdocs_page_input_path = "index.md";
-    var mkdocs_page_url = "/";
+    var mkdocs_page_url = null;
   </script>
   
-  <script src="./js/jquery-2.1.1.min.js"></script>
-  <script src="./js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
+  <script src="js/jquery-2.1.1.min.js" defer></script>
+  <script src="js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
   
 </head>
 
@@ -39,261 +40,197 @@
         <a href="." class="icon icon-home"> Slurmy</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-      
-
-
-  
-    
-    
-    
-    
-    
-    
-
-  <p class="caption">Slurmy</p>
-
-
-<ul class="current" href="index">
-  
-    
-      
-<li class="current toctree-l1">
-  <a href="." title="Slurmy"
-      class="current">
-    Slurmy
-  </a>
-
-  
-  
+	<ul class="tocbase current">
     
     
       
-  
-  
-  <ul class="current subnav">
-    
-      
-
-  
-  
-  
-
-
-  <li class="current toctree-l2">
-    
-    <ul class="current subnav">
-      
-        
-
-  
-  
-
-
-  <li class="toctree-l2 toc-item">
-    <a href="#recommended-setup" title="Slurmy">Recommended Setup</a>
+  <li class="navtree toctree-l1 label">
+    <p class="caption">Slurmy</p>
   </li>
 
+
+  
+
+  
+    <li class="navtree toctree-l1 group">
+      <ul class="navtree subnav-l1 current">
+          
+
+
+  
+    
+    <li class="navtree toctree-l2 page current">
+      <a class="current" href=".">
+        Slurmy
+          <span class="toctree-expand"></span>
+      </a>
+    </li>
+    
       
+
+  <li class="toctree-l2 current with-children">
+    <a href="#slurmy-special-handler-for-universal-running-of-multiple-jobs-yes">
+      SLURMY - Special handLer for Universal Running of Multiple jobs, Yes!
+      <span class="toctree-expand"></span>
+    </a>
+  </li>
+
+
+
+  <li class="toctree-l2 current">
+    <ul class="subnav-l2 current">
+    
+      
+          
+
+  <li class="toctree-l3 current with-children">
+    <a href="#installation">
+      Installation
+      <span class="toctree-expand"></span>
+    </a>
+  </li>
+
+
+
+  <li class="toctree-l3 current">
+    <ul class="subnav-l3 current">
+    
+      
+        <li class="toctree-l4">
+          <a class="toctree-l5" href="#pip">pip</a>
+        </li>
+    
+      
+        <li class="toctree-l4">
+          <a class="toctree-l5" href="#github">github</a>
+        </li>
+    
     </ul>
   </li>
 
+      
+    
+    </ul>
+  </li>
+
+
+  
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="howto/">HowTo</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="interactive_slurmy/">Interactive Slurmy</a>
+  </li>
+        
+      </ul>
+    </li>
+    
+      
+  <li class="navtree toctree-l1 label">
+    <p class="caption">Classes</p>
+  </li>
+
+
+  
+
+  
+    <li class="navtree toctree-l1 group">
+      <ul class="navtree subnav-l1 current">
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="classes/JobHandler/">JobHandler</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="classes/JobHandlerConfig/">JobHandlerConfig</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="classes/JobContainer/">JobContainer</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="classes/Job/">Job</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="classes/JobConfig/">JobConfig</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="classes/Listener/">Listener</a>
+  </li>
+        
+      </ul>
+    </li>
+    
+      
+  <li class="navtree toctree-l1 label">
+    <p class="caption">Utility</p>
+  </li>
+
+
+  
+
+  
+    <li class="navtree toctree-l1 group">
+      <ul class="navtree subnav-l1 current">
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="utils/SuccessTrigger/">SuccessTrigger</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="utils/FinishedTrigger/">FinishedTrigger</a>
+  </li>
+        
+          
+
+
+  <li class="navtree toctree-l2 inactive">
+    <a class="" href="utils/LogMover/">LogMover</a>
+  </li>
+        
+      </ul>
+    </li>
     
   </ul>
-
-    
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="howto/" title="HowTo"
-      class="">
-    HowTo
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="interactive_slurmy/" title="Interactive Slurmy"
-      class="">
-    Interactive Slurmy
-  </a>
-
-  
-  
-</li>
-    
-</ul>
-
-<!--
- | This is a hacky way to pass setting from the template generator to the
- | javascript that drives the dropdown functionality
--->
-<div style="width: 1px; height: 1px; visibility: none;">
-
-</div>
-
-
-
-  
-    
-    
-    
-    
-    
-    
-
-  <p class="caption">Classes</p>
-
-
-<ul class="" href="classes/JobHandler">
-  
-    
-      
-<li class=" toctree-l1">
-  <a href="classes/JobHandler/" title="JobHandler"
-      class="">
-    JobHandler
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="classes/JobHandlerConfig/" title="JobHandlerConfig"
-      class="">
-    JobHandlerConfig
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="classes/JobContainer/" title="JobContainer"
-      class="">
-    JobContainer
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="classes/Job/" title="Job"
-      class="">
-    Job
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="classes/JobConfig/" title="JobConfig"
-      class="">
-    JobConfig
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="classes/Listener/" title="Listener"
-      class="">
-    Listener
-  </a>
-
-  
-  
-</li>
-    
-</ul>
-
-<!--
- | This is a hacky way to pass setting from the template generator to the
- | javascript that drives the dropdown functionality
--->
-<div style="width: 1px; height: 1px; visibility: none;">
-
-</div>
-
-
-
-  
-    
-    
-    
-    
-    
-    
-
-  <p class="caption">Utility</p>
-
-
-<ul class="" href="utils/SuccessTrigger">
-  
-    
-      
-<li class=" toctree-l1">
-  <a href="utils/SuccessTrigger/" title="SuccessTrigger"
-      class="">
-    SuccessTrigger
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="utils/FinishedTrigger/" title="FinishedTrigger"
-      class="">
-    FinishedTrigger
-  </a>
-
-  
-  
-</li>
-    
-      
-<li class=" toctree-l1">
-  <a href="utils/LogMover/" title="LogMover"
-      class="">
-    LogMover
-  </a>
-
-  
-  
-</li>
-    
-</ul>
-
-<!--
- | This is a hacky way to pass setting from the template generator to the
- | javascript that drives the dropdown functionality
--->
-<div style="width: 1px; height: 1px; visibility: none;">
-
-</div>
-
-
       </div>
       &nbsp;
     </nav>
@@ -331,20 +268,34 @@
               
                 <h1 id="slurmy-special-handler-for-universal-running-of-multiple-jobs-yes">SLURMY - Special handLer for Universal Running of Multiple jobs, Yes!</h1>
 <p>Slurmy is a general batch submission module, which allows to define very general jobs to be run on batch system setups on linux computing clusters. Currently, only slurm is supported as backend, but further backends can easily be added. The definition of the job execution is done with a general shell execution script, as is used by most batch systems. In addition to the batch definition, jobs can also be dynamically executed locally, which allows for an arbitrary combination of batch and local jobs.</p>
-<h2 id="recommended-setup">Recommended Setup</h2>
-<p>Clone the latest stable tag or master branch locally:</p>
+<h2 id="installation">Installation</h2>
+<p>First off, it is very much recommended to use slurmy in python3. While it is compatible with python2, some features only work (properly) in python3. You can either install slurmy using pip or directly check out the git repository.</p>
+<h3 id="pip">pip</h3>
+<p>Most likely you won't have root privileges on your machine, so you have to make a user pip installation:</p>
+<pre><code class="shell">pip install --user slurmy
+</code></pre>
+
+<p>Depending on your setup <code>pip</code> points to the python2 or python3 pip executable. In order to ensure that you're installing slurmy for python3 you can be more explicit:</p>
+<pre><code class="shell">pip3 install --user slurmy
+</code></pre>
+
+<p>This will install the slurmy module in <code>~/.local/lib/pythonX.Y/site-packages/</code> (<code>X.Y</code> indicates the version of your python installation) and the slurmy executables in <code>~/.local/bin/</code>. In order to ensure that python properly finds the module and you can run the executables, you should add the respective paths to <code>PYTHONPATH</code> and <code>PATH</code>:</p>
+<pre><code class="shell">MYPYTHONVERSION=python$(python3 -c &quot;from sys import version_info; print('{}.{}'.format(version_info.major, version_info.minor))&quot;)
+export PYTHONPATH=~/.local/lib/$MYPYTHONVERSION/site-packages:$PYTHONPATH
+export PATH=~/.local/bin:$PATH
+</code></pre>
+
+<h3 id="github">github</h3>
+<p>Clone the latest stable tag or (if you're brave) master branch locally:</p>
 <pre><code class="shell">git clone https://github.com/Thomas-Maier/slurmy.git
+LATESTTAG=$(git describe --abbrev=0 --tags)
+git co $LATESTTAG
 </code></pre>
 
-<p>Make sure to add the directory in which you cloned slurmy to <code>PYTHONPATH</code>, and the slurmy folder to <code>PATH</code>:</p>
-<pre><code class="shell">export PYTHONPATH=$PWD:$PYTHONPATH
-export PATH=$PWD/slurmy:$PATH
-</code></pre>
-
-<p>This will make python aware of the slurmy module and you'll be able to execute the slurmy executable.</p>
-<p>Furthermode, in order to use the bar mode of the output printer, install the <a href="https://github.com/tqdm/tqdm">tqdm</a> module:</p>
-<pre><code class="shell">pip install --user tqdm
-pip3 install --user tqdm   # Depending on your setup &quot;pip&quot; points to pip2 or pip3
+<p>Make sure to add the respository folder to <code>PYTHONPATH</code> and the <code>bin/</code> folder to <code>PATH</code>':</p>
+<pre><code class="shell">## Assuming that we are in the repository folder now
+export PYTHONPATH=$PWD:$PYTHONPATH
+export PATH=$PWD/bin:$PATH
 </code></pre>
 
 <p>Also, take a look at the <a href="howto/#slurmyconfig">slurmy config setup</a>.</p>
@@ -388,14 +339,8 @@ pip3 install --user tqdm   # Depending on your setup &quot;pip&quot; points to p
     </span>
 </div>
     <script>var base_url = '.';</script>
-    <script src="./js/theme.js"></script>
-      <script src="./search/require.js"></script>
-      <script src="./search/search.js"></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
 
 </body>
 </html>
-
-<!--
-MkDocs version : 0.17.4
-Build Date UTC : 2018-07-15 18:06:04
--->
