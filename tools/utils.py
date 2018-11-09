@@ -258,9 +258,10 @@ def remove_content(folder):
 ## String manipulation utils
 def find_between(s, first, last):
     """Find first substring between two substrings first and last in string s."""
-    try:
-        expression = '{}(.+?){}'.format(first, last)
-        return re.findall(expression, s)[0]
-    except ValueError:
-        logging.error("String `{s}` does not contain a substring between `{first}` and `{last}`".format(s=s, first=first, last=last))
-        return ""
+    expression = '{}(.+?){}'.format(first, last)
+    results = re.findall(expression, s)
+    if len(results) == 0:
+        log.error('Could not find substring in "{s}" between "{first}" and "{last}"'.format(s=s, first=first, last=last))
+        return ''
+    else:
+        return results[0]
