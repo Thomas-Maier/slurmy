@@ -34,8 +34,6 @@ class SuccessTrigger:
         return False
 
 def get_listen_files(file_list, folder_list, status):
-    import logging
-    log = logging.getLogger('slurmy')
     def listen_files(results, interval = 1):
         import os, time, subprocess
         from slurmy import Status
@@ -77,7 +75,7 @@ class FinishedTrigger:
             subprocess.check_output(['ls', folder], universal_newlines = True, stderr = subprocess.STDOUT)
         except subprocess.CalledProcessError:
             log.debug('Output folder {} does not exist, please check'.format(folder))
-            
+
         finished = os.path.isfile(self._finished_file)
 
         return finished
@@ -232,7 +230,7 @@ def _prompt_decision(message):
 def _get_update_property(name):
     def getter(self):
         return getattr(self, name)
-    
+
     def setter(self, val):
         val_old = getattr(self, name)
         log.debug('Set attribute "{}" of class "{}" from value "{}" to "{}"'.format(name, self, val_old, val))
@@ -240,7 +238,7 @@ def _get_update_property(name):
             log.debug('Value changed, tag for update')
             self.update = True
         setattr(self, name, val)
-        
+
     return property(fget = getter, fset = setter)
 
 def set_update_properties(class_obj):
@@ -252,7 +250,7 @@ def set_update_properties(class_obj):
 def update_decorator(func):
     def new_func(self, *args, **kwargs):
         self.update = True
-        
+
         return func(self, *args, **kwargs)
 
     return new_func

@@ -1,5 +1,6 @@
 
 import logging
+import re
 from .defs import Status
 
 log = logging.getLogger('slurmy')
@@ -20,7 +21,11 @@ class Parser(object):
             prop_val = getattr(self.config, prop)
             string = string.replace(parse_string, prop_val)
         ## Make sanity check and print warning if prefix string still exists in script
-        if self._prefix in string: log.warning('Unknown {} variable in input string'.format(self._prefix))
+        problem_lines = [l for l in string.split('\n') if self._prefix in string]
+        if problem_lines:
+            log.warning('Unknown {} variable(s) in input string:'.format(self._prefix))
+            for line in problem_lines:
+                log.warning('  '+line)
 
         return string
 
