@@ -43,12 +43,6 @@ class Base(object):
 
         return print_string
 
-    def load_default_config(self):
-        """@SLURMY
-        Load the default backend configuration, as defined in the slurmy config file.
-        """
-        options.Main.get_backend_options(self)
-
     def sync(self, config):
         """@SLURMY
         Synchronise backend configuration with reference one. Options from self are prioritised.

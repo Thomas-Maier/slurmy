@@ -4,7 +4,7 @@ import os
 import sys
 import datetime
 import logging
-from ..backends.utils import backend_list
+from ..backends.utils import backend_list, get_backend
 
 log = logging.getLogger('slurmy')
 
@@ -16,14 +16,14 @@ class Options(object):
         ## General options. Set defaults here, which are overwritten by values set in _options_file.
         self.bookkeeping = '{}/.slurmy_bookkeeping'.format(os.environ['HOME'])
         self.workdir = './'
-        self.backend = 'Slurm'
+        self.backend = None
         self.editor = None
         ## Additional options
         self.test_mode = False
         self.interactive_mode = False
         self.profile_mode = False
-        ## Backend options
-        self._backend_options = {}
+        ## Default backends which hold the options configured in _options_file
+        self._backend_defaults = {}
         ## Internal vars
         self._bookkeeping = None
         ## Read options from _options_file
@@ -89,12 +89,14 @@ class Options(object):
         with open(self.bookkeeping, 'w') as out_file:
             json.dump(self._bookkeeping, out_file)
 
+    ## TODO: use regex here
     ## TODO: only checking if the backend_options are already set is not really robust
     def _read_options(self, force = False):
         ## If no options file present, do nothing
         if not os.path.isfile(Options._options_file): return
         ## If options were already filled, do nothing
-        if self._backend_options and not force: return
+        if self._backend_defaults and not force: return
+        backend_options = {}
         lines = None
         with open(Options._options_file, 'r') as in_file:
             lines = filter(None, [line.strip() for line in in_file if not line.startswith('#')])
@@ -121,28 +123,36 @@ class Options(object):
                 if domain not in backend_list:
                     log.warning('Trying to add an option for unknown backend "{}", list of available backends: {}'.format(domain, backend_list))
                     continue
-                if domain not in self._backend_options: self._backend_options[domain] = {}
-                if option in self._backend_options[domain]:
+                if domain not in backend_options: backend_options[domain] = {}
+                if option in backend_options[domain]:
                     log.warning('Trying to set a backend option twice, ignoring duplicate')
                     continue
-                self._backend_options[domain][option] = val
+                backend_options[domain][option] = val
         ## Check if backend from options file is refering to an available backend
         if self.backend is not None and self.backend not in backend_list:
             log.warning('Unknown backend "{}", list of available backends: {}'.format(self.backend, backend_list))
             ## Setting backend to None
             self.backend = None
+        ## Set backend defaults according to backend options from options file
+        self._set_backend_defaults(backend_options)
 
+    def _set_backend_defaults(self, backend_options):
+        for domain in backend_options:
+            backend = get_backend(domain)
+            for option, val in backend_options.items():
+                if not option in backend:
+                    log.warning('Option "{}" not in backend "{}"'.format(option, backend.bid))
+                    continue
+                ## If option was already set, give priority to that
+                backend[option] = backend[option] or val
+            ## Add backend to defaults
+            self._backend_defaults[domain] = backend
 
-    def get_backend_options(self, backend):
+    def sync_backend(self, backend):
         bid = backend.bid
-        ## If no options set for this backend, nothing to do
-        if bid not in self._backend_options: return
-        for option, val in self._backend_options[bid].items():
-            if not option in backend:
-                log.warning('Option "{}" not in backend "{}"'.format(option, backend.bid))
-                continue
-            ## If option was already set, give priority to that
-            backend[option] = backend[option] or val
+        if bid not in self._backend_defaults:
+            return
+        backend.sync(self._backend_defaults[bid])
 
     @staticmethod
     def _parse_file_name(file_name):
