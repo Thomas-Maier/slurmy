@@ -4,7 +4,7 @@ import argparse
 import os
 import logging
 from slurmy import JobHandler, test_mode, Slurm
-from slurmy.tools.utils import _get_prompt, list_sessions, load, load_path, load_latest
+from slurmy.tools.utils import _get_prompt, list_sessions, load, load_path, load_latest, set_docker_mode
 from slurmy.tools.defs import Status, Type, Theme
 import slurmy.tools.options as _ops
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     ## Modes to start slurmy in
     if _args.test_mode: test_mode()
     if _args.debug: _log.setLevel(level = logging.DEBUG)
-    if _args.docker: _ops.Main.set_docker_mode()
+    if _args.docker: set_docker_mode()
     ## Load config file if one was provided
     if _args.config:
         with open(_args.config, 'r') as in_file:

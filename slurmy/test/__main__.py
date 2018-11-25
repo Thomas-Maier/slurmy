@@ -6,7 +6,7 @@ import argparse
 import sys
 import os
 import logging
-from ..tools import options
+from ..tools.utils import set_docker_mode
 
 log = logging.getLogger('slurmy')
 
@@ -49,7 +49,7 @@ else:
     verbosity = 2
 
 if args.d:
-    options.Main.set_docker_mode()
+    set_docker_mode()
 
 if args.tests:
     tests = args.tests
