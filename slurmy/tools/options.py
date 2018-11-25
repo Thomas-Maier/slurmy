@@ -4,7 +4,11 @@ import os
 import sys
 import datetime
 import logging
+import subprocess
+import shlex
+import re
 from ..backends.utils import backend_list
+from .utils import check_return
 
 log = logging.getLogger('slurmy')
 
@@ -18,6 +22,8 @@ class Options(object):
         self.workdir = './'
         self.backend = 'Slurm'
         self.editor = None
+        self.user = os.environ['USER']
+        self.command_wrapper = '{command}'
         ## Additional options
         self.test_mode = False
         self.interactive_mode = False
@@ -143,6 +149,29 @@ class Options(object):
                 continue
             ## If option was already set, give priority to that
             backend[option] = backend[option] or val
+
+    def set_docker_mode(self, container_name):
+        log.debug('Setting up docker mode...')
+        inspect_command = 'docker inspect -f "{{.State.Running}}" '+container_name
+        ## Check if the docker container exists
+        if not check_return(inspect_command):
+            log.error('Docker container "{}" does not exist, abort...'.format(container_name))
+            raise Exception
+        ## Get the output of the inspect command
+        inspect_output = subprocess.check_output(shlex.split(inspect_command), universal_newlines = True)
+        ## Check if the container is in Running state, the inspect output should just be just "true\n" or "false\n"
+        if re.findall('(.+?)\n', inspect_output) == 'false':
+            log.error('Docker container {} is not in Running state, abort...')
+            raise Exception
+        ## Set user option to docker user
+        # self.user = user
+        ## Set command_wrapper to docker exec command
+        # command_wrapper = 'docker exec {} runuser -l {}'.format(container_name, self.user)
+        # command_wrapper += ' -c "{command}"'
+        command_wrapper = 'docker exec {}'.format(container_name)
+        command_wrapper += ' {command}'
+        log.debug('Setting command_wrapper to "'+command_wrapper+'"')
+        self.command_wrapper = command_wrapper
 
     @staticmethod
     def _parse_file_name(file_name):

@@ -6,6 +6,7 @@ import logging
 from ..tools.defs import Status
 from .base import Base
 from .defs import bids
+from ..tools import options
 
 log = logging.getLogger('slurmy')
 
@@ -29,13 +30,13 @@ class Slurm(Base):
     * `time` Time limit for the slurm job.
     * `export` Environment exports that are propagated to the slurm job.
     """
-    
+
     bid = bids['SLURM']
     _script_options_identifier = 'SBATCH'
-    _commands = ['sbatch', 'scancel', 'squeue', 'sacct']
+    _commands = ['sbatch', 'scancel', 'sacct']
     _successcode = '0:0'
     _run_states = set(['PENDING', 'RUNNING'])
-    
+
     def __init__(self, name = None, log = None, run_script = None, run_args = None, partition = None, exclude = None, clusters = None, qos = None, mem = None, time = None, export = None):
         super(Slurm, self).__init__()
         ## Common backend options
@@ -61,25 +62,7 @@ class Slurm(Base):
 
         Returns the job id (int).
         """
-        submit_list = ['sbatch']
-        if self.name: submit_list += ['-J', self.name]
-        if self.log: submit_list += ['-o', self.log]
-        if self.partition: submit_list += ['-p', self.partition]
-        if self.exclude: submit_list += ['-x', self.exclude]
-        if self.clusters: submit_list += ['-M', self.clusters]
-        if self.qos: submit_list.append('--qos={}'.format(self.qos))
-        if self.mem: submit_list.append('--mem={}'.format(self.mem))
-        if self.time: submit_list.append('--time={}'.format(self.time))
-        if self.export: submit_list.append('--export={}'.format(self.export))
-        ## Get run_script setup through wrapper
-        run_script = self.wrapper.get(self.run_script)
-        ## shlex splits run_script in a Popen digestable way
-        run_script = shlex.split(run_script)
-        submit_list += run_script
-        if self.run_args:
-            ## shlex splits run_args in a Popen digestable way
-            if isinstance(self.run_args, str): self.run_args = shlex.split(self.run_args)
-            submit_list += self.run_args
+        submit_list = self._get_submit_command()
         log.debug('({}) Submit job with command {}'.format(self.name, submit_list))
         submit_string = subprocess.check_output(submit_list, universal_newlines = True)
         job_id = int(submit_string.split(' ')[3].rstrip('\n'))
@@ -92,7 +75,10 @@ class Slurm(Base):
         Cancel the slurm job.
         """
         log.debug('({}) Cancel job'.format(self.name))
-        os.system('scancel {}'.format(self._job_id))
+        cancel_command = 'scancel {}'.format(self._job_id)
+        ## Wrap command
+        cancel_command = Base._get_command(cancel_command)
+        os.system(cancel_command)
 
     def status(self):
         """@SLURMY
@@ -119,22 +105,46 @@ class Slurm(Base):
         ## If exitcode is not set yet, run status evaluation
         if self._exitcode is None:
             self.status()
-            
+
         return self._exitcode
 
+    def _get_submit_command(self):
+        submit_command = 'sbatch '
+        if self.name: submit_command += '-J {} '.format(self.name)
+        if self.log: submit_command += '-o {} '.format(self.log)
+        if self.partition: submit_command += '-p {} '.format(self.partition)
+        if self.exclude: submit_command += '-x {} '.format(self.exclude)
+        if self.clusters: submit_command += '-M {} '.format(self.clusters)
+        if self.qos: submit_command += '--qos={} '.format(self.qos)
+        if self.mem: submit_command += '--mem={} '.format(self.mem)
+        if self.time: submit_command += '--time={} '.format(self.time)
+        if self.export: submit_command += '--export={} '.format(self.export)
+        ## Add run_script setup through wrapper
+        run_script = self.wrapper.get(self.run_script)
+        submit_command += '{} '.format(run_script)
+        ## Add run_args
+        if self.run_args:
+            if isinstance(self.run_args, str):
+                submit_command += self.run_args
+            else:
+                submit_command += ' '.join(self.run_args)
+        ## Wrap command
+        submit_command = Base._get_command(submit_command)
+        ## Split command string with shlex in a Popen digestable way
+        submit_command = shlex.split(submit_command)
+
+        return submit_command
+
+    ## TODO: the sacct_output parsing expects a particular output format which apparently can vary from system to system... the ".batch" stuff is not happening on every system
+    ## TODO: probably need to (AGAIN) rework how this is done
     def _get_sacct_entry(self, column):
-        sacct_list = ['sacct']
-        if self.partition:
-            sacct_list.extend(['-r', self.partition])
-        if self.clusters:
-            sacct_list.extend(['-M', self.clusters])
-        sacct_list.extend(['-j', '{}'.format(self._job_id), '-P', '-o', column])
-        sacct_list = subprocess.check_output(sacct_list, universal_newlines = True).rstrip('\n').split('\n')
-        log.debug('({}) Return list from sacct: {}'.format(self.name, sacct_list))
+        sacct_command = Slurm._get_sacct_command(column, job_id = self._job_id, partition = self.partition, clusters = self.clusters)
+        sacct_output = subprocess.check_output(sacct_command, universal_newlines = True).rstrip('\n').split('\n')
+        log.debug('({}) Return list from sacct: {}'.format(self.name, sacct_output))
         sacct_return = None
-        if len(sacct_list) > 1:
+        if len(sacct_output) > 1:
             sacct_return = {}
-            for entry in sacct_list[1:]:
+            for entry in sacct_output[1:]:
                 job_string, state, exitcode = entry.split('|')
                 log.debug('({}) Column "{}" values from sacct: {} {} {}'.format(self.name, column, job_string, state, exitcode))
                 if '.batch' in job_string:
@@ -145,14 +155,24 @@ class Slurm(Base):
         return sacct_return
 
     @staticmethod
+    def _get_sacct_command(column, job_id = None, user = None, partition = None, clusters = None):
+        sacct_command = 'sacct '
+        if partition: sacct_command += '-r {} '.format(partition)
+        if clusters: sacct_command += '-M {} '.format(clusters)
+        if job_id: sacct_command += '-j {} '.format(job_id)
+        if user: sacct_command += '-u {} '.format(user)
+        sacct_command += '-P -o {}'.format(column)
+        ## Wrap command
+        sacct_command = Base._get_command(sacct_command)
+        ## Split command string with shlex in a Popen digestable way
+        sacct_command = shlex.split(sacct_command)
+
+        return sacct_command
+
+    @staticmethod
     def get_listen_func(partition = None, clusters = None):
-        command = ['sacct']
-        if partition:
-            command.extend(['-r', partition])
-        if clusters:
-            command.extend(['-M', clusters])
-        user = os.environ['USER']
-        command.extend(['-u', user, '-P', '-o', 'JobID,State,ExitCode'])
+        user = options.Main.user
+        command = Slurm._get_sacct_command('JobID,State,ExitCode', user = user, partition = partition, clusters = clusters)
         ## Define function for Listener
         def listen(results, interval = 1):
             import subprocess, time

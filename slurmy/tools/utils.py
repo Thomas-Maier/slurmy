@@ -1,3 +1,5 @@
+import subprocess
+import shlex
 import re
 import logging
 log = logging.getLogger('slurmy')
@@ -276,3 +278,16 @@ def find_between(s, first, last):
         return ''
     else:
         return results[0]
+
+## Command utils
+def check_return(command):
+    split_command = shlex.split(command)
+    log.debug('Check return value for command {}'.format(split_command))
+    proc = subprocess.Popen(split_command, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
+    ret_code = proc.wait()
+    ## Close stdout streaming
+    proc.stdout.close()
+    if ret_code != 0:
+        return False
+
+    return True

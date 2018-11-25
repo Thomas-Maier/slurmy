@@ -1,11 +1,9 @@
 
-import subprocess
-import shlex
 import logging
 import os
 import stat
 from ..tools import options
-from ..tools.utils import _prompt_decision
+from ..tools.utils import _prompt_decision, check_return
 from .defs import bids
 from ..tools.wrapper import Wrapper
 
@@ -107,15 +105,19 @@ class Base(object):
             raise Exception
 
     @staticmethod
-    def _check_command(command):
-        proc = subprocess.Popen(shlex.split('which {}'.format(command)), stdout = subprocess.PIPE, stderr = subprocess.STDOUT, universal_newlines = True)
-        ret_code = proc.wait()
-        ## Close stdout streaming
-        proc.stdout.close()
-        if ret_code != 0:
-            return False
+    def _get_command(command):
+        command_wrapper = options.Main.command_wrapper
+        full_command = command_wrapper.format(command = command)
 
-        return True
+        return full_command
+
+    @staticmethod
+    def _check_command(command):
+        command = 'which {}'.format(command)
+        ## Wrap command
+        command = Base._get_command(command)
+
+        return check_return(command)
 
     ## Backend specific implementations
     def submit(self):
