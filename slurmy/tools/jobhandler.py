@@ -9,7 +9,7 @@ from .defs import Status, Type, Theme, Mode
 from .job import Job, JobConfig
 from .namegenerator import NameGenerator
 from . import options
-from ..backends.utils import get_backend
+from ..backends.utils import get_backend, get_backend_class
 from .parser import Parser
 from .utils import SuccessTrigger, FinishedTrigger, get_input_func, set_update_properties, make_dir, remove_content
 from .jobcontainer import JobContainer
@@ -386,22 +386,21 @@ class JobHandler(object):
         ## If JobHandler doesn't listen, return empty list
         if not self.config.listens:
             return listeners
-        ## Set up backend specific FINISHED listeners (for now only SLURMY). TODO: dynamically assert which backends are used (one listener for each?)
-        ## If we are in test mode (aka local mode), don't add batch listeners
+        ## Set up backend specific FINISHED listeners (for now only SLURMY). If we are in test mode (aka local mode), don't add batch listeners.
         ## TODO: In interactive slurmy, test_mode activation is not triggered unless a Slurm instance is created --> Listener is setup even though Slurm doesn't work
-        ## TODO: Listener setup must check for backends configured in jobs. In principle multiple different backends could be used at once. The current implementation looks for the backend configured in the JobHandler which can anyway be None now.
         if not options.Main.test_mode:
-            from ..backends.slurm import Slurm
-            from ..backends.htcondor import HTCondor
-            if isinstance(self.config.backend, Slurm):
-                ## This one also sets the exitcode of the job, so the success evaluation can be done by itself.
-                listen_slurm = Slurm.get_listen_func()
-                listener_slurm = Listener(self, listen_slurm, Status.RUNNING, 'id')
-                listeners.append(listener_slurm)
-            elif isinstance(self.config.backend, HTCondor):
-                listen_htcondor = HTCondor.get_listen_func()
-                listener_htcondor = Listener(self, listen_htcondor, Status.RUNNING, 'id')
-                listeners.append(listener_htcondor)
+            ## Get list of defined job backend bids
+            bid_list = set([job.config.backend.bid for job in self.jobs.values()])
+            log.debug('List of backend bids: {}'.format(bid_list))
+            ## Add listener for each backend
+            for bid in bid_list:
+                log.debug('Set up FINISHED listener for bid "{}"'.format(bid))
+                ## Get backend class according to bid
+                backend_class = get_backend_class(bid)
+                ## This function also sets the exitcode of the job, so the success evaluation can be done by itself.
+                listen_func = backend_class.get_listen_func()
+                listener = Listener(self, listen_func, Status.RUNNING, 'id')
+                listeners.append(listener)
 
         ## Get list of defined output files
         file_list = [l.output for l in self.jobs.values() if l.output is not None]
@@ -410,7 +409,7 @@ class JobHandler(object):
             from .utils import get_listen_files
             ### Get list of associated folders
             folder_list = set([os.path.dirname(f) for f in file_list])
-            log.debug('Setup output listener')
+            log.debug('Set up output listener')
             log.debug('--folder list: {}'.format(folder_list))
             log.debug('--file list: {}'.format(file_list))
             listen_success = get_listen_files(file_list, folder_list, Status.SUCCESS)
