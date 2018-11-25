@@ -145,10 +145,11 @@ class Slurm(Base):
             sacct_return = {}
             for entry in sacct_output[1:]:
                 job_string, state, exitcode = entry.split('|')
-                if '.batch' in job_string: continue
                 log.debug('({}) Column "{}" values from sacct: {} {} {}'.format(self.name, column, job_string, state, exitcode))
-                sacct_return['finished'] = state
-                sacct_return['success'] = exitcode
+                if '.batch' in job_string:
+                    sacct_return['success'] = exitcode
+                else:
+                    sacct_return['finished'] = state
 
         return sacct_return
 
@@ -177,21 +178,23 @@ class Slurm(Base):
             from collections import OrderedDict
             while True:
                 result = subprocess.check_output(command, universal_newlines = True).rstrip('\n').split('\n')
-                return_states = {}
-                return_exitcodes = {}
+                sacct_returns = {}
                 job_ids = set()
                 ## Evaluate sacct return values
-                for res in result[1:]:
+                for res in result:
                     job_id, state, exitcode = res.split('|')
-                    job_ids.add(job_id)
-                    return_states[job_id] = state
-                    return_exitcodes[job_id] = exitcode
+                    if job_id.endswith('.batch'):
+                        sacct_returns[job_id] = exitcode
+                    else:
+                        sacct_returns[job_id] = state
+                        job_ids.add(job_id)
                 ## Generate results dict
                 res_dict = OrderedDict()
                 for job_id in job_ids:
-                    if return_states[job_id] in Slurm._run_states: continue
+                    if sacct_returns[job_id] in Slurm._run_states: continue
                     batch_string = '{}.batch'.format(job_id)
-                    exitcode = return_exitcodes[job_id]
+                    if batch_string not in sacct_returns: continue
+                    exitcode = sacct_returns[batch_string]
                     res_dict[int(job_id)] = {'status': Status.FINISHED, 'exitcode': exitcode}
                 results.put(res_dict)
                 time.sleep(interval)

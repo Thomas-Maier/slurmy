@@ -18,7 +18,7 @@ from .listener import Listener
 from .printer import Printer
 
 log = logging.getLogger('slurmy')
-        
+
 
 class JobHandlerConfig(object):
     """@SLURMY
@@ -26,12 +26,12 @@ class JobHandlerConfig(object):
 
     Arguments: see JobHandler class.
     """
-    
+
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_name_gen', '_name', '_script_dir', '_log_dir', '_output_dir', '_snapshot_dir', '_tmp_dir', '_path',
                    '_success_func', '_finished_func', '_local_max', '_local_dynamic', '_max_retries', '_run_max', '_backend',
                    '_do_snapshot', '_wrapper', '_job_config_paths', '_listens', '_output_max_attempts']
-    
+
     def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, local_dynamic = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
@@ -79,10 +79,9 @@ class JobHandlerConfig(object):
         snapshot_dir = os.path.join(base_dir, snapshot)
         tmp_dir = os.path.join(base_dir, tmp)
         path = os.path.join(snapshot_dir, snapshot_name)
-        
 
         return [script_dir, log_dir, output_dir, snapshot_dir, tmp_dir, path]
-    
+
 ## Set properties to incorporate update tagging
 set_update_properties(JobHandlerConfig)
 
@@ -109,7 +108,7 @@ class JobHandler(object):
     * `profiler` Profiler to be used for profiling.
     * `printer_bar_mode` Turn bar mode of the printer on/off.
     """
-    
+
     def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, local_dynamic = False, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5, printer_bar_mode = True):
         ## Set debug mode
         self._debug = False
@@ -391,7 +390,7 @@ class JobHandler(object):
                 listen_htcondor = HTCondor.get_listen_func()
                 listener_htcondor = Listener(self, listen_htcondor, Status.RUNNING, 'id')
                 listeners.append(listener_htcondor)
-            
+
         ## Get list of defined output files
         file_list = [l.output for l in self.jobs.values() if l.output is not None]
         ## Set up output file listener, if any are defined

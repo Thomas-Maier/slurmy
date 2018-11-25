@@ -163,11 +163,9 @@ class Options(object):
         if re.findall('(.+?)\n', inspect_output) == 'false':
             log.error('Docker container {} is not in Running state, abort...')
             raise Exception
-        ## Set user option to docker user
-        # self.user = user
+        ## Set user option to root
+        self.user = 'root'
         ## Set command_wrapper to docker exec command
-        # command_wrapper = 'docker exec {} runuser -l {}'.format(container_name, self.user)
-        # command_wrapper += ' -c "{command}"'
         command_wrapper = 'docker exec {}'.format(container_name)
         command_wrapper += ' {command}'
         log.debug('Setting command_wrapper to "'+command_wrapper+'"')

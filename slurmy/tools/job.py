@@ -3,6 +3,7 @@ import subprocess as sp
 import os
 import pickle
 import logging
+import time
 from .defs import Status, Type, Mode
 from .utils import set_update_properties, update_decorator
 from . import options
@@ -25,13 +26,15 @@ class JobConfig(object):
     * `job_type` Define the type of the job.
     * `output` Output file of the job.
     * `starttime` Timestamp at which job is started by the JobHandler.
+    * `delaytimes` Dictionary ({Status:int}) of time (in seconds) the job should stay in the specified job state in before it can be changed. If None is specified, the default is to stay in RUNNING for 2 seconds.
     """
-    
+
     ## Properties for which custom getter/setter will be defined (without prepending "_") which incorporate the update tagging
     _properties = ['_backend', '_name', '_path', '_tags', '_parent_tags', '_success_func', '_finished_func', '_post_func',
-                   '_max_retries', '_output', '_type', '_starttime', '_modes', '_status', '_job_id', '_n_retries', '_exitcode']
-    
-    def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, job_type = Type.BATCH, output = None, starttime = None):
+                   '_max_retries', '_output', '_type', '_starttime', '_delaytimes', '_modes', '_status', '_job_id', '_n_retries',
+                   '_exitcode', '_timestamps']
+
+    def __init__(self, backend, path, success_func = None, finished_func = None, post_func = None, max_retries = 0, tags = None, parent_tags = None, job_type = Type.BATCH, output = None, starttime = None, delaytimes = None):
         ## Static variables
         self._backend = backend
         self._name = self.backend.name
@@ -46,6 +49,12 @@ class JobConfig(object):
         self._max_retries = max_retries
         self._output = output
         self._starttime = starttime
+        if delaytimes is None:
+            self._delaytimes = {}
+            ## Set delaytime for RUNNING to 2 seconds to avoid "race condition" after job submission
+            self._delaytimes[Status.RUNNING] = 2
+        else:
+            self._delaytimes = delaytimes
         ## Dynamic variables
         self._type = job_type
         self._modes = {}
@@ -56,6 +65,7 @@ class JobConfig(object):
         self._job_id = None
         self._n_retries = 0
         self._exitcode = None
+        self._timestamps = {}
 
     @update_decorator
     def add_tag(self, tag, is_parent = False):
@@ -92,7 +102,7 @@ class JobConfig(object):
         * `mode` Mode that the job is set to for the given status.
         """
         self._modes[status] = mode
-        
+
 ## Set properties to incorporate update tagging
 set_update_properties(JobConfig)
 
@@ -103,7 +113,7 @@ class Job(object):
 
     * `config` The JobConfig instance that defines the initial job setup.
     """
-    
+
     def __init__(self, config):
         self.config = config
         ## Variables that are not picklable
@@ -133,6 +143,7 @@ class Job(object):
         self.exitcode = None
         self.config.job_id = None
         self._local_process = None
+        self.config.timestamps = {}
         if reset_retries:
             self.config.n_retries = 0
         if os.path.isfile(self.config.backend.log): os.remove(self.config.backend.log)
@@ -187,7 +198,7 @@ class Job(object):
         * `is_parent` Mark tags as parent.
         """
         self.config.add_tags(tags, is_parent)
-        
+
     def has_tag(self, tag):
         """@SLURMY
         Check if the job has a given tag.
@@ -232,7 +243,7 @@ class Job(object):
     def cancel(self, clear_retry = False):
         """@SLURMY
         Cancel the job.
-        
+
         * `clear_retry` Deactivate automatic retry mechanism
 
         Returns the job status (Status).
@@ -476,6 +487,16 @@ class Job(object):
 
         * `status` Status to set the job status to.
         """
+        ## If a delaytime was specified for the current job state, don't set status if the delaytime hasn't passed yet
+        if self.status in self.config.delaytimes:
+            delaytime = self.config.delaytimes[self.status]
+            time_diff = time.time() - self.config.timestamps[self.status]
+            if time_diff < delaytime:
+                log.debug('({}) Delaytime for state {} is set to {}s, but only {:.1f}s have passed since last state transition. Not setting job state.'.format(self.name, self.status, delaytime, time_diff))
+                return
+        ## Set timestamp when a particular job state is set first
+        if status not in self.config.timestamps:
+            self.config.timestamps[status] = time.time()
         ## If status changes from pre-completion state to SUCCESS/FAILED/CANCELLED, execute the completion routine as well
         if self.status.value < Status.SUCCESS.value and status.value >= Status.SUCCESS.value:
             self.complete()
