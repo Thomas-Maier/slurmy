@@ -384,15 +384,16 @@ class Job(object):
 
     def edit_script(self, editor = None):
         """@SLURMY
-        Open the job's run script in an editor.
+        Open the job's run script in an editor if in interactive_mode.
 
         * `editor` Command line editor to use. If none is specified, the editor specified in $EDITOR is used and if this is not set, the default editor according to the slurmy config is used.
         """
-        editor = editor or os.environ['EDITOR'] or options.Main.editor
-        if editor:
-            os.system('{} {}'.format(editor, self.config.backend.run_script))
-        else:
-            log.error('({}) No (default) editor specified'.format(self.name))
+        if options.Main.interactive_mode:
+            editor = editor or os.environ['EDITOR'] or options.Main.editor
+            if editor:
+                os.system('{} {}'.format(editor, self.config.backend.run_script))
+            else:
+                log.error('({}) No (default) editor specified'.format(self.name))
 
     @property
     def tags(self):
@@ -418,22 +419,24 @@ class Job(object):
     @property
     def log(self):
         """@SLURMY
-        Open the job log file with less.
+        Open the job log file with less if in interactive_mode.
 
         Returns the log file path (str).
         """
-        os.system('less -R {}'.format(self.config.backend.log))
+        if options.Main.interactive_mode:
+            os.system('less -R {}'.format(self.config.backend.log))
 
         return self.config.backend.log
 
     @property
     def script(self):
         """@SLURMY
-        Open the job script file with less.
+        Open the job script file with less if in interactive_mode.
 
         Returns the script file path (str).
         """
-        os.system('less -R {}'.format(self.config.backend.run_script))
+        if options.Main.interactive_mode:
+            os.system('less -R {}'.format(self.config.backend.run_script))
 
         return self.config.backend.run_script
 
