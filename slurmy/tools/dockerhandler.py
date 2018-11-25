@@ -5,7 +5,7 @@ import re
 import os
 import logging
 from .utils import check_return
-from ..backends.slurm import Slurm
+from ..backends.defs import bids
 
 log = logging.getLogger('slurmy')
 
@@ -19,10 +19,11 @@ class DockerHandler:
         self.command_wrapper = {}
         self._stop_command = {}
         ## Slurm
-        self._container_name[Slurm.bid] = 'slurm'
-        self._start_command[Slurm.bid] = self._get_start_command(self._container_name[Slurm.bid])
-        self.command_wrapper[Slurm.bid] = DockerHandler._get_command_wrapper(self._container_name[Slurm.bid])
-        self._stop_command[Slurm.bid] = DockerHandler._get_stop_command(self._container_name[Slurm.bid])
+        bid = bids['SLURM']
+        self._container_name[bid] = 'slurm'
+        self._start_command[bid] = self._get_start_command(self._container_name[bid])
+        self.command_wrapper[bid] = DockerHandler._get_command_wrapper(self._container_name[bid])
+        self._stop_command[bid] = DockerHandler._get_stop_command(self._container_name[bid])
         ## TODO: HTCondor
 
     def start(self, bid):

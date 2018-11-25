@@ -8,7 +8,6 @@ import subprocess
 import shlex
 import re
 from ..backends.utils import backend_list, get_backend
-from . import dockerhandler
 
 log = logging.getLogger('slurmy')
 
@@ -160,17 +159,6 @@ class Options(object):
         if bid not in self._backend_defaults:
             return
         backend.sync(self._backend_defaults[bid])
-
-    def set_docker_mode(self):
-        log.debug('Setting up docker mode...')
-        ## Set docker mode flag
-        self.docker_mode = True
-        ## Set user option to root
-        self.user = 'root'
-        ## Set workdir to DockerHandler bind_dir
-        self.workdir = dockerhandler.Main.bind_dir
-        ## Set command wrappers to docker wrappers
-        self.command_wrapper.update(dockerhandler.Main.command_wrapper)
 
     @staticmethod
     def _parse_file_name(file_name):

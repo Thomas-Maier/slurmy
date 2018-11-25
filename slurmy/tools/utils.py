@@ -291,3 +291,17 @@ def check_return(command):
         return False
 
     return True
+
+## Mode setting
+def set_docker_mode():
+    from . import options
+    from . import dockerhandler
+    log.debug('Setting up docker mode...')
+    ## Set docker mode flag
+    options.Main.docker_mode = True
+    ## Set user option to root
+    options.Main.user = 'root'
+    ## Set workdir to DockerHandler bind_dir
+    options.Main.workdir = dockerhandler.Main.bind_dir
+    ## Set command wrappers to docker wrappers
+    options.Main.command_wrapper.update(dockerhandler.Main.command_wrapper)
