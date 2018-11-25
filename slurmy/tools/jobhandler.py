@@ -146,11 +146,6 @@ class JobHandler(object):
                     job_config = pickle.load(in_file)
                 self._add_job_with_config(job_config)
         else:
-            ## Backend setup
-            if backend is None and options.Main.backend is not None:
-                backend = get_backend(options.Main.backend)
-            ## Set default backend configuration
-            backend.load_default_config()
             ## Make new JobHandler config
             self.config = JobHandlerConfig(name = name, backend = backend, work_dir = work_dir, local_max = local_max, local_dynamic = local_dynamic, success_func = success_func, finished_func = finished_func, max_retries = max_retries, theme = theme, run_max = run_max, do_snapshot = do_snapshot, wrapper = wrapper, listens = listens, output_max_attempts = output_max_attempts)
             self.reset(skip_jobs = True)
@@ -231,6 +226,17 @@ class JobHandler(object):
 
         return job
 
+    def _get_job_backend(self):
+        if self.config.backend:
+            backend = get_backend(self.config.backend.bid)
+        elif options.Main.backend:
+            backend = get_backend(options.Main.backend)
+        else:
+            log.error('Could not get backend for the job, please provide configuration either in the slurmy options file, to the JobHandler, or when calling JobHandler.add_job.')
+            raise Exception
+
+        return backend
+
     def add_job(self, backend = None, run_script = None, run_args = None, success_func = None, finished_func = None, post_func = None, max_retries = None, output = None, tags = None, parent_tags = None, name = None, job_type = Type.BATCH, starttime = None):
         """@SLURMY
         Add a job to the list of jobs to be processed by the JobHandler.
@@ -255,11 +261,9 @@ class JobHandler(object):
         if job_type == Type.LOCAL and self.config.local_max == 0:
             log.error('Job is created as Type.LOCAL but local_max is set to 0. Please set local_max of the JobHandler to a non-zero value.')
             raise Exception
-        if backend is None and options.Main.backend is not None:
-            backend = get_backend(options.Main.backend)
+        ## If no backend is defined with JobHandler.add_job(), get a job backend according to the configuration hierarchy
         if backend is None:
-            log.error('No backend set for job, either set directly or define default in ~/.slurmy')
-            return
+            backend = self._get_job_backend()
         ## Set run_script and run_args if not already done
         backend.run_script = backend.run_script or run_script
         backend.run_args = backend.run_args or run_args
@@ -299,8 +303,11 @@ class JobHandler(object):
         backend.write_script(self.config.script_dir)
         ## Set log name
         backend.log = os.path.join(self.config.log_dir, name)
-        ## Synchronise backend
-        backend.sync(self.config.backend)
+        ## Synchronise backend with JobHandler backend if one is defined and it matches the job backend
+        if self.config.backend and self.config.backend.bid == backend.bid:
+            backend.sync(self.config.backend)
+        ## Synchronise backend with default options from slurmy options file, if defined
+        options.Main.sync_backend(backend)
         job_max_retries = max_retries or self.config.max_retries
         config_path = os.path.join(self.config.snapshot_dir, name+'.pkl')
 
@@ -382,6 +389,7 @@ class JobHandler(object):
         ## Set up backend specific FINISHED listeners (for now only SLURMY). TODO: dynamically assert which backends are used (one listener for each?)
         ## If we are in test mode (aka local mode), don't add batch listeners
         ## TODO: In interactive slurmy, test_mode activation is not triggered unless a Slurm instance is created --> Listener is setup even though Slurm doesn't work
+        ## TODO: Listener setup must check for backends configured in jobs. In principle multiple different backends could be used at once. The current implementation looks for the backend configured in the JobHandler which can anyway be None now.
         if not options.Main.test_mode:
             from ..backends.slurm import Slurm
             from ..backends.htcondor import HTCondor
