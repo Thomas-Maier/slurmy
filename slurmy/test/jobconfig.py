@@ -1,13 +1,14 @@
 
 import unittest
 import os
+from ..tools import options
 
 
 class Test(unittest.TestCase):
     def setUp(self):
         from slurmy import JobHandler, test_mode
         test_mode(True)
-        self.test_dir = 'slurmy_unittest/jobconfig'
+        self.test_dir = os.path.join(options.Main.workdir, 'slurmy_unittest/jobconfig')
         self.jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_jobconfig', do_snapshot = False)
         self.run_script = 'echo "test"'
         self.run_script_trigger = '@SLURMY.FINISHED; @SLURMY.SUCCESS;'
@@ -21,13 +22,13 @@ class Test(unittest.TestCase):
     def test_run_args(self):
         job = self.jh.add_job(run_script = self.run_script, run_args = 'test')
         self.assertIs(job.config.backend.run_args, 'test')
-        
+
     def test_name(self):
         job = self.jh.add_job(run_script = self.run_script, name = 'test')
         self.assertIs(job.name, 'test')
         self.assertIn('test', self.jh.jobs)
         self.assertIs(self.jh.jobs.test.name, 'test')
-        
+
     def test_type_local(self):
         from slurmy import JobHandler, Type
         jh = JobHandler(work_dir = self.test_dir, verbosity = 0, name = 'test_jobconfig_type_local', do_snapshot = False, local_max = 1)

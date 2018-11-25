@@ -77,7 +77,7 @@ class Slurm(Base):
         log.debug('({}) Cancel job'.format(self.name))
         cancel_command = 'scancel {}'.format(self._job_id)
         ## Wrap command
-        cancel_command = Base._get_command(cancel_command)
+        cancel_command = Base._get_command(cancel_command, Slurm.bid)
         os.system(cancel_command)
 
     def status(self):
@@ -130,7 +130,7 @@ class Slurm(Base):
             else:
                 submit_command += ' '.join(self.run_args)
         ## Wrap command
-        submit_command = Base._get_command(submit_command)
+        submit_command = Base._get_command(submit_command, Slurm.bid)
         ## Split command string with shlex in a Popen digestable way
         submit_command = shlex.split(submit_command)
 
@@ -161,7 +161,7 @@ class Slurm(Base):
         if user: sacct_command += '-u {} '.format(user)
         sacct_command += '-P -o {}'.format(column)
         ## Wrap command
-        sacct_command = Base._get_command(sacct_command)
+        sacct_command = Base._get_command(sacct_command, Slurm.bid)
         ## Split command string with shlex in a Popen digestable way
         sacct_command = shlex.split(sacct_command)
 

@@ -2,19 +2,20 @@
 import unittest
 import os
 import time
+from ..tools import options
 
 
 class TestPostFunction:
     def __init__(self, file_name):
         self._file_name = file_name
-        
+
     def __call__(self, config):
         os.system('touch {}'.format(self._file_name))
 
 
 class Test(unittest.TestCase):
     def setUp(self):
-        self.test_dir = 'slurmy_unittest/submission'
+        self.test_dir = os.path.join(options.Main.workdir, 'slurmy_unittest/submission')
         if not os.path.isdir(self.test_dir): os.makedirs(self.test_dir)
         self.run_script = '#!/bin/bash\necho "test"'
         self.run_script_fail = '#!/bin/bash\necho "test"; exit 1;'
@@ -45,7 +46,7 @@ class Test(unittest.TestCase):
         self.assertIs(jh.jobs.test.status, Status.SUCCESS)
         id_second = jh.jobs.test.id
         self.assertIsNot(id_first, id_second)
-    
+
     def test_local(self):
         from slurmy import JobHandler, Status, Type, test_mode
         test_mode(True)

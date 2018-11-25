@@ -6,6 +6,7 @@ import argparse
 import sys
 import os
 import logging
+from ..tools import options
 
 log = logging.getLogger('slurmy')
 
@@ -21,7 +22,7 @@ def get_test_names(discover_list, test_dict):
             test_method_name = test._testMethodName
             test_name = '{}.{}.{}'.format(test_class_module, test_class_name, test_method_name)
             test_dict[test_class_module].append(test_name)
-            
+
 ## Get discovery start directory via __file__
 start_dir = os.path.dirname(__file__)
 discover_list = unittest.defaultTestLoader.discover(start_dir, pattern = '*.py')
@@ -37,6 +38,7 @@ parser.add_argument('tests', nargs = '*', help = 'Only run given tests')
 parser.add_argument('--log', help = 'Logging level')
 parser.add_argument('-l', '--list', dest = 'list', help = 'List test modules and methods', action = 'store_true')
 parser.add_argument('-q', help = 'Set test verbosity to 1 (default 2)', action = 'store_true', default = False)
+parser.add_argument('-d', help = 'Switch to run tests in docker mode', action = 'store_true', default = False)
 args = parser.parse_args()
 
 if args.log:
@@ -45,6 +47,9 @@ if args.q:
     verbosity = 1
 else:
     verbosity = 2
+
+if args.d:
+    options.Main.set_docker_mode()
 
 if args.tests:
     tests = args.tests
@@ -64,7 +69,7 @@ if args.list:
         for test_method in test_dict[test_module]:
             print('-- {}'.format(test_method))
     sys.exit(0)
-    
+
 
 suite = unittest.TestSuite()
 

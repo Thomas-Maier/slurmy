@@ -32,11 +32,12 @@ class JobHandlerConfig(object):
                    '_success_func', '_finished_func', '_local_max', '_local_dynamic', '_max_retries', '_run_max', '_backend',
                    '_do_snapshot', '_wrapper', '_job_config_paths', '_listens', '_output_max_attempts']
 
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, local_dynamic = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
+    def __init__(self, name = None, backend = None, work_dir = None, local_max = 0, local_dynamic = False, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, wrapper = None, listens = True, output_max_attempts = 5):
         ## Static variables
         self._name_gen = NameGenerator(name = name, theme = theme)
         self._name = self._name_gen.name
         ## Get directory paths
+        work_dir = work_dir or ''
         self.dirs = JobHandlerConfig.get_dirs(self._name, work_dir)
         ## Pop of path to snapshot
         self._path = self.dirs.pop(-1)
@@ -109,7 +110,7 @@ class JobHandler(object):
     * `printer_bar_mode` Turn bar mode of the printer on/off.
     """
 
-    def __init__(self, name = None, backend = None, work_dir = '', local_max = 0, local_dynamic = False, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5, printer_bar_mode = True):
+    def __init__(self, name = None, backend = None, work_dir = None, local_max = 0, local_dynamic = False, verbosity = 1, success_func = None, finished_func = None, max_retries = 0, theme = Theme.Lovecraft, run_max = None, do_snapshot = True, use_snapshot = False, description = None, wrapper = None, profiler = None, listens = True, output_max_attempts = 5, printer_bar_mode = True):
         ## Set debug mode
         self._debug = False
         if log.level == 10: self._debug = True
@@ -122,6 +123,9 @@ class JobHandler(object):
             log.warning('Local job processing not supported in python 2, switched off')
             local_max = 0
             local_dynamic = False
+        ## Get workdir from options if not explicitly set
+        if work_dir is None:
+            work_dir = options.Main.workdir
         ## Variables that are not picklable
         self.jobs = JobContainer()
         ## Snapshot loading

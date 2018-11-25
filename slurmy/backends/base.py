@@ -3,6 +3,7 @@ import logging
 import os
 import stat
 from ..tools import options
+from ..tools import dockerhandler
 from ..tools.utils import _prompt_decision, check_return
 from .defs import bids
 from ..tools.wrapper import Wrapper
@@ -22,6 +23,9 @@ class Base(object):
     run_args = None
 
     def __init__(self):
+        ## If we are in docker_mode, start the docker container relevant for this backend
+        if options.Main.docker_mode:
+            dockerhandler.Main.start(self.bid)
         self._check_commands()
 
     def __getitem__(self, key):
@@ -92,7 +96,7 @@ class Base(object):
         if options.Main.test_mode:
             return
         for command in self._commands:
-            if Base._check_command(command): continue
+            if Base._check_command(command, self.bid): continue
             log.error('{} command not found: "{}"'.format(self.bid, command))
             ## If we are in interactive mode, switch into test/local mode. If in normal mode, prompt the user.
             if options.Main.interactive_mode:
@@ -105,17 +109,16 @@ class Base(object):
             raise Exception
 
     @staticmethod
-    def _get_command(command):
-        command_wrapper = options.Main.command_wrapper
-        full_command = command_wrapper.format(command = command)
+    def _get_command(command, bid):
+        full_command = options.Main.command_wrapper[bid].format(command = command)
 
         return full_command
 
     @staticmethod
-    def _check_command(command):
+    def _check_command(command, bid):
         command = 'which {}'.format(command)
         ## Wrap command
-        command = Base._get_command(command)
+        command = Base._get_command(command, bid)
 
         return check_return(command)
 

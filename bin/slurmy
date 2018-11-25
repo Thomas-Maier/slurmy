@@ -16,7 +16,7 @@ if __name__ == '__main__':
     _parser.add_argument('-p', '--path', dest = 'path', type = str, default = None, help = 'Path to the base folder of an existing JobHandler session. Directly loads the JobHandler as "jh".')
     _parser.add_argument('-c', '--config', dest = 'config', type = str, default = None, help = 'Path to a job configuration file.')
     _parser.add_argument('-t', dest = 'test_mode', action = 'store_true', default = False, help = 'Switch to start in test/local mode.')
-    _parser.add_argument('-d', '--docker', dest = 'docker', type = str, default = None, help = 'Name of docker container to send backend commands to.')
+    _parser.add_argument('-d', '--docker', dest = 'docker', action = 'store_true', default = False, help = 'Switch to activate docker_mode')
     _parser.add_argument('--debug', dest = 'debug', action = 'store_true', default = False, help = 'Run in debugging mode.')
     _args = _parser.parse_args()
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     ## Modes to start slurmy in
     if _args.test_mode: test_mode()
     if _args.debug: _log.setLevel(level = logging.DEBUG)
-    if _args.docker: _ops.Main.set_docker_mode(_args.docker)
+    if _args.docker: _ops.Main.set_docker_mode()
     ## Load config file if one was provided
     if _args.config:
         with open(_args.config, 'r') as in_file:
