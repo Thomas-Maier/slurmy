@@ -7,7 +7,7 @@ import logging
 import subprocess
 import shlex
 import re
-from ..backends.utils import backend_list, get_backend
+from ..backends.utils import backend_list
 
 log = logging.getLogger('slurmy')
 
@@ -28,8 +28,8 @@ class Options(object):
         self.interactive_mode = False
         self.profile_mode = False
         self.docker_mode = False
-        ## Default backends which hold the options configured in _options_file
-        self._backend_defaults = {}
+        ## Default backend options configured in _options_file
+        self._backend_options = {}
         ## Internal vars
         self._bookkeeping = None
         ## Read options from _options_file
@@ -101,8 +101,7 @@ class Options(object):
         ## If no options file present, do nothing
         if not os.path.isfile(Options._options_file): return
         ## If options were already filled, do nothing
-        if self._backend_defaults and not force: return
-        backend_options = {}
+        if self._backend_options and not force: return
         lines = None
         with open(Options._options_file, 'r') as in_file:
             lines = filter(None, [line.strip() for line in in_file if not line.startswith('#')])
@@ -129,36 +128,27 @@ class Options(object):
                 if domain not in backend_list:
                     log.warning('Trying to add an option for unknown backend "{}", list of available backends: {}'.format(domain, backend_list))
                     continue
-                if domain not in backend_options: backend_options[domain] = {}
-                if option in backend_options[domain]:
+                if domain not in self._backend_options: self._backend_options[domain] = {}
+                if option in self._backend_options[domain]:
                     log.warning('Trying to set a backend option twice, ignoring duplicate')
                     continue
-                backend_options[domain][option] = val
+                self._backend_options[domain][option] = val
         ## Check if backend from options file is refering to an available backend
         if self.backend is not None and self.backend not in backend_list:
             log.warning('Unknown backend "{}", list of available backends: {}'.format(self.backend, backend_list))
             ## Setting backend to None
             self.backend = None
-        ## Set backend defaults according to backend options from options file
-        self._set_backend_defaults(backend_options)
-
-    def _set_backend_defaults(self, backend_options):
-        for domain in backend_options:
-            backend = get_backend(domain)
-            for option, val in backend_options.items():
-                if not option in backend:
-                    log.warning('Option "{}" not in backend "{}"'.format(option, backend.bid))
-                    continue
-                ## If option was already set, give priority to that
-                backend[option] = backend[option] or val
-            ## Add backend to defaults
-            self._backend_defaults[domain] = backend
 
     def sync_backend(self, backend):
         bid = backend.bid
-        if bid not in self._backend_defaults:
+        if bid not in self._backend_options:
             return
-        backend.sync(self._backend_defaults[bid])
+        for option, val in self._backend_options[bid].items():
+            if not option in backend:
+                log.warning('Option "{}" not in backend "{}"'.format(option, backend.bid))
+                continue
+            ## If option was already set, give priority to that
+            backend[option] = backend[option] or val
 
     @staticmethod
     def _parse_file_name(file_name):
