@@ -145,6 +145,7 @@ class Slurm(Base):
             sacct_return = {}
             for entry in sacct_output[1:]:
                 job_string, state, exitcode = entry.split('|')
+                ## Skip the .batch entry if it exists
                 if '.batch' in job_string: continue
                 log.debug('({}) Column "{}" values from sacct: {} {} {}'.format(self.name, column, job_string, state, exitcode))
                 sacct_return['finished'] = state
@@ -183,6 +184,9 @@ class Slurm(Base):
                 ## Evaluate sacct return values
                 for res in result[1:]:
                     job_id, state, exitcode = res.split('|')
+                    ## Skip the .batch entries if any exist
+                    if '.batch' in job_id: continue
+                    job_id = int(job_id)
                     job_ids.add(job_id)
                     return_states[job_id] = state
                     return_exitcodes[job_id] = exitcode
@@ -190,9 +194,8 @@ class Slurm(Base):
                 res_dict = OrderedDict()
                 for job_id in job_ids:
                     if return_states[job_id] in Slurm._run_states: continue
-                    batch_string = '{}.batch'.format(job_id)
                     exitcode = return_exitcodes[job_id]
-                    res_dict[int(job_id)] = {'status': Status.FINISHED, 'exitcode': exitcode}
+                    res_dict[job_id] = {'status': Status.FINISHED, 'exitcode': exitcode}
                 results.put(res_dict)
                 time.sleep(interval)
 
