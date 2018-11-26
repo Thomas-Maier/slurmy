@@ -1,11 +1,13 @@
 import setuptools
+import subprocess
+import shlex
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="slurmy",
-    version="1.3.1",
+    version=subprocess.check_output(shlex.split('git describe --abbrev=0 --tags'), universal_newlines = True).rstrip('\n'),
     author="Thomas Maier",
     author_email="thomas.maier1989@gmail.com",
     description="Manager of batch jobs accross different backends.",
